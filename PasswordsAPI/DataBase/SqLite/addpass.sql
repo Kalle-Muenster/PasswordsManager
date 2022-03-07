@@ -1,0 +1,1 @@
+INSERT INTO UserPasswords(User, Hash) VALUES( 2, 447346571520543 );

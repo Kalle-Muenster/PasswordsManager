@@ -1,0 +1,72 @@
+{
+	"info": {
+		"_postman_id": "41abdf6d-b1c4-42ad-a931-6992ccc8da84",
+		"name": "Passworts",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET /Passwords expect 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"  pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}Passwords",
+					"host": [
+						"{{BASE_URL}}Passwords"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET /Passwords/CryptLibTest expect 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"  pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}Passwords/CryptLibTest",
+					"host": [
+						"{{BASE_URL}}Passwords"
+					],
+					"path": [
+						"CryptLibTest"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
