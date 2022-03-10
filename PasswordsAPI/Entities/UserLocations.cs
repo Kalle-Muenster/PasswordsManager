@@ -9,7 +9,7 @@ namespace PasswordsAPI
     public class UserLocations : EntityBase
     {
         public new static readonly UserLocations Invalid =
-            new UserLocations( new Error( 
+            new UserLocations( new Status( 
                 ErrorCode.User | ErrorCode.Area |
                 ErrorCode.Invalid, "Location not valid" )
             );
@@ -36,16 +36,16 @@ namespace PasswordsAPI
             Pass = Array.Empty<byte>();
         }
 
-        public UserLocations( Error invalid )
+        public UserLocations( Status invalid )
             : base(invalid)
         {
             Area = String.Empty;
             Pass = Array.Empty<byte>();
-            Is().Error = invalid.Code == ErrorCode.NoError
-                  ? Invalid.Is().Error : invalid;
+            Is().Status = invalid.Code == ErrorCode.NoError
+                  ? Invalid.Is().Status : invalid;
         }
 
-        public static implicit operator UserLocations( Error cast )
+        public static implicit operator UserLocations( Status cast )
         {
             return new UserLocations( cast );
         }

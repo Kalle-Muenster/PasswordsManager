@@ -32,7 +32,7 @@ namespace PasswordsAPI.Controllers
             }
             else
             {
-                testoutput.Append("Unknown Error running test");
+                testoutput.Append("Unknown Status running test");
             }
 
             if (ok)
@@ -54,7 +54,7 @@ namespace PasswordsAPI.Controllers
                 }
                 else
                 {
-                    testoutput.Append("Unknown Error reading output");
+                    testoutput.Append("Unknown Status reading output");
                 }
             }
 
@@ -86,7 +86,7 @@ namespace PasswordsAPI.Controllers
             }
             else
             {
-                testoutput.Append("Unknown Error running test");
+                testoutput.Append("Unknown Status running test");
             }
 
             if (ok)
@@ -107,7 +107,7 @@ namespace PasswordsAPI.Controllers
                 }
                 else
                 {
-                    testoutput.Append("Unknown Error reading output");
+                    testoutput.Append("Unknown Status reading output");
                 }
             }
 
@@ -131,7 +131,7 @@ namespace PasswordsAPI.Controllers
             sbyte[] resultdata = Crypt.Decrypt<sbyte>(key, cryptisch);
             if ( Crypt.Error )
             {
-                result.Append( "Error: " );
+                result.Append( "Status: " );
                 cryptisch = Crypt.Error.ToString();
             }
             else unsafe

@@ -5,7 +5,7 @@ namespace PasswordsAPI.Services
 
     public interface IPasswordsApiService 
     {
-        Error Error { get; }
+        Status Status { get; }
         bool  Ok    { get; set; }
     }
 
@@ -35,40 +35,40 @@ namespace PasswordsAPI.Services
         where S : AbstractApiService<E,S>
     {
         protected PasswordsDbContext? db;
-        protected abstract Error GetDefaultError();
+        protected abstract Status GetDefaultError();
         public abstract E Entity { get; set; }
 
-        private Error error;
-        public  Error Error { get => error; 
-            protected set => error = value; }
+        private Status status;
+        public  Status Status { get => status; 
+            protected set => status = value; }
 
         public virtual bool Ok {
-            get { return error.Code == ErrorCode.NoError; }
-            set { if ( value ) error = Error.NoError;
-             else if (error.Code == ErrorCode.NoError)
-                 error = GetDefaultError();
+            get { return (status.Code & ErrorCode.IsValid) < ErrorCode.Unknown; }
+            set { if ( value ) status = Status.Success;
+             else if (status.Code > ErrorCode.Success )
+                 status = GetDefaultError();
             }
         }
 
-        // tunneling an error detected by another service then
-        // that one where the error was happening, way back to 
-        // that service to let generate proper error code there
+        // tunneling an status detected by another service then
+        // that one where the status was happening, way back to 
+        // that service to let generate proper status code there
         // which can point out where that errors was caused.
         public S OnError( IPasswordsApiService otherService )
         {
-            if ( otherService.Error.Code.HasFlag( ErrorCode.Service ) ) {
-                if( otherService.Error.Data.ToString() == "" ) {
-                    error = otherService.Error.WithData( this.GetType().Name );
+            if ( otherService.Status.Code.HasFlag( ErrorCode.Service ) ) {
+                if( otherService.Status.Data.ToString() == "" ) {
+                    status = otherService.Status.WithData( GetType().Name );
                 } else {
-                    error = otherService.Error.WithText(
-                        $"{GetType().Name}: {otherService.Error.Text}"
+                    status = otherService.Status.WithText(
+                        $"{GetType().Name}: {otherService.Status.Text}"
                     );
                 }
             } else {
-                error = new Error(
+                status = new Status(
                     ErrorCode.Unknown|ErrorCode.Service|
-                    otherService.Error.Code,
-                    otherService.Error.Text,
+                    otherService.Status.Code,
+                    otherService.Status.Text,
                     this.GetType().Name
                 );
             } return this.serve();
@@ -86,7 +86,7 @@ namespace PasswordsAPI.Services
 
         protected AbstractApiService( PasswordsDbContext ctx )
         {
-            error = Error.NoError;
+            status = Status.NoError;
             db = ctx;
         }
 

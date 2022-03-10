@@ -10,7 +10,7 @@ namespace PasswordsAPI
     public class UserPasswords : EntityBase
     {
         public new static readonly UserPasswords Invalid = 
-            new UserPasswords(new Error(ErrorCode.Invalid|ErrorCode.Word));
+            new UserPasswords(new Status(ErrorCode.Invalid|ErrorCode.Word));
 
         [Key]
         public int Id { get; set; }
@@ -28,10 +28,10 @@ namespace PasswordsAPI
             return Crypt.CreateKey( Hash );
         }
 
-        public UserPasswords( Error invalid )
+        public UserPasswords( Status invalid )
             : base( invalid ) {
-            Is().Error = invalid.Code > 0 
-                  ? invalid : Invalid.Is().Error;
+            Is().Status = invalid.Code > 0 
+                  ? invalid : Invalid.Is().Status;
         }
 
         public UserPasswords() : base()
@@ -40,7 +40,7 @@ namespace PasswordsAPI
             Pass = String.Empty;
         }
 
-        public static implicit operator UserPasswords( Error cast ) {
+        public static implicit operator UserPasswords( Status cast ) {
             return new UserPasswords( cast );
         }
 

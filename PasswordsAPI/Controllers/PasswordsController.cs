@@ -25,7 +25,7 @@ namespace PasswordsAPI.Controllers
         private UserPasswordsService keys;
         private UserLocationsService locs;
 
-        public PasswordsController( ILogger<PasswordsController> logger, PasswordsDbContext ctx, 
+        public PasswordsController( ILogger<PasswordsController> logger, PasswordsDbContext  ctx, 
                                     IPasswordsApiService<PasswordUsers,PasswordUsersService> usr,
                                     IPasswordsApiService<UserPasswords,UserPasswordsService> pwd,
                                     IPasswordsApiService<UserLocations,UserLocationsService> loc ) {
@@ -51,8 +51,8 @@ namespace PasswordsAPI.Controllers
         [Produces(  "application/json" ), HttpGet( "{user}/Info" )]
         public IActionResult GetUserInfo(string user)
         {
-            if (usrs.ByNameOrId( user ).Error ) {
-                return StatusCode( 400, usrs.Error.ToString() );
+            if (usrs.ByNameOrId( user ).Status ) {
+                return StatusCode( 400, usrs.Status.ToString() );
             } else {
                 return Ok( usrs.Entity.Info );
             }
@@ -67,15 +67,29 @@ namespace PasswordsAPI.Controllers
                 dbc.Update( usr );
                 dbc.SaveChanges();
                 return new OkObjectResult( usr );
-            } else return StatusCode( 500, usrs.Error.ToString() );
+            } else return StatusCode( 500, usrs.Status.ToString() );
+        }
+
+        [Produces( "application/json" ), HttpPut( "{user}/Pass" )]
+        public IActionResult SetUserPassword( string user, string oldpass, string newpass )
+        {
+            if ( usrs.ByNameOrId( user ).Ok ) {
+                PasswordUsers usr = usrs.Entity;
+                if ( keys.ByUserEntity( usr ).Ok ) {
+                    if ( keys.VerifyPassword( usr.Id, oldpass ) ) {
+                        if ( keys.SetMasterKey( usr.Id, newpass ).Ok )
+                            return new OkObjectResult( keys.Status.ToString() );
+                    }
+                } return StatusCode( 500, keys.Status.ToString() );
+            } return StatusCode( 500, usrs.Status.ToString() );
         }
 
         [Produces(  "application/json" ), HttpPut( "{user}/{area}/Login" )]
         public IActionResult PutUserLocationLoginInfo( string user, string area, string login )
         {
-            UserLocations loc = locs.FromUserByNameOrId( usrs.GetUserId(user), area )?.Entity ?? locs.Error;
-            if ( loc.Is().Error ) {
-                return StatusCode( 400, loc.Is().Error.Code.ToInt32() + loc.Is().Error.ToString() );
+            UserLocations loc = locs.FromUserByNameOrId( usrs.GetUserId(user), area )?.Entity ?? locs.Status;
+            if ( loc.Is().Status ) {
+                return StatusCode( 400, loc.Is().Status.Code.ToInt32() + loc.Is().Status.ToString() );
             } else {
                 loc.Name = login;
                 dbc.Update( loc );
@@ -91,24 +105,22 @@ namespace PasswordsAPI.Controllers
                 dbc.UserLocations.Update( locs.Entity );
                 dbc.SaveChanges();
                 return new OkObjectResult( locs.Entity );
-            } else return StatusCode( 500, locs.Error.ToString() );
+            } else return StatusCode( 500, locs.Status.ToString() );
         }
 
-        /*---------------------------------------------------------------------------------------*/
-        
         [Produces( "application/json"), HttpPost("User")]
         public IActionResult NewUser(string name, string email, string pass)
         {
             PasswordUsers usr = usrs.CreateNewUser( name, email, pass, "").Entity;
-            if ( usr.IsValid() ) {
+            if ( usr.NoError() ) {
                 // as soon user has been add, set the users master password
                 // (or a password hash, if user keys residing client sided)
-                if( keys.SetMasterKey( usr.Id, pass ).Error ) {
+                if( keys.SetMasterKey( usr.Id, pass ).Status ) {
                     dbc.PasswordUsers.Remove( usr );
                     dbc.SaveChanges();
-                    return StatusCode( 500, keys.Error.ToString() );
+                    return StatusCode( 500, keys.Status.ToString() );
                 } return new OkObjectResult( usr ?? usrs.Entity );
-            } else return StatusCode( 500, usrs.Error.ToString() );
+            } else return StatusCode( 500, usrs.Status.ToString() );
         }
 
         [Produces( "application/json" ), HttpGet( "{user}/Locations" )]
@@ -129,34 +141,59 @@ namespace PasswordsAPI.Controllers
         public IActionResult GetUserLocation( string user, string area )
         {
             UserLocations loc = locs.FromUserByNameOrId(  usrs.GetUserId( user ),  area ).Entity;
-            if ( loc.IsValid() ) return new OkObjectResult( loc );
-            else return StatusCode( 400, loc.Is().Error.ToString() );
+            if ( loc.NoError() ) return new OkObjectResult( loc );
+            else return StatusCode( 400, loc.Is().Status.ToString() );
         }
 
         [Produces( "application/json" ), HttpGet( "{user}/{area}/Password" )]
         public async Task<IActionResult> GetUserLocationPassword( string user, string area, string master )
         {
             int userId = usrs.GetUserId( user );
-            int areaId = locs.GetAreaId( area, userId );
-            return Ok( locs.FromUserByNameOrId( userId, areaId.ToString() )?.SetKey( Crypt.CreateKey( master ) ).GetPassword() );
+            if ( locs.FromUserByNameOrId( userId, area ).Status ) return StatusCode( 500,locs.Status.ToString() );
+            string pass = locs.GetPassword( master );
+            if ( locs.Status ) {
+                return StatusCode( 500, locs.Status.ToString()  );
+            } return Ok( pass );
         }
 
         [Produces( "application/json" ), HttpPost( "{user}/Locations" )]
         public IActionResult NewUserLocation( string user, string name, string pass, string? login, string? info )
         {
             PasswordUsers usr = usrs.ByNameOrId( user ).Entity;
-            if( usr.IsValid() ) {
+            if( usr.NoError() ) {
                 UserLocations newArea = new UserLocations();
                 newArea.User = usr.Id; newArea.Area = name;
                 newArea.Name = login ?? String.Empty;
                 newArea.Info = info ?? String.Empty;
                 newArea = locs.SetLocationPassword( usr, newArea, pass )
                        .FromUserByNameOrId( newArea.User, newArea.Area ).Entity;
-                if( newArea.IsValid() ) {
+                if( newArea.NoError() ) {
                     return new OkObjectResult( newArea );
                 } else {
-                    return StatusCode( 500, locs.Error.ToString() ); }
-            } return StatusCode( 500, usrs.Error.ToString() );
+                    return StatusCode( 500, locs.Status.ToString() ); }
+            } return StatusCode( 500, usrs.Status.ToString() );
+        }
+
+        [Produces( "application/json" ), HttpDelete( "{user}/{area}" )]
+        public IActionResult RemoveLocation( string user, string area, string masterPass )
+        {
+            if( locs.RemoveLocation( usrs.ByNameOrId( user ).Entity, area, masterPass ).Ok )
+                return Ok( $"Successfully removed Password for Location: {area}" );
+            else return StatusCode( 500, locs.Status.ToString() );
+        }
+        
+        [Produces( "application/json" ), HttpDelete( "{user}" )]
+        public IActionResult RemoveUserAccount( string user, string mail, string pass )
+        {
+            PasswordUsers usr = usrs.ByNameOrId( user ).Entity;
+            if ( usr.NoError() ) {
+                if ( usr.Mail == mail ) {
+                    if ( keys.ByUserEntity( usr ).VerifyPassword( usr.Id, pass ) ) {
+                        if ( usrs.RemoveUser( usr ).Status ) return new OkObjectResult( usrs.Status.ToString() );
+                        else return StatusCode( 500, "Removing the user account has failed!" );
+                    } return StatusCode( 500, keys.Status.ToString() );
+                } return StatusCode( 500, "Status: user email address incorrect" );
+            } return StatusCode( 500, usr.Is().Status.ToString() );
         }
     }
 }

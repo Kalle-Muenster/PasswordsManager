@@ -19,7 +19,7 @@ namespace PasswordsAPI
             return (ErrorCode)value;
         }
 
-        public static EntityBase SetError( this Error message )
+        public static EntityBase SetError( this Status message )
         {
             return new EntityBase( message );
         }
@@ -29,7 +29,10 @@ namespace PasswordsAPI
     public enum ErrorCode : uint
     {
         NoError = 0,
-        Unknown = 1,
+        Unknown = 2,
+        Success = 1,
+
+        IsValid = 0xff000003,
 
         Invalid = 0x01000000,
         Cryptic = 0x02000000,
@@ -48,78 +51,96 @@ namespace PasswordsAPI
         Icon    = 0x00400000
     }
 
-    public struct Error
+    public struct Status
     {
-        public static readonly Error NoError = new Error(ErrorCode.NoError);
-        public static readonly Error Unknown = new Error(ErrorCode.Unknown);
-        public static readonly Error Invalid = new Error(ErrorCode.Invalid);
-        public static readonly Error Cryptic = new Error(ErrorCode.Cryptic|ErrorCode.Data,"Data Encrypted");
-        public static readonly Error Service = new Error(ErrorCode.Service);
+        public static readonly Status NoError = new Status(ErrorCode.NoError);
+        public static readonly Status Unknown = new Status(ErrorCode.Unknown);
+        public static readonly Status Success = new Status(ErrorCode.Success);
+        public static readonly Status Invalid = new Status(ErrorCode.Invalid);
+        public static readonly Status Cryptic = new Status(ErrorCode.Cryptic|ErrorCode.Data,"Data Encrypted");
+        public static readonly Status Service = new Status(ErrorCode.Service);
 
         public readonly ErrorCode Code;
         public readonly string    Text;
         public readonly object    Data;
 
-        public Error( ErrorCode code ) : this( code, code.ToString() )
+
+        public Status( ErrorCode code )
+            : this( code, code.ToString() )
         { }
-        public Error( ErrorCode code, string text )
+        public Status( ErrorCode code, string text )
         {
             Code = code;
             Text = text.Contains( "{0}" ) ? text : text + " {0}";
             Data = String.Empty;
         }
-        public Error( ErrorCode code, string text, object data )
+        private Status( in Status status, object with )
+            : this( status.Code, status.Text, with )
+        { }
+        public Status( ErrorCode code, string text, object data )
             : this( code, text )
         { Data = data; }
 
-        private Error( in Error error, object with )
-            : this( error.Code, error.Text, with )
-        {}
 
-        public Error WithData( object with )
+
+        public Status WithData( object with )
         {
-            return new Error( this, with );
+            return new Status( this, with );
         }
 
-        public Error WithText( string text )
+        public Status WithText( string text )
         {
-            return new Error( Code, text.Contains("{0}") 
-                            ? text : text + " {0}"
-                            , Data );
+            return new Status( Code, text.Contains("{0}") 
+                             ? text : text + " {0}"
+                             , Data );
         }
 
-        public static implicit operator bool( Error cast )
+        public static implicit operator bool( Status cast )
         {
             return cast.Code != 0;
         }
 
-        public static implicit operator string( Error cast )
+        public static implicit operator string( Status cast )
         {
             return string.Format( cast.Text, cast.Data );
         }
 
         public override string ToString()
         {
-            return string.Format( $"Error-[{Code}]: {Text}", Data );
+            ErrorCode masked = Code & ErrorCode.IsValid;
+            string status = masked < ErrorCode.Unknown 
+              ? "Success" : masked > ErrorCode.Unknown
+                ? "Error" : "Status";
+
+            return string.Format( $"{status}-[{Code}]: {Text}", Data );
         }
 
-        public static Error operator + ( Error own, Error add )
+        public static Status operator + ( Status own, Status add )
         {
             object data = add.Data;
             if( data == String.Empty && own.Data != String.Empty )
                 data = own.Data;
 
-            return new Error(
+            return new Status(
                 own.Code | add.Code,
                 $"{add.Text} => {own.Text}",
                 data
             );
         }
 
-        public static Error operator + ( Error error, ErrorCode code )
+        public static Status operator + ( Status status, ErrorCode code )
         {
-            return new Error( error.Code|code, error.Text, error.Data );
+            return new Status( status.Code|code, status.Text, status.Data );
         }
 
+        public bool Bad
+        {
+            get { return (Code & ErrorCode.IsValid) > ErrorCode.Success; }
+        }
+
+        public bool Ok
+        {
+            get { return (Code & ErrorCode.IsValid) < ErrorCode.Unknown; }
+        }
     }
 }

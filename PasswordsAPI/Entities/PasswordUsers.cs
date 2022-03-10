@@ -8,7 +8,7 @@ namespace PasswordsAPI
     public class PasswordUsers : EntityBase
     {
         public new static readonly PasswordUsers Invalid = new PasswordUsers(
-            new Error( ErrorCode.Invalid|ErrorCode.User|ErrorCode.Data ) );
+            new Status( ErrorCode.Invalid|ErrorCode.User|ErrorCode.Data ) );
 
         [Key]
         public int      Id { get; set; }
@@ -28,17 +28,17 @@ namespace PasswordsAPI
 
         /*----------------------------*/
 
-        public PasswordUsers( Error code )
+        public PasswordUsers( Status code )
             : base( code ) {
-            Is().Error = code.Code > 0 
-                  ? code : Invalid.Is().Error;
+            Is().Status = code.Code > 0 
+                  ? code : Invalid.Is().Status;
             Info = String.Empty;
             Name = String.Empty;
             Mail = String.Empty;
             Id = -1;
         }
 
-        public static implicit operator PasswordUsers( Error cast ) {
+        public static implicit operator PasswordUsers( Status cast ) {
             return new PasswordUsers( cast );
         }
 

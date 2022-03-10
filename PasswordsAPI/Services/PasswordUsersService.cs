@@ -9,11 +9,11 @@ namespace PasswordsAPI.Services
         : AbstractApiService<PasswordUsers,PasswordUsersService>
         , IPasswordsApiService<PasswordUsers,PasswordUsersService>
     {
-        private static readonly ErrorCode UserService = ErrorCode.User|ErrorCode.Service; 
-        private static readonly Error InvalidId = new Error(UserService|ErrorCode.Id,"Invalid User.Id: {0}");
-        private static readonly Error UsersName = new Error(UserService|ErrorCode.Name, "User.Name {0}");
+        private static readonly ErrorCode UserService = ErrorCode.User|ErrorCode.Service|ErrorCode.Invalid; 
+        private static readonly Status InvalidId = new Status(UserService|ErrorCode.Id,"Invalid User.Id: {0}");
+        private static readonly Status UsersName = new Status(UserService|ErrorCode.Name, "User.Name {0}");
 
-        protected override Error GetDefaultError() { return new Error(UserService); }
+        protected override Status GetDefaultError() { return new Status(UserService); }
 
         public int GetUserId( string nameOrId )
         {
@@ -38,9 +38,9 @@ namespace PasswordsAPI.Services
         private PasswordUsers usr = (PasswordUsers)PasswordUsers.Invalid;
 
         public override PasswordUsers Entity {
-            get { return Ok ? usr : Error; }
+            get { return Ok ? usr : Status; }
             set { if ( value ) usr = value;
-                else Error = value.Is().Error; }
+                else Status = value.Is().Status; }
         }
 
         public PasswordUsersService( PasswordsDbContext ctx )
@@ -53,12 +53,12 @@ namespace PasswordsAPI.Services
             IEnumerator<PasswordUsers> it = db.PasswordUsers.AsNoTracking().GetEnumerator();
             while ( it.MoveNext() ) {
                 if (it.Current.Name == name) {
-                    Error = new Error( UsersName.Code,"Already Exists", name ); 
+                    Status = new Status( UsersName.Code,"Already Exists", name ); 
                 break; } 
                 if( it.Current.Mail == email ) {
-                    Error = new Error( UserService | ErrorCode.Mail, "Already Exists", email ); 
+                    Status = new Status( UserService | ErrorCode.Mail, "Already Exists", email ); 
                 break; }
-            } if (Error) return this;
+            } if (Status) return this;
             it.Dispose();
             usr = db.PasswordUsers.Add(
                 new PasswordUsers {
@@ -75,18 +75,27 @@ namespace PasswordsAPI.Services
             if (usr) if (usr.Id == byId) return this;
             usr = db.PasswordUsers.AsNoTracking().SingleOrDefault( u => u.Id == byId ) 
                 ?? InvalidId.WithData( byId );
-            if( usr.Is().Error ) Error = usr.Is().Error;
+            if( usr.Is().Status ) Status = usr.Is().Status;
             return this;
         }
 
         public PasswordUsersService ByEmail( string email )
         {
-            if ( usr.IsValid() ) if ( usr.Mail == email ) return this;
+            if ( usr.NoError() ) if ( usr.Mail == email ) return this;
             usr = db.PasswordUsers.AsNoTracking().SingleOrDefault( u => u.Mail == email )
-                  ?? new Error( UserService | ErrorCode.Mail, "Unknown email address: '{0}'", email );
-            if ( usr.Is().Error ) Error = usr.Is().Error;
+                  ?? new Status( UserService | ErrorCode.Mail, "Unknown email address: '{0}'", email );
+            if ( usr.Is().Status ) Status = usr.Is().Status;
             return this;
         }
 
+        public PasswordUsersService RemoveUser( PasswordUsers account )
+        {
+            db.PasswordUsers.Remove( account );
+            db.SaveChanges();
+            Status = (Status.Success + ErrorCode.Cryptic).WithText(
+                $"Successfully removed user {account.Name} (id:{account.Id}) from db"
+            ).WithData( account );
+            return this;
+        }
     }
 }

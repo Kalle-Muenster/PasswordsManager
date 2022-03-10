@@ -3,50 +3,55 @@
 
     public interface IEntityBase
     {
-        Error Error { get; set; }
+        Status Status { get; set; }
         IEntityBase Is();
     }
 
 
     public class EntityBase : IEntityBase
     {
-        public static readonly EntityBase Invalid = new EntityBase( new Error( ErrorCode.Invalid ) );
+        public static readonly EntityBase Invalid = new EntityBase( new Status( ErrorCode.Invalid ) );
 
-        Error  IEntityBase.Error { get; set; }
+        Status IEntityBase.Status { get; set; }
         public IEntityBase Is() { return this; }
 
         public static implicit operator bool( EntityBase cast ) {
-            return cast.IsValid();
+            return cast.NoError();
         }
-        public static implicit operator EntityBase( Error wasError ) {
+        public static implicit operator EntityBase( Status wasError ) {
             return new EntityBase( wasError );
         }
 
 
         public EntityBase()
         {
-            Is().Error = Error.NoError;
+            Is().Status = Status.NoError;
         }
 
         public EntityBase( EntityBase copy )
         {
-            Is().Error = copy.Is().Error;
+            Is().Status = copy.Is().Status;
         }
 
-        public EntityBase( Error wasError )
+        public EntityBase( Status wasError )
         {
-            Is().Error = wasError;
+            Is().Status = wasError;
         }
 
 
-        public bool IsValid()
+        public bool NoError()
         {
-            return Is().Error.Code == ErrorCode.NoError;
+            return ( Is().Status.Code & ErrorCode.IsValid ) < ErrorCode.Unknown;
+        }
+
+        public bool HasInfo()
+        {
+            return ( Is().Status.Code & ErrorCode.IsValid ) == ErrorCode.Success;
         }
 
         public override string ToString()
         {
-            return Is().Error.ToString();
+            return Is().Status.ToString();
         }
     }
 }
