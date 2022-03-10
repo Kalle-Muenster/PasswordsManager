@@ -55,21 +55,5 @@ namespace PasswordsAPI
             Mail = copy.Mail;
             Info = copy.Info ?? String.Empty;
         }
-
-        //public override void SetTo<T>( T assignee )
-        //{
-        //    base.SetTo( assignee );
-        //    if ( typeof( T ) == GetType() )
-        //    {
-        //        if ( ( assignee as PasswordUsers ) != null )
-        //        {
-        //            PasswordUsers copy = assignee as PasswordUsers;
-        //            Id = copy.Id;
-        //            Name = copy.Name;
-        //            Mail = copy.Mail;
-        //            Info = copy.Info ?? String.Empty;
-        //        }
-        //    }
-        //}
     }
 }

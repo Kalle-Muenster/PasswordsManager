@@ -51,18 +51,5 @@ namespace PasswordsAPI
             Hash = copy.Hash; 
             Pass = copy.Pass ?? String.Empty;
         }
-
-        //public override void SetTo<T>( T assignee )
-        //{
-        //    base.SetTo( assignee );
-        //    if ( typeof( T ) == GetType() )
-        //    {
-        //        UserPasswords copy = assignee as UserPasswords;
-        //        Id = copy.Id;
-        //        User = copy.User;
-        //        Hash = copy.Hash;
-        //        Pass = copy.Pass ?? String.Empty;
-        //    }
-        //}
     }
 }

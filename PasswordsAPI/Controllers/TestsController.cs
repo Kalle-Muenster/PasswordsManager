@@ -17,7 +17,7 @@ namespace PasswordsAPI.Controllers
         {
             System.Diagnostics.ProcessStartInfo startinfo = new System.Diagnostics.ProcessStartInfo(
                 "C:\\Program Files\\dotnet\\dotnet.exe",
-                "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\bin\\x64\\Debug\\net5.0\\Int24Tests.dll --verbose");
+                "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\bin\\x64\\Debug\\net5.0\\test_int24_dotnet_dll.dll --verbose");
             startinfo.RedirectStandardOutput = true;
             startinfo.RedirectStandardError = true;
             System.Diagnostics.Process test = new System.Diagnostics.Process();
@@ -38,7 +38,7 @@ namespace PasswordsAPI.Controllers
             if (ok)
             {
                 FileInfo outfile =
-                    new FileInfo("C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\Int24Tests_Err.log");
+                    new FileInfo("C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\test_int24_dotnet_dll_Err.log");
                 if (outfile.Exists)
                 {
                     StreamReader f = outfile.OpenText();
@@ -46,7 +46,7 @@ namespace PasswordsAPI.Controllers
                     f.Close();
                     outfile.Delete();
                     outfile = new FileInfo(
-                        "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\Int24Tests_Out.log");
+                        "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\test_int24_dotnet_dll_Out.log" );
                     f = outfile.OpenText();
                     testoutput.Append(f.ReadToEnd());
                     f.Close();
