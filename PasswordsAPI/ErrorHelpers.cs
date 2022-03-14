@@ -31,9 +31,10 @@ namespace PasswordsAPI
         NoError = 0,
         Unknown = 2,
         Success = 1,
+    //    Waiting = 2,
 
         IsValid = 0xff000003,
-
+        
         Invalid = 0x01000000,
         Cryptic = 0x02000000,
 
@@ -141,6 +142,11 @@ namespace PasswordsAPI
         public bool Ok
         {
             get { return (Code & ErrorCode.IsValid) < ErrorCode.Unknown; }
+        }
+
+        public bool Waiting
+        {
+            get { return Code.HasFlag( ErrorCode.Unknown ); }
         }
     }
 }

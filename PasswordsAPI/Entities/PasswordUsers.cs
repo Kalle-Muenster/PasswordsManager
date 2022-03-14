@@ -35,7 +35,8 @@ namespace PasswordsAPI
             Info = String.Empty;
             Name = String.Empty;
             Mail = String.Empty;
-            Id = -1;
+            Icon = Array.Empty<byte>();
+            Id = 0;
         }
 
         public static implicit operator PasswordUsers( Status cast ) {
@@ -54,6 +55,7 @@ namespace PasswordsAPI
             Name = copy.Name;
             Mail = copy.Mail;
             Info = copy.Info ?? String.Empty;
+            Icon = copy.Icon;
         }
     }
 }

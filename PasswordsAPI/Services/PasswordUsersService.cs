@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace PasswordsAPI.Services
@@ -24,7 +25,7 @@ namespace PasswordsAPI.Services
             } return id;
         }
 
-        public PasswordUsersService ByNameOrId( string nameOrId )
+        public async Task<PasswordUsersService> ByNameOrId( string nameOrId )
         {
             int id = 0;
             if ( int.TryParse( nameOrId, out id ) ) {
@@ -48,7 +49,7 @@ namespace PasswordsAPI.Services
         {}
         
 
-        public PasswordUsersService CreateNewUser( string name, string email, string pass, string? info )
+        public async Task<PasswordUsersService> CreateNewUser( string name, string email, string pass, string? info )
         {
             IEnumerator<PasswordUsers> it = db.PasswordUsers.AsNoTracking().GetEnumerator();
             while ( it.MoveNext() ) {
@@ -64,13 +65,15 @@ namespace PasswordsAPI.Services
                 new PasswordUsers {
                     Info = info ?? String.Empty,
                     Mail = email,
-                    Name = name }
+                    Name = name,
+                    Icon = Array.Empty<byte>()
+                }
             ).Entity;
             db.SaveChanges();
             return this;
         }
 
-        public PasswordUsersService ById( int byId )
+        public async Task<PasswordUsersService> ById( int byId )
         {
             if (usr) if (usr.Id == byId) return this;
             usr = db.PasswordUsers.AsNoTracking().SingleOrDefault( u => u.Id == byId ) 
@@ -79,7 +82,7 @@ namespace PasswordsAPI.Services
             return this;
         }
 
-        public PasswordUsersService ByEmail( string email )
+        public async Task<PasswordUsersService> ByEmail( string email )
         {
             if ( usr.NoError() ) if ( usr.Mail == email ) return this;
             usr = db.PasswordUsers.AsNoTracking().SingleOrDefault( u => u.Mail == email )
@@ -88,7 +91,7 @@ namespace PasswordsAPI.Services
             return this;
         }
 
-        public PasswordUsersService RemoveUser( PasswordUsers account )
+        public async Task<PasswordUsersService> RemoveUser( PasswordUsers account )
         {
             db.PasswordUsers.Remove( account );
             db.SaveChanges();

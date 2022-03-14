@@ -34,6 +34,7 @@ namespace PasswordsAPI
         {
             Area = Info = Name = String.Empty;
             Pass = Array.Empty<byte>();
+            Id = 0;
         }
 
         public UserLocations( Status invalid )
@@ -43,6 +44,7 @@ namespace PasswordsAPI
             Pass = Array.Empty<byte>();
             Is().Status = invalid.Code == ErrorCode.NoError
                   ? Invalid.Is().Status : invalid;
+            Id = -1;
         }
 
         public static implicit operator UserLocations( Status cast )

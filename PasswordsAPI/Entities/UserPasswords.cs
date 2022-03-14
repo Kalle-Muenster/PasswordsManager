@@ -38,6 +38,8 @@ namespace PasswordsAPI
         {
             Hash = 0;
             Pass = String.Empty;
+            Id = 0;
+            User = 0;
         }
 
         public static implicit operator UserPasswords( Status cast ) {
