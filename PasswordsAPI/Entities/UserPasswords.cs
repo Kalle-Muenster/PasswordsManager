@@ -7,10 +7,12 @@ using Yps;
 namespace PasswordsAPI
 {
 
-    public class UserPasswords : EntityBase
+    public class UserPasswords : EntityBase<UserPasswords>
     {
         public new static readonly UserPasswords Invalid = 
             new (new Status(ResultCode.Invalid|ResultCode.Password));
+
+        //------------------------------//
 
         [Key]
         public int Id { get; set; }
@@ -22,7 +24,7 @@ namespace PasswordsAPI
         [MaybeNull]
         public string Pass { get; set; }
 
-        //-----------------------------//
+        //------------------------------//
 
         public Crypt.Key GetUserKey() {
             return Crypt.CreateKey( Hash );
@@ -46,12 +48,5 @@ namespace PasswordsAPI
             return new UserPasswords( cast );
         }
 
-        public UserPasswords( UserPasswords copy ) : base( copy )
-        {
-            Id = copy.Id;
-            User = copy.User;
-            Hash = copy.Hash; 
-            Pass = copy.Pass ?? String.Empty;
-        }
     }
 }

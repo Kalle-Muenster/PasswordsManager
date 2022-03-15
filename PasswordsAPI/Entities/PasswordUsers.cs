@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace PasswordsAPI
 {
 
-    public class PasswordUsers : EntityBase
+    public class PasswordUsers : EntityBase<PasswordUsers>
     {
         public new static readonly PasswordUsers Invalid = new PasswordUsers(
             new Status( ResultCode.Invalid|ResultCode.User|ResultCode.Data ) );
@@ -46,16 +46,6 @@ namespace PasswordsAPI
         public override string ToString() {
             return string.Format("{{0}}",
                 $"\"Id\":{Id},\"Name\":\"{Name}\"" );
-        }
-
-        public PasswordUsers( PasswordUsers copy )
-            : base( copy )
-        {
-            Id   = copy.Id;
-            Name = copy.Name;
-            Mail = copy.Mail;
-            Info = copy.Info ?? String.Empty;
-            Icon = copy.Icon;
         }
     }
 }

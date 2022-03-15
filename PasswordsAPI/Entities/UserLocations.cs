@@ -6,13 +6,15 @@ using System.Diagnostics.CodeAnalysis;
 namespace PasswordsAPI
 {
     
-    public class UserLocations : EntityBase
+    public class UserLocations : EntityBase<UserLocations>
     {
         public new static readonly UserLocations Invalid =
             new ( new Status( 
                 ResultCode.User | ResultCode.Area |
                 ResultCode.Invalid, "Location not valid" )
             );
+        
+        /*-----------------------------*/
 
         [Key]
         public int      Id { get; set; }
@@ -30,7 +32,8 @@ namespace PasswordsAPI
 
         /*-----------------------------*/
 
-        public UserLocations() : base()
+        public UserLocations()
+            : base()
         {
             Area = Info = Name = String.Empty;
             Pass = Array.Empty<byte>();
@@ -38,7 +41,7 @@ namespace PasswordsAPI
         }
 
         public UserLocations( Status invalid )
-            : base(invalid)
+            : base( invalid )
         {
             Area = String.Empty;
             Pass = Array.Empty<byte>();
@@ -47,19 +50,8 @@ namespace PasswordsAPI
             Id = -1;
         }
 
-        public static implicit operator UserLocations( Status cast )
-        {
+        public static implicit operator UserLocations( Status cast ) {
             return new UserLocations( cast );
-        }
-
-        public UserLocations(UserLocations copy) : base(copy)
-        {
-            Id = copy.Id;
-            Area = copy.Area;
-            Info = copy.Info ?? String.Empty;
-            User = copy.User;
-            Name = copy.Name ?? String.Empty;
-            Pass = copy.Pass;
         }
     }
 }
