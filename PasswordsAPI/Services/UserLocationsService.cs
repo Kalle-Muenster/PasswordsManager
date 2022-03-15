@@ -11,8 +11,8 @@ namespace PasswordsAPI.Services
 {
     public class UserLocationsService : AbstractApiService<UserLocations,UserLocationsService>, IPasswordsApiService<UserLocations,UserLocationsService>
     {
-        private static readonly Status LocationStatus = new Status( ErrorCode.Area|ErrorCode.Service|ErrorCode.Invalid,"Invalid Location");
-        protected override Status GetDefaultError() { return LocationStatus; }
+        private static readonly Status LocationServiceError = new Status( ResultCode.Area|ResultCode.Service|ResultCode.Invalid,"Invalid Location");
+        protected override Status GetDefaultError() { return LocationServiceError; }
 
         private Crypt.Key? _key = null;
         private UserPasswordsService  pwds;
@@ -48,7 +48,7 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService> SetKey( Crypt.Key masterKey )
         {
             if( !masterKey.IsValid() ) {
-                Status = (LocationStatus + ErrorCode.Cryptic).WithText( "Invalid Crypt.Key" );
+                Status = (LocationServiceError + ResultCode.Cryptic).WithText( "Invalid Crypt.Key" );
                 _key = null;
             } else {
                 _key = masterKey;
@@ -81,7 +81,7 @@ namespace PasswordsAPI.Services
                     } else Status = pwds.Status;
                 } return this;
             } else {
-                Status = LocationStatus.WithText("unknown user id");
+                Status = LocationServiceError.WithText("unknown user id");
                 return this;
             }
         }
@@ -89,14 +89,14 @@ namespace PasswordsAPI.Services
         public int GetAreaId( string nameOrId, int usrId )
         {
             if ( int.TryParse( nameOrId, out int locId ) ) {
-                if ( Entity.NoError() )
+                if ( Entity.IsValid() )
                     if ( Entity.User == usrId && Entity.Id == locId )
                         return locId;
                 locLazy = db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Id == locId);
                 loc = Status.Unknown;
                 Status = Status.NoError;
             } else {
-                if ( Entity.NoError() )
+                if ( Entity.IsValid() )
                     if ( Entity.User == usrId && Entity.Area == nameOrId )
                         return Entity.Id;
                 locLazy = db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Area == nameOrId);
@@ -109,11 +109,10 @@ namespace PasswordsAPI.Services
 
         public async Task<UserLocationsService> FromUserByNameOrId( int userId, string area )
         {
-            if ( Status.Bad ) return this;
             if ( userId > 0 ) {
-                if ( GetAreaId(area, userId) == -1 ) Status = LocationStatus.WithText("location invalid");
+                if ( GetAreaId(area, userId) == -1 ) Status = LocationServiceError.WithText("location invalid");
             } else {
-                loc = Status = ( LocationStatus.WithText( "user invalid" ).WithData( userId ) + ErrorCode.User );
+                _enty = Status = ( LocationServiceError.WithText( "user invalid" ).WithData( userId ) + ResultCode.User );
             } return this;
         }
 

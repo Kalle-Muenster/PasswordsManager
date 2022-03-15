@@ -8,7 +8,7 @@ namespace PasswordsAPI
     public class PasswordUsers : EntityBase
     {
         public new static readonly PasswordUsers Invalid = new PasswordUsers(
-            new Status( ErrorCode.Invalid|ErrorCode.User|ErrorCode.Data ) );
+            new Status( ResultCode.Invalid|ResultCode.User|ResultCode.Data ) );
 
         [Key]
         public int      Id { get; set; }

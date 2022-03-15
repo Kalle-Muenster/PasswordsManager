@@ -10,7 +10,7 @@ namespace PasswordsAPI
     public class UserPasswords : EntityBase
     {
         public new static readonly UserPasswords Invalid = 
-            new UserPasswords(new Status(ErrorCode.Invalid|ErrorCode.Word));
+            new (new Status(ResultCode.Invalid|ResultCode.Password));
 
         [Key]
         public int Id { get; set; }

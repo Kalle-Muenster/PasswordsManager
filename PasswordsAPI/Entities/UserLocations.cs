@@ -9,9 +9,9 @@ namespace PasswordsAPI
     public class UserLocations : EntityBase
     {
         public new static readonly UserLocations Invalid =
-            new UserLocations( new Status( 
-                ErrorCode.User | ErrorCode.Area |
-                ErrorCode.Invalid, "Location not valid" )
+            new ( new Status( 
+                ResultCode.User | ResultCode.Area |
+                ResultCode.Invalid, "Location not valid" )
             );
 
         [Key]
@@ -42,7 +42,7 @@ namespace PasswordsAPI
         {
             Area = String.Empty;
             Pass = Array.Empty<byte>();
-            Is().Status = invalid.Code == ErrorCode.NoError
+            Is().Status = invalid.Code == ResultCode.NoError
                   ? Invalid.Is().Status : invalid;
             Id = -1;
         }

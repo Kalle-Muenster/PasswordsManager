@@ -41,14 +41,18 @@
 
         public bool NoError()
         {
-            return ( Is().Status.Code & ErrorCode.IsValid ) < ErrorCode.Unknown;
+            return ( Is().Status.Code & ResultCode.IsValid ) < ResultCode.Unknown;
         }
 
         public bool HasInfo()
         {
-            return ( Is().Status.Code & ErrorCode.IsValid ) == ErrorCode.Success;
+            return ( Is().Status.Code & ResultCode.IsValid ) == ResultCode.Success;
         }
 
+        public bool Waiting()
+        {
+            return( Is().Status.Code & ResultCode.IsValid ) == ResultCode.Unknown;
+        }
         public override string ToString()
         {
             return Is().Status.ToString();

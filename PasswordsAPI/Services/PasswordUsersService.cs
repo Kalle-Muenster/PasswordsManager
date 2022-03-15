@@ -10,11 +10,11 @@ namespace PasswordsAPI.Services
         : AbstractApiService<PasswordUsers,PasswordUsersService>
         , IPasswordsApiService<PasswordUsers,PasswordUsersService>
     {
-        private static readonly ErrorCode UserService = ErrorCode.User|ErrorCode.Service|ErrorCode.Invalid; 
-        private static readonly Status InvalidId = new Status(UserService|ErrorCode.Id,"Invalid User.Id: {0}");
-        private static readonly Status UsersName = new Status(UserService|ErrorCode.Name, "User.Name {0}");
+        private static readonly Status UserServiceError = new Status(ResultCode.User|ResultCode.Service|ResultCode.Invalid); 
+        private static readonly Status InvalidId = new Status(UserServiceError.Code|ResultCode.Id,"Invalid User.Id: {0}");
+        private static readonly Status UsersName = new Status(UserServiceError.Code|ResultCode.Name, "User.Name {0}");
 
-        protected override Status GetDefaultError() { return new Status(UserService); }
+        protected override Status GetDefaultError() { return UserServiceError; }
 
         public int GetUserId( string nameOrId )
         {
@@ -57,7 +57,7 @@ namespace PasswordsAPI.Services
                     Status = new Status( UsersName.Code,"Already Exists", name ); 
                 break; } 
                 if( it.Current.Mail == email ) {
-                    Status = new Status( UserService | ErrorCode.Mail, "Already Exists", email ); 
+                    Status = UserServiceError.WithText("Already Exists").WithData(email) + ResultCode.Mail; 
                 break; }
             } if (Status) return this;
             it.Dispose();

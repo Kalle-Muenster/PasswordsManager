@@ -14,10 +14,10 @@ namespace PasswordsAPI.Services
         : AbstractApiService<UserPasswords,UserPasswordsService>
         , IPasswordsApiService<UserPasswords,UserPasswordsService>
     {
-        private readonly Status PassStatus = new Status(ErrorCode.Service|ErrorCode.Word);
-        private readonly Status InvalidId = new Status(ErrorCode.Service|ErrorCode.Word|ErrorCode.User, "Invalid User.Id: {0}");
-        private readonly Status HashValue = new Status(ErrorCode.Service|ErrorCode.Word|ErrorCode.Id, "Missing Password Hash" );
-        protected override Status GetDefaultError() { return PassStatus; }
+        private readonly Status PasswordServiceError = new Status(ResultCode.Service|ResultCode.Password|ResultCode.IsError);
+        private readonly Status InvalidId = new Status(ResultCode.Service|ResultCode.Password|ResultCode.User|ResultCode.Invalid, "Invalid User.Id: {0}");
+        private readonly Status HashValue = new Status(ResultCode.Service|ResultCode.Password|ResultCode.Id|ResultCode.Invalid, "password incorrct '{0}'" );
+        protected override Status GetDefaultError() { return PasswordServiceError; }
 
         private UserPasswords pwd = UserPasswords.Invalid;
         private Task<UserPasswords> pwdLazy;

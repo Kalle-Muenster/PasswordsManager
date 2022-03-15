@@ -43,9 +43,9 @@ namespace PasswordsAPI.Services
             protected set => status = value; }
 
         public virtual bool Ok {
-            get { return (status.Code & ErrorCode.IsValid) < ErrorCode.Unknown; }
-            set { if ( value ) status = Status.Success;
-             else if (status.Code > ErrorCode.Success )
+            get { return (status.Code & ResultCode.IsValid) < ResultCode.Unknown; }
+            protected set { if ( value ) status = Status.Success;
+             else if (status.Code > ResultCode.Success )
                  status = GetDefaultError();
             }
         }
@@ -56,7 +56,7 @@ namespace PasswordsAPI.Services
         // which can point out where that errors was caused.
         public S OnError( IPasswordsApiService otherService )
         {
-            if ( otherService.Status.Code.HasFlag( ErrorCode.Service ) ) {
+            if ( otherService.Status.Code.HasFlag( ResultCode.Service ) ) {
                 if( otherService.Status.Data.ToString() == "" ) {
                     status = otherService.Status.WithData( GetType().Name );
                 } else {
@@ -66,7 +66,7 @@ namespace PasswordsAPI.Services
                 }
             } else {
                 status = new Status(
-                    ErrorCode.Unknown|ErrorCode.Service|
+                    ResultCode.Unknown|ResultCode.Service|
                     otherService.Status.Code,
                     otherService.Status.Text,
                     this.GetType().Name
