@@ -15,33 +15,36 @@ namespace PasswordsAPI.Services
         protected override Status GetDefaultError() { return LocationServiceError; }
 
         private Crypt.Key? _key = null;
-        private UserPasswordsService  pwds;
-        private UserLocations loc = UserLocations.Invalid;
-        private Task<UserLocations> locLazy;
+        private UserPasswordsService  _keys;
+
 
         public override UserLocations Entity {
             get {
-                if (loc.Is().Status.Waiting) loc = locLazy.GetAwaiter().GetResult();
-                return Ok ? loc : Status;
+                if (_enty.Is().Status.Waiting)
+                    _enty = _lazy.GetAwaiter().GetResult() 
+                        ?? LocationServiceError;
+                return Ok ? _enty : Status;
             }
             set {
-                if ( value ) loc = value;
+                if ( value ) { _enty = value;
+                    Status = _enty.Is().Status; }
                 else Status = value.Is().Status;
             }
         }
 
-        public UserLocationsService( PasswordsDbContext ctx, IPasswordsApiService<UserPasswords,UserPasswordsService> pwd ) : base(ctx)
-        { 
-            pwds = pwd.serve();
-            locLazy = new Task<UserLocations>(() => { return loc; });
+        public UserLocationsService( PasswordsDbContext ctx, IPasswordsApiService<UserPasswords,UserPasswordsService> pwd ) : base( ctx )
+        {
+            _keys = pwd.serve();
+            _enty = UserLocations.Invalid;
+            _lazy = new Task<UserLocations>(() => { return _enty; });
         }
 
         public async Task<UserLocationsService> SetKey( string masterPass )
         {
             if( Entity.Is().Status.Bad ) return this; 
-            if( pwds.VerifyPassword( Entity.User, masterPass ) ) _key = pwds.GetMasterKey( Entity.User );
-            return pwds.Status 
-                 ? OnError( pwds )
+            if( _keys.VerifyPassword( Entity.User, masterPass ) ) _key = _keys.GetMasterKey( Entity.User );
+            return _keys.Status 
+                 ? OnError( _keys )
                  : this;
         }
 
@@ -51,6 +54,7 @@ namespace PasswordsAPI.Services
                 Status = (LocationServiceError + ResultCode.Cryptic).WithText( "Invalid Crypt.Key" );
                 _key = null;
             } else {
+                Ok = true;
                 _key = masterKey;
             } return this;
         }
@@ -72,13 +76,13 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService> SetPassword( string userMasterPass, string newLocationPass )
         {
             if ( Entity.Id > 0 ) {
-                if ( await pwds.ByUserId( Entity.User ) ) {
-                    if ( pwds.VerifyPassword( Entity.User, userMasterPass ) ) {
-                        Crypt.Key key = pwds.GetMasterKey( Entity.User );
+                if ( await _keys.ByUserId( Entity.User ).ConfigureAwait(false) ) {
+                    if ( _keys.VerifyPassword( Entity.User, userMasterPass ) ) {
+                        Crypt.Key key = _keys.GetMasterKey( Entity.User );
                         Entity.Pass = Encoding.ASCII.GetBytes(key.Encrypt(newLocationPass));
-                        db.Update(Entity);
-                        db.SaveChangesAsync();
-                    } else Status = pwds.Status;
+                        _db.Update(Entity);
+                        _db.SaveChangesAsync();
+                    } else Status = _keys.Status;
                 } return this;
             } else {
                 Status = LocationServiceError.WithText("unknown user id");
@@ -92,19 +96,19 @@ namespace PasswordsAPI.Services
                 if ( Entity.IsValid() )
                     if ( Entity.User == usrId && Entity.Id == locId )
                         return locId;
-                locLazy = db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Id == locId);
-                loc = Status.Unknown;
                 Status = Status.NoError;
+                _enty = Status.Unknown;
+                _lazy = _db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Id == locId);
             } else {
                 if ( Entity.IsValid() )
                     if ( Entity.User == usrId && Entity.Area == nameOrId )
                         return Entity.Id;
-                locLazy = db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Area == nameOrId);
-                loc = Status.Unknown;
                 Status = Status.NoError;
+                _enty = Status.Unknown;
+                _lazy = _db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Area == nameOrId);
             }
-            if ( Status ) return -1;
-            return Entity.Id;
+            if ( Entity ) return Entity.Id;
+            else return -1;
         }
 
         public async Task<UserLocationsService> FromUserByNameOrId( int userId, string area )
@@ -118,9 +122,10 @@ namespace PasswordsAPI.Services
 
         public async Task<UserLocationsService> ById( int locId )
         {
-            if ( loc ) if ( loc.Id == locId ) return this;
-            locLazy = db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.Id == locId);
-            loc = Status.Unknown;
+            if ( _enty ) if ( _enty.Id == locId ) return this;
+            _lazy = _db.UserLocations.AsNoTracking().SingleOrDefaultAsync(l => l.Id == locId);
+            _enty= Status.Unknown;
+            Status = Status.NoError;
             return this;
         }
 
@@ -128,16 +133,16 @@ namespace PasswordsAPI.Services
         {
             if ( Status.Bad ) return this;
             if ( !keyToUse.IsValid() ) {
-                loc= Status = new Status( LocationStatus.Code | ErrorCode.Cryptic | ErrorCode.Word, "Invalid Master Key" );
+                _enty= Status = new Status( LocationServiceError.Code | ResultCode.Cryptic | ResultCode.Password, "Invalid Master Key" );
                 return this;
-            } loc = init;
+            } _enty = init;
 
-            loc.Pass = Encoding.ASCII.GetBytes( keyToUse.Encrypt( passToStore ) );
+            _enty.Pass = Encoding.ASCII.GetBytes( keyToUse.Encrypt( passToStore ) );
             if( Crypt.Error ) {
-                loc = Status = new Status( LocationStatus.Code|Status.Cryptic.Code, Crypt.Error.ToString(), passToStore );
+                _enty = Status = new Status( LocationServiceError.Code|Status.Cryptic.Code, Crypt.Error.ToString(), passToStore );
                 return this;
-            } db.UserLocations.AddAsync( loc );
-            db.SaveChangesAsync();
+            } _db.UserLocations.AddAsync( _enty );
+            _db.SaveChangesAsync();
             return this;
         }
 
@@ -146,31 +151,31 @@ namespace PasswordsAPI.Services
             PasswordUsers usr = (await usrserv).Entity;
             if( usr.Is().Status.Bad ) {
                 Status = new Status( (
-                    ErrorCode.Service | ErrorCode.Area 
-                  | ErrorCode.User ),"Unknown User"
+                    ResultCode.Service | ResultCode.Area 
+                  | ResultCode.User ),"Unknown User"
                 );
                 return this;
             }
 
-            if ( (await pwds.ByUserEntity( usrserv ) ).Entity.Is().Status.Bad ) return OnError( pwds );
-
-            Crypt.Key encryptionKey = pwds.Entity.GetUserKey();
+            if ( !(await _keys.ByUserEntity( usrserv )) ) return OnError( _keys );
+            UserPasswords pwd = _keys.Entity;
+            Crypt.Key encryptionKey = pwd.GetUserKey();
             if ( await FromUserByNameOrId( init.User = usr.Id, init.Area ) ) {
-                loc.Pass = Encoding.ASCII.GetBytes( encryptionKey.Encrypt( pass ) );
-                db.UserLocations.Update( loc );
-                db.SaveChangesAsync();
+                _enty.Pass = Encoding.ASCII.GetBytes( encryptionKey.Encrypt( pass ) );
+                _db.UserLocations.Update( _enty );
+                _db.SaveChangesAsync();
                 return this;
-            } else loc = Status = Status.NoError;
+            } else _enty = Status = Status.NoError;
             return AddNewLocationEntry( init, pass, encryptionKey );
         }
 
         public async Task<UserLocationsService> SetLoginInfo( int locId, string? login, string? info )
         {
             if( (await ById( locId )).Entity.Is().Status.Ok ) {
-                if (info != null) if (info != String.Empty) loc.Info = info;
-                if (login != null) if (login != String.Empty) loc.Name = login;
-                db.UserLocations.Update(loc);
-                db.SaveChangesAsync();
+                if (info != null) if (info != String.Empty) _enty.Info = info;
+                if (login != null) if (login != String.Empty) _enty.Name = login;
+                _db.UserLocations.Update(_enty);
+                _db.SaveChangesAsync();
             } return this;
         }
 
@@ -178,9 +183,9 @@ namespace PasswordsAPI.Services
         {
             if ( Status.Bad || Entity.Is().Status.Bad ) return Status.ToString();
             StringBuilder str = new StringBuilder("{ Id:");
-            str.Append( loc.Id ).Append( ", User:" ).Append( loc.User ).Append( ", Name:'" ).Append( loc.Area );
-            if ( loc.Info != null ) str.Append( "', Info:'" ).Append( loc.Info );
-            if ( loc.Name != null ) str.Append( "', LoginName:'" ).Append( loc.Name );
+            str.Append( _enty.Id ).Append( ", User:" ).Append( _enty.User ).Append( ", Name:'" ).Append( _enty.Area );
+            if ( _enty.Info != null ) str.Append( "', Info:'" ).Append( _enty.Info );
+            if ( _enty.Name != null ) str.Append( "', LoginName:'" ).Append( _enty.Name );
             str.Append( "', Password:'" ).Append( GetPassword() ).Append( "' }" );
             return str.ToString();
         }
@@ -188,16 +193,16 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService> RemoveLocation( Task<PasswordUsersService> userserv, string area, string master )
         {
             PasswordUsers user = (await userserv).Entity;
-            UserPasswords password = (await pwds.ByUserEntity( userserv ) ).Entity;
+            UserPasswords password = (await _keys.ByUserEntity( userserv ).ConfigureAwait(false) ).Entity;
             if ( password.Is().Status.Ok ) {
-                if( pwds.VerifyPassword( user.Id, master ) ) {
+                if( _keys.VerifyPassword( user.Id, master ) ) {
                     if ( (await FromUserByNameOrId( user.Id, area )).Entity.Is().Status.Ok ) {
-                        db.UserLocations.Remove( Entity );
-                        db.SaveChanges();
-                    } else Status = LocationStatus.WithText( "No password for {0}" ).WithData( area );
-                } else Status = LocationStatus.WithData( master ).WithText( 
+                        _db.UserLocations.Remove( Entity );
+                        _db.SaveChanges();
+                    } else Status = LocationServiceError.WithText( "No password for {0}" ).WithData( area );
+                } else Status = LocationServiceError.WithData( master ).WithText( 
                   "For Deleting a Passwords, correct master key is needed"
-                ) + ( ErrorCode.Invalid | ErrorCode.User | ErrorCode.Word );
+                ) + ( ResultCode.Invalid | ResultCode.User | ResultCode.Password );
             } return this;
         }
     }

@@ -19,89 +19,87 @@ namespace PasswordsAPI.Services
         private readonly Status HashValue = new Status(ResultCode.Service|ResultCode.Password|ResultCode.Id|ResultCode.Invalid, "password incorrct '{0}'" );
         protected override Status GetDefaultError() { return PasswordServiceError; }
 
-        private UserPasswords pwd = UserPasswords.Invalid;
-        private Task<UserPasswords> pwdLazy;
-        private PasswordUsersService usrs;
+
+        private PasswordUsersService _usrs;
 
         public UserPasswordsService( PasswordsDbContext ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService> usr )
             : base(ctx)
         {
-            usrs = usr.serve();
-            pwdLazy = new Task<UserPasswords>(() => { return pwd; });
+            _usrs = usr.serve();
+            _enty = UserPasswords.Invalid;
+            _lazy = new Task<UserPasswords>(() => { return _enty; });
         }
 
         public override UserPasswords Entity {
-            get { if ( pwd.Is().Status.Waiting ) pwd = pwdLazy.GetAwaiter().GetResult();
-                if (!pwd.NoError()) Status = pwd.Is().Status;
-                return pwd; }
-            set { if( value.NoError() ) pwd = value;
-                Status = pwd.Is().Status; }
+            get { if ( _enty.Is().Status.Waiting )
+                    _enty = _lazy.GetAwaiter().GetResult() 
+                             ?? PasswordServiceError;
+                if (_enty.Is().Status.Bad ) Status = _enty.Is().Status;
+                return _enty; }
+            set { if( value.IsValid() ) _enty = value;
+                Status = _enty.Is().Status; }
 
         }
 
         public override bool Ok
         {
-            get { return Entity.NoError() && Status.Code == ErrorCode.NoError; }
-            set { if ( value ) Status = pwd.NoError() ? Status.NoError : pwd.Is().Status;
-                else if (Status.Code == ErrorCode.NoError) 
-                    Status = PassStatus;
+            get { return Entity.IsValid() && Status.Code == ResultCode.NoError; }
+            protected set { if ( value ) Status = _enty.IsValid() ? Status.NoError : _enty.Is().Status;
+                else if (Status.Code == ResultCode.NoError) 
+                    Status = PasswordServiceError;
             }
         }
 
         public async Task<UserPasswordsService> ByUserEntity( Task<PasswordUsersService> byUser )
         {
             PasswordUsers user = (await byUser).Entity;
-            if( !user ) { pwd = user.Is().Status;
+            if( !user ) { _enty = user.Is().Status;
+                Status = _enty.Is().Status;
                 return this;
             }
-            if( usrs.Status ) {
-                Status = usrs.Status + ErrorCode.Word;
-                pwd = Status;
-            } else if( pwd.User != user.Id )
-            { pwdLazy = db.UserPasswords
-                    .AsNoTracking()
-                    .SingleOrDefaultAsync(p => p.User == user.Id);
-                pwd = Status.Unknown;
-                //if (pwd.User != user.Id)
-                //    pwd = new Status(ErrorCode.User | ErrorCode.Word | ErrorCode.Invalid, "master key invalid" );
-            } Status = pwd.Is().Status;
-            return this;
+            if( _usrs.Status ) {
+                Status = _usrs.Status + ResultCode.Password;
+                _enty = Status;
+            } else if( _enty.User != user.Id ) {
+                Status = Status.NoError;
+                _enty= Status.Unknown;
+                _lazy  = _db.UserPasswords
+                         .AsNoTracking()
+                         .SingleOrDefaultAsync(p => p.User == user.Id);
+            } return this;
         }
 
         public async Task<UserPasswordsService> SetMasterKey( int userId, string pass )
         {
-            if ( ByUserEntity( usrs.ById( userId ) ).GetAwaiter().GetResult().Entity.Is().Status.Bad ) {
-                if ( Status.Code.HasFlag( ErrorCode.Word ) ) {
+            if( !( await ByUserEntity(_usrs.ById(userId)) ) ) {
+                if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
                     Status = Status.NoError;
-                    pwd = new UserPasswords();
-                    pwd.Hash = Crypt.CalculateHash(pass);
-                    BigInteger big = new BigInteger(pwd.Hash);
-                    pwd.User = userId;
-                    pwd.Pass = "";
-                    pwd.Id = 0;
-                    db.UserPasswords.AddAsync(pwd);
-                    db.SaveChangesAsync();
+                    _enty = new UserPasswords();
+                    _enty.Hash = Crypt.CalculateHash(pass);
+                    BigInteger big = new BigInteger(_enty.Hash);
+                    _enty.User = userId;
+                    _enty.Pass = "";
+                    _enty.Id = 0;
+                    _db.UserPasswords.AddAsync(_enty);
+                    _db.SaveChangesAsync();
                     return this;
                 } else {
-                    pwd = PassStatus;
+                    _enty = PasswordServiceError;
                     return this;
                 }
             } else {
-                pwd.Hash = Crypt.CalculateHash(pass);
-                db.UserPasswords.Update( pwd );
-                db.SaveChangesAsync();
+                _enty.Hash = Crypt.CalculateHash(pass);
+                _db.UserPasswords.Update( _enty );
+                _db.SaveChangesAsync();
                 return this;
             }
-
-            Status = PassStatus.WithText("Unkown Error") + ErrorCode.Unknown;
-            return this;
         }
 
         public bool VerifyPassword( int forUser, string masterPassword )
         {
-            if ( ByUserEntity( usrs.ById( forUser ) ).GetAwaiter().GetResult().Entity.Is().Status.Ok ) {
-                if( pwd.Hash != Crypt.CalculateHash( masterPassword ) ) {
-                    pwd = Status = HashValue.WithData( masterPassword );
+            if ( ByUserEntity( _usrs.ById( forUser ) ).GetAwaiter().GetResult() ) {
+                if( Entity.Hash != Crypt.CalculateHash( masterPassword ) ) {
+                    _enty = Status = HashValue.WithData( masterPassword );
                     return false;
                 } else Status = Status.NoError;
                 return true;
@@ -110,17 +108,20 @@ namespace PasswordsAPI.Services
 
         public Crypt.Key GetMasterKey( int ofUser )
         {
-            if ( Entity.NoError() ) if ( Entity.User == ofUser ) return Crypt.CreateKey( pwd.Hash );
-            if ( ByUserEntity( usrs.ById( ofUser ) ).GetAwaiter().GetResult().Ok ) return Crypt.CreateKey( pwd.Hash );
-            return null;
+            if ( Entity ) if ( Entity.User == ofUser ) 
+                return Crypt.CreateKey( _enty.Hash );
+            if ( ByUserEntity( _usrs.ById( ofUser ) ).GetAwaiter().GetResult() )
+                return Crypt.CreateKey( _enty.Hash );
+            else
+                return null;
         }
 
         public async Task<UserPasswordsService> ByUserId( int ofUser )
         {
-            if (pwd.Is().Status.Ok) if (pwd.User == ofUser) return this;
-            pwdLazy = db.UserPasswords.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
-            pwd = Status.Unknown;
-            //if (pwdLazy.Status.Bad) Status = pwd.Is().Status;
+            if ( Entity ) if ( Entity.User == ofUser ) return this;
+            Status = Status.NoError;
+            _enty= Status.Unknown;
+            _lazy = _db.UserPasswords.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
             return this;
         }
     } 
