@@ -5,21 +5,26 @@
     {
         Status Status { get; set; }
         IEntityBase Is();
+        E Entity<E>() where E : IEntityBase;
     }
 
 
-    public class EntityBase : IEntityBase
+    public class EntityBase<E> : IEntityBase where E : EntityBase<E>, new()
     {
-        public static readonly EntityBase Invalid = new EntityBase( new Status( ErrorCode.Invalid ) );
+        public static readonly EntityBase<E> Invalid = new( new Status( ResultCode.Invalid ) );
 
         Status IEntityBase.Status { get; set; }
         public IEntityBase Is() { return this; }
+        ET IEntityBase.Entity<ET>() { return (ET)Is(); }
+        public E Entity() { return Is().Entity<E>(); }
+        
 
-        public static implicit operator bool( EntityBase cast ) {
-            return cast.NoError();
+
+        public static implicit operator bool( EntityBase<E> cast ) {
+            return cast.IsValid();
         }
-        public static implicit operator EntityBase( Status wasError ) {
-            return new EntityBase( wasError );
+        public static implicit operator EntityBase<E>( Status wasError ) {
+            return new EntityBase<E>( wasError );
         }
 
 
@@ -28,18 +33,12 @@
             Is().Status = Status.NoError;
         }
 
-        public EntityBase( EntityBase copy )
-        {
-            Is().Status = copy.Is().Status;
-        }
-
         public EntityBase( Status wasError )
         {
             Is().Status = wasError;
         }
 
-
-        public bool NoError()
+        public bool IsValid()
         {
             return ( Is().Status.Code & ResultCode.IsValid ) < ResultCode.Unknown;
         }

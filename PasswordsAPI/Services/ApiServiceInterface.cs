@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace PasswordsAPI.Services
 {
@@ -6,13 +7,13 @@ namespace PasswordsAPI.Services
     public interface IPasswordsApiService 
     {
         Status Status { get; }
-        bool  Ok    { get; set; }
+        bool  Ok    { get; }
     }
 
 
     public interface IPasswordsApiService<E>
         : IPasswordsApiService
-        where E : class
+        where E : IEntityBase, new()
     {
         IPasswordsApiService srv();
     }
@@ -20,7 +21,7 @@ namespace PasswordsAPI.Services
 
     public interface IPasswordsApiService<E,S>
         : IPasswordsApiService<E>
-        where E : EntityBase
+        where E : EntityBase<E>, new()
         where S : IPasswordsApiService<E>
     {
         S serve();
@@ -31,11 +32,15 @@ namespace PasswordsAPI.Services
 
     public abstract class AbstractApiService<E,S>
         : IPasswordsApiService<E,S>
-        where E : EntityBase
+        where E : EntityBase<E>, new()
         where S : AbstractApiService<E,S>
     {
-        protected PasswordsDbContext? db;
+        protected PasswordsDbContext? _db;
         protected abstract Status GetDefaultError();
+
+        protected E       _enty;
+        protected Task<E> _lazy;
+
         public abstract E Entity { get; set; }
 
         private Status status;
@@ -69,7 +74,7 @@ namespace PasswordsAPI.Services
                     ResultCode.Unknown|ResultCode.Service|
                     otherService.Status.Code,
                     otherService.Status.Text,
-                    this.GetType().Name
+                    GetType().Name
                 );
             } return this.serve();
         }
@@ -86,8 +91,9 @@ namespace PasswordsAPI.Services
 
         protected AbstractApiService( PasswordsDbContext ctx )
         {
-            status = Status.NoError;
-            db = ctx;
+            _enty = new E();
+            _enty.Is().Status = status = GetDefaultError();
+            _db = ctx;
         }
 
         public static implicit operator bool( AbstractApiService<E,S> srv )

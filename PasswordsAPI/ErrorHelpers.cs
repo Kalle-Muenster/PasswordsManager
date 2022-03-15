@@ -19,9 +19,9 @@ namespace PasswordsAPI
             return (ResultCode)value;
         }
 
-        public static EntityBase SetError( this Status message )
+        public static EntityBase<E> SetError<E>( this Status message ) where E : EntityBase<E>, new()
         {
-            return new EntityBase( message );
+            return new EntityBase<E>( message );
         }
     }
 
