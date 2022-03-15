@@ -88,7 +88,7 @@ namespace PasswordsAPI.Controllers
         [Produces(  "application/json" ), HttpPut( "{user}/{area}/Login" )]
         public async Task<IActionResult> PutUserLocationLogin( string user, string area, string login )
         {
-            UserLocations loc = (await _locs.FromUserByNameOrId( _usrs.GetUserId(user), area ))?.Entity ?? _locs.Status;
+            UserLocations loc = (await _locs.GetLocationEntity( _usrs.GetUserId(user), area ))?.Entity ?? _locs.Status;
             if ( loc.Is().Status ) {
                 return StatusCode( 400, loc.Is().Status.Code.ToInt32() + loc.Is().Status.ToString() );
             } else {
@@ -113,7 +113,7 @@ namespace PasswordsAPI.Controllers
         [Produces("application/json"), HttpPut("{user}/{area}/Password")]
         public async Task<IActionResult> PutUserLocationPassword(string user, string userPass, string area, string areaPass)
         {
-            if( await _locs.FromUserByNameOrId(_usrs.GetUserId(user), area ) ) {
+            if( await _locs.GetLocationEntity(_usrs.GetUserId(user), area ) ) {
                 if( await _locs.SetPassword(userPass, areaPass).ConfigureAwait(false) ) {
                     return Ok( _locs.Status.ToString() );
                 }
@@ -154,7 +154,7 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpGet( "{user}/{area}" )]
         public async Task<IActionResult> GetUserLocation( string user, string area )
         {
-            UserLocations location = ( await _locs.FromUserByNameOrId(_usrs.GetUserId( user ), area ) ).Entity;
+            UserLocations location = ( await _locs.GetLocationEntity(_usrs.GetUserId( user ), area ) ).Entity;
             if (location.IsValid() ) return new OkObjectResult( location );
             else return StatusCode( 400, location.Is().Status.ToString() );
         }
@@ -163,7 +163,7 @@ namespace PasswordsAPI.Controllers
         public async Task<IActionResult> GetUserLocationPassword( string user, string area, string master )
         {
             int userId = _usrs.GetUserId( user );
-            if ( !(await _locs.FromUserByNameOrId( userId, area )) )
+            if ( !(await _locs.GetLocationEntity( userId, area )) )
                 return StatusCode( 500,_locs.Status.ToString() );
             string pass = _locs.GetPassword( master );
             if ( _locs.Status.Bad ) {
@@ -179,8 +179,8 @@ namespace PasswordsAPI.Controllers
                 newArea.User = _usrs.Entity.Id; newArea.Area = name;
                 newArea.Name = login ?? String.Empty;
                 newArea.Info = info ?? String.Empty;
-                await (await _locs.SetLocationPassword(_usrs.ByNameOrId(user), newArea, pass )
-                       ).FromUserByNameOrId( newArea.User, newArea.Area );
+                await _locs.SetLocationPassword(_usrs.ByNameOrId(user), newArea, pass );
+                await _locs.GetLocationEntity( newArea.User, newArea.Area );
                 if( _locs.Entity.IsValid() ) {
                     return new OkObjectResult( _locs.Entity );
                 } else {
@@ -207,7 +207,7 @@ namespace PasswordsAPI.Controllers
                         else return StatusCode( 500, "removing the user account has failed" );
                     } return StatusCode( 500, _keys.Status.ToString() );
                 } return StatusCode( 500, "incorrect Em@il address");
-            } return StatusCode( 500, _usrs.Entity.Is().Status.ToString() );
+            } return StatusCode( 500, _usrs.Status.ToString() );
         }
     }
 }
