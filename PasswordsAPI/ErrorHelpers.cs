@@ -4,19 +4,19 @@ namespace PasswordsAPI
 {
     public static class Extensions
     {
-        public static Int32 ToInt32( this ErrorCode value )
+        public static Int32 ToInt32( this ResultCode value )
         {
             return Convert.ToInt32( value );
         }
 
-        public static UInt32 ToUInt32( this ErrorCode value )
+        public static UInt32 ToUInt32( this ResultCode value )
         {
             return Convert.ToUInt32( value );
         }
 
-        public static ErrorCode ToError( this Int32 value )
+        public static ResultCode ToError( this Int32 value )
         {
-            return (ErrorCode)value;
+            return (ResultCode)value;
         }
 
         public static EntityBase SetError( this Status message )
@@ -26,14 +26,15 @@ namespace PasswordsAPI
     }
 
     [Flags]
-    public enum ErrorCode : uint
+    public enum ResultCode : uint
     {
         NoError = 0,
-        Unknown = 2,
         Success = 1,
     //    Waiting = 2,
 
-        IsValid = 0xff000003,
+        Unknown = 2,
+        IsError = 4,
+        IsValid = 0xff000007,
         
         Invalid = 0x01000000,
         Cryptic = 0x02000000,
@@ -42,7 +43,7 @@ namespace PasswordsAPI
 
         User    = 0x00000100,
         Area    = 0x00000200,
-        Word    = 0x00000400,
+        Password = 0x00000400,
         
         Id      = 0x00020000,
         Data    = 0x00040000,
@@ -54,22 +55,22 @@ namespace PasswordsAPI
 
     public struct Status
     {
-        public static readonly Status NoError = new Status(ErrorCode.NoError);
-        public static readonly Status Unknown = new Status(ErrorCode.Unknown);
-        public static readonly Status Success = new Status(ErrorCode.Success);
-        public static readonly Status Invalid = new Status(ErrorCode.Invalid);
-        public static readonly Status Cryptic = new Status(ErrorCode.Cryptic|ErrorCode.Data,"Data Encrypted");
-        public static readonly Status Service = new Status(ErrorCode.Service);
+        public static readonly Status NoError = new Status(ResultCode.NoError);
+        public static readonly Status Unknown = new Status(ResultCode.Unknown);
+        public static readonly Status Success = new Status(ResultCode.Success);
+        public static readonly Status Invalid = new Status(ResultCode.Invalid);
+        public static readonly Status Cryptic = new Status(ResultCode.Cryptic|ResultCode.Data,"Data Encrypted");
+        public static readonly Status Service = new Status(ResultCode.Service);
 
-        public readonly ErrorCode Code;
-        public readonly string    Text;
-        public readonly object    Data;
+        public readonly ResultCode Code;
+        public readonly string     Text;
+        public readonly object     Data;
 
 
-        public Status( ErrorCode code )
+        public Status( ResultCode code )
             : this( code, code.ToString() )
         { }
-        public Status( ErrorCode code, string text )
+        public Status( ResultCode code, string text )
         {
             Code = code;
             Text = text.Contains( "{0}" ) ? text : text + " {0}";
@@ -78,7 +79,7 @@ namespace PasswordsAPI
         private Status( in Status status, object with )
             : this( status.Code, status.Text, with )
         { }
-        public Status( ErrorCode code, string text, object data )
+        public Status( ResultCode code, string text, object data )
             : this( code, text )
         { Data = data; }
 
@@ -108,9 +109,9 @@ namespace PasswordsAPI
 
         public override string ToString()
         {
-            ErrorCode masked = Code & ErrorCode.IsValid;
-            string status = masked < ErrorCode.Unknown 
-              ? "Success" : masked > ErrorCode.Unknown
+            ResultCode masked = Code & ResultCode.IsValid;
+            string status = masked < ResultCode.Unknown 
+              ? "Success" : masked > ResultCode.Unknown
                 ? "Error" : "Status";
 
             return string.Format( $"{status}-[{Code}]: {Text}", Data );
@@ -129,24 +130,24 @@ namespace PasswordsAPI
             );
         }
 
-        public static Status operator + ( Status status, ErrorCode code )
+        public static Status operator + ( Status status, ResultCode code )
         {
             return new Status( status.Code|code, status.Text, status.Data );
         }
 
         public bool Bad
         {
-            get { return (Code & ErrorCode.IsValid) > ErrorCode.Success; }
+            get { return (Code & ResultCode.IsValid) > ResultCode.Success; }
         }
 
         public bool Ok
         {
-            get { return (Code & ErrorCode.IsValid) < ErrorCode.Unknown; }
+            get { return (Code & ResultCode.IsValid) < ResultCode.Unknown; }
         }
 
         public bool Waiting
         {
-            get { return Code.HasFlag( ErrorCode.Unknown ); }
+            get { return Code.HasFlag( ResultCode.Unknown ); }
         }
     }
 }
