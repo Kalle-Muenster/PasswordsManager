@@ -1,16 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Consola;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using PasswordsAPI.BaseClasses;
 using PasswordsAPI.Services;
-using Yps;
-
+using System;
+using System.Threading.Tasks;
+using PasswordsAPI.Models;
 
 namespace PasswordsAPI.Controllers
 {
@@ -27,9 +21,9 @@ namespace PasswordsAPI.Controllers
         private UserLocationsService _locs;
 
         public PasswordsController( ILogger<PasswordsController> logger, PasswordsDbContext  db, 
-                                    IPasswordsApiService<PasswordUsers,PasswordUsersService> usrs,
-                                    IPasswordsApiService<UserPasswords,UserPasswordsService> keys,
-                                    IPasswordsApiService<UserLocations,UserLocationsService> locs ) {
+                                    IPasswordsApiService<PasswordUsers,PasswordUsersService,PasswordsDbContext> usrs,
+                                    IPasswordsApiService<UserPasswords,UserPasswordsService,PasswordsDbContext> keys,
+                                    IPasswordsApiService<UserLocations,UserLocationsService,PasswordsDbContext> locs ) {
             _logger = logger;
             _db = db;
             _usrs = usrs.serve();
@@ -41,14 +35,7 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpGet( "User")]
         public IActionResult GetUser()
         {
-            StdStream.Out.WriteLine(Request.Path);
-            IEnumerator<PasswordUsers> usinger = _db.PasswordUsers.AsNoTracking().GetEnumerator();
-            List<PasswordUsers> listinger = new List<PasswordUsers>();
-            while ( usinger.MoveNext() ) {
-                 listinger.Add( usinger.Current );
-            } usinger.Dispose(); 
-            StdStream.Out.WriteLine("Returns Ok");
-            return new OkObjectResult( listinger );
+            return new OkObjectResult( _usrs.ListAllUsers() );
         }
 
         [Produces(  "application/json" ), HttpGet( "{user}/Info" )]
@@ -64,7 +51,7 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpPut( "{user}/Info" )]
         public async Task<IActionResult> PutUserInfo(string user,string info)
         {
-            if ( (await _usrs.ByNameOrId(user)).Status.Ok ) {
+            if ( (await _usrs.ByNameOrId(user)).Entity.IsValid() ) {
                 PasswordUsers usr = _usrs.Entity;
                 usr.Info = info;
                 _db.Update( usr );
@@ -76,48 +63,45 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpPut( "{user}/Pass" )]
         public async Task<ActionResult> SetUserPassword( string user, string oldpass, string newpass )
         {
-            Task<PasswordUsersService> getuser = _usrs.ByNameOrId(user);
-            Task<UserPasswordsService> getpass = _keys.ByUserEntity(getuser);
-            PasswordUsers usr = (await getuser).Entity;
-            if (usr.Is().Status.Bad ) return StatusCode( 500, usr.Is().Status.ToString() );
-            if ( (await getpass).VerifyPassword( usr.Id, oldpass ) ) {
-                return new OkObjectResult((await _keys.SetMasterKey(usr.Id, newpass)).Status.ToString());
-            } else return StatusCode( 500, _keys.Status.ToString() );
-        }
-
+            if( await _keys.ForUserAccount( _usrs.ByNameOrId(user) ) ) {
+                if ( _keys.VerifyPassword( _usrs.Entity.Id, oldpass ) )
+                    return new OkObjectResult(
+               (await _keys.SetMasterKey(_usrs.Entity.Id, newpass)).Status.ToString()
+                                               );
+            } return StatusCode(500, _keys.Status.ToString() );
+        }    
+        
         [Produces(  "application/json" ), HttpPut( "{user}/{area}/Login" )]
         public async Task<IActionResult> PutUserLocationLogin( string user, string area, string login )
         {
-            UserLocations loc = (await _locs.GetLocationEntity( _usrs.GetUserId(user), area ))?.Entity ?? _locs.Status;
-            if ( loc.Is().Status ) {
-                return StatusCode( 400, loc.Is().Status.Code.ToInt32() + loc.Is().Status.ToString() );
+            if( !await _locs.GetLocationEntity( _usrs.GetUserId(user), area) ) {
+                return StatusCode( 400, _locs.Status.ToString() );
             } else {
-                loc.Name = login;
-                _db.Update( loc );
-                _db.SaveChanges();
-            } return new OkObjectResult( loc );
+                _locs.Entity.Name = login;
+                if ( _locs.Update() ) return new OkObjectResult( _locs.Entity ); 
+            } return StatusCode( 500, _locs.Status.ToString() );
         }
 
         [Produces( "application/json" ), HttpPut( "{user}/{area}/Info" )]
         public async Task<IActionResult> PutUserLocationInfo( string user, string area, string info )
         {
-            UserLocations location = (await _locs.ById(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity;
+            UserLocations location = (await _locs.GetLocationEntity(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity;
             if ( location.Is().Status.Ok ) {
                 location.Info = info;
                 _db.UserLocations.Update( location );
                 _db.SaveChanges();
                 return new OkObjectResult( location );
-            } else return StatusCode( 500, location.Is().Status.ToString() );
+            } else return StatusCode( 404, location.Is().Status.ToString() );
         }
 
         [Produces("application/json"), HttpPut("{user}/{area}/Password")]
         public async Task<IActionResult> PutUserLocationPassword(string user, string userPass, string area, string areaPass)
         {
             if( await _locs.GetLocationEntity(_usrs.GetUserId(user), area ) ) {
-                if( await _locs.SetPassword(userPass, areaPass).ConfigureAwait(false) ) {
+                if( await _locs.SetPassword(userPass, areaPass) ) {
                     return Ok( _locs.Status.ToString() );
                 }
-            } return StatusCode( 500, _locs.Status.ToString() );
+            } return StatusCode( 404, _locs.Status.ToString() );
         }
 
         [Produces( "application/json"), HttpPost("User")]
@@ -141,14 +125,9 @@ namespace PasswordsAPI.Controllers
         public async Task<IActionResult> GetUserLocations( string user )
         {
             int usrid = _usrs.GetUserId( user );
-            IEnumerator<UserLocations> locations = _db.UserLocations.AsNoTracking().GetEnumerator();
-            List<UserLocations> returnList = new List<UserLocations>();
-            while ( locations.MoveNext() ) {
-                if ( locations.Current.User == usrid) {
-                    returnList.Add( locations.Current );
-                }
-            } locations.Dispose();
-            return new OkObjectResult( returnList );
+            if (usrid > 0) {
+                return new OkObjectResult(_locs.GetUserLocations(usrid) );
+            } else return StatusCode( 404, _usrs.Status.ToString() );
         }
 
         [Produces( "application/json" ), HttpGet( "{user}/{area}" )]
@@ -176,9 +155,10 @@ namespace PasswordsAPI.Controllers
         {
             if( await _usrs.ByNameOrId( user ) ) {
                 UserLocations newArea = new UserLocations();
-                newArea.User = _usrs.Entity.Id; newArea.Area = name;
-                newArea.Name = login ?? String.Empty;
+                newArea.Area = name;
+                newArea.User = _usrs.Entity.Id;
                 newArea.Info = info ?? String.Empty;
+                newArea.Name = login ?? String.Empty;
                 await _locs.SetLocationPassword(_usrs.ByNameOrId(user), newArea, pass );
                 await _locs.GetLocationEntity( newArea.User, newArea.Area );
                 if( _locs.Entity.IsValid() ) {
@@ -193,7 +173,7 @@ namespace PasswordsAPI.Controllers
         public async Task<IActionResult> RemoveLocation( string user, string area, string masterPass )
         {
             if( await _locs.RemoveLocation( _usrs.ByNameOrId( user ), area, masterPass ) )
-                return Ok( $"Successfully removed user location: {area}" );
+                return Ok( $"Successfully removed password for: {area}" );
             else return StatusCode( 500, _locs.Status.ToString() );
         }
         
@@ -202,12 +182,21 @@ namespace PasswordsAPI.Controllers
         {
             if ( await _usrs.ByNameOrId( user ) ) {
                 if ( _usrs.Entity.Mail == mail ) {
-                    if ( (await _keys.ByUserEntity( _usrs.ByNameOrId( user ) )).VerifyPassword( _usrs.Entity.Id, pass ) ) {
+                    if ( (await _keys.ForUserAccount( _usrs.ByNameOrId( user ) )).VerifyPassword( _usrs.Entity.Id, pass ) ) {
                         if ( await _usrs.RemoveUser(_usrs.Entity ) ) return new OkObjectResult( _usrs.Status.ToString() );
-                        else return StatusCode( 500, "removing the user account has failed" );
-                    } return StatusCode( 500, _keys.Status.ToString() );
-                } return StatusCode( 500, "incorrect Em@il address");
-            } return StatusCode( 500, _usrs.Status.ToString() );
+                        else return StatusCode( 500, "removing user account failed" );
+                    } return StatusCode( 303, _keys.Status.ToString() );
+                } return StatusCode( 404, "incorrect Em@il address");
+            } return StatusCode( 404, _usrs.Status.ToString() );
+        }
+
+        [Produces("application/json"), HttpGet("errormessage/{code}")]
+        public async Task<IActionResult> GetErrorMessage(uint code)
+        {
+            Status textFromErrorCode = new Status((ResultCode) code, "message from error code: {0}", (ResultCode) code);
+            if (textFromErrorCode.Ok) return Ok(textFromErrorCode.ToString());
+            if (textFromErrorCode.Bad) return StatusCode(404, textFromErrorCode.ToString());
+            else return StatusCode( 500, textFromErrorCode.ToString() ); 
         }
     }
 }
