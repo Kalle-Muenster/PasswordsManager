@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PasswordsAPI
+namespace PasswordsAPI.BaseClasses
 {
     public static class Extensions
     {
@@ -30,8 +30,6 @@ namespace PasswordsAPI
     {
         NoError = 0,
         Success = 1,
-    //    Waiting = 2,
-
         Unknown = 2,
         IsError = 4,
         IsValid = 0xff000007,
@@ -99,7 +97,7 @@ namespace PasswordsAPI
 
         public static implicit operator bool( Status cast )
         {
-            return cast.Code != 0;
+            return (cast.Code & ResultCode.IsValid) <= ResultCode.Unknown && cast.Code != 0;
         }
 
         public static implicit operator string( Status cast )
@@ -114,8 +112,13 @@ namespace PasswordsAPI
               ? "Success" : masked > ResultCode.Unknown
                 ? "Error" : "Status";
 
-            return string.Format( $"{status}-[{Code}]: {Text}", Data );
+            return string.Format( $"{status}-[{Code.ToUInt32()}]: {Text}", Data );
         }
+
+        public static string MessageFromStatusFlags(uint flags)
+        {
+            return ((ResultCode) flags).ToString();
+        } 
 
         public static Status operator + ( Status own, Status add )
         {
@@ -142,7 +145,7 @@ namespace PasswordsAPI
 
         public bool Ok
         {
-            get { return (Code & ResultCode.IsValid) < ResultCode.Unknown; }
+            get { return (Code != 0) && (Code & ResultCode.IsValid) < ResultCode.Unknown; }
         }
 
         public bool Waiting

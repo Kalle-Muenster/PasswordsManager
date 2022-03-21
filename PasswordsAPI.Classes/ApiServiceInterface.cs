@@ -1,45 +1,60 @@
 ﻿using System;
 using System.Threading.Tasks;
+using PasswordsAPI.BaseClasses;
+using Microsoft.EntityFrameworkCore;
+using Consola;
 
 namespace PasswordsAPI.Services
 {
 
-    public interface IPasswordsApiService 
+    public interface IPasswordsApiService<D> 
+        where D : DbContext
     {
         Status Status { get; }
         bool  Ok    { get; }
+        D db { get; }
     }
+    
 
-
-    public interface IPasswordsApiService<E>
-        : IPasswordsApiService
+    public interface IPasswordsApiService<E,D>
+        : IPasswordsApiService<D>
         where E : IEntityBase, new()
+        where D : DbContext
     {
-        IPasswordsApiService srv();
+        IPasswordsApiService<D> srv();
     }
+    
 
-
-    public interface IPasswordsApiService<E,S>
-        : IPasswordsApiService<E>
+    public interface IPasswordsApiService<E,S,D>
+        : IPasswordsApiService<E,D>
         where E : EntityBase<E>, new()
-        where S : IPasswordsApiService<E>
+        where S : IPasswordsApiService<E,D>
+        where D : DbContext
     {
         S serve();
-        S OnError( IPasswordsApiService malfunctioned );
+        S OnError( IPasswordsApiService<D> malfunctioned );
         E Entity { get; set; }
     }
 
 
-    public abstract class AbstractApiService<E,S>
-        : IPasswordsApiService<E,S>
+    public abstract class AbstractApiService<E,S,D>
+        : IPasswordsApiService<E,S,D>
         where E : EntityBase<E>, new()
-        where S : AbstractApiService<E,S>
+        where S : AbstractApiService<E,S,D>
+        where D : DbContext
     {
-        protected PasswordsDbContext? _db;
+        protected D? _db;
+
+        D IPasswordsApiService<D>.db
+        {
+            get { return _db; }
+        }
+
         protected abstract Status GetDefaultError();
 
-        protected E       _enty;
-        protected Task<E> _lazy;
+        protected E          _enty;
+        protected Task<E>    _lazy;
+        protected StdStreams _cons;
 
         public abstract E Entity { get; set; }
 
@@ -59,7 +74,7 @@ namespace PasswordsAPI.Services
         // that one where the status was happening, way back to 
         // that service to let generate proper status code there
         // which can point out where that errors was caused.
-        public S OnError( IPasswordsApiService otherService )
+        public S OnError( IPasswordsApiService<D> otherService )
         {
             if ( otherService.Status.Code.HasFlag( ResultCode.Service ) ) {
                 if( otherService.Status.Data.ToString() == "" ) {
@@ -84,19 +99,20 @@ namespace PasswordsAPI.Services
             return (S)this;
         }
 
-        public IPasswordsApiService srv()
+        public IPasswordsApiService<D> srv()
         {
             return this;
         }
 
-        protected AbstractApiService( PasswordsDbContext ctx )
+        protected AbstractApiService( D ctx )
         {
+            _cons = new StdStreams();
             _enty = new E();
             _enty.Is().Status = status = GetDefaultError();
             _db = ctx;
         }
 
-        public static implicit operator bool( AbstractApiService<E,S> srv )
+        public static implicit operator bool( AbstractApiService<E,S,D> srv )
         {
             return srv.Ok;
         }
