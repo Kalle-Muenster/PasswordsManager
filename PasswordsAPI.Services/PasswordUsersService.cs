@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using PasswordsAPI.BaseClasses;
+using PasswordsAPI.Models;
 
 namespace PasswordsAPI.Services
 {
     public class PasswordUsersService 
-        : AbstractApiService<PasswordUsers,PasswordUsersService>
-        , IPasswordsApiService<PasswordUsers,PasswordUsersService>
+        : AbstractApiService<PasswordUsers,PasswordUsersService,PasswordsDbContext> //, IPasswordsApiService<PasswordUsers,PasswordUsersService>
     {
         private static readonly Status UserServiceError = new Status(ResultCode.User|ResultCode.Service|ResultCode.Invalid); 
         private static readonly Status InvalidId = new Status(UserServiceError.Code|ResultCode.Id,"Invalid User.Id: {0}");
@@ -22,8 +23,13 @@ namespace PasswordsAPI.Services
             if ( !int.TryParse( nameOrId, out id ) ) {
                 _enty = _db.PasswordUsers.AsNoTracking().SingleOrDefault(u => u.Name == nameOrId) ??
                       UsersName.WithData( nameOrId );
+                Status = _enty.Is().Status;
                 return _enty?.Id ?? -1;
-            } return id;
+            } if( Entity ) if ( Entity.Id == id ) return id;
+            Entity = _db.PasswordUsers.AsNoTracking().SingleOrDefault(u => u.Id == id)
+                      ?? UserServiceError.WithText($"Invalid User.Id '{id}'");
+            if (Entity) if (Entity.Id == id) return id;
+            return -1;
         }
 
         public async Task<PasswordUsersService> ByNameOrId( string nameOrId )
@@ -43,7 +49,7 @@ namespace PasswordsAPI.Services
 
         public override PasswordUsers Entity {
             get { if (_enty.Is().Status.Waiting) {
-                    _enty = _lazy.GetAwaiter().GetResult();
+                    _enty = _lazy.GetAwaiter().GetResult() ?? UserServiceError;
                     Status = _enty.Is().Status; }
                 return Ok ? _enty : Status; }
             set { if ( value ) _enty = value;
@@ -55,24 +61,22 @@ namespace PasswordsAPI.Services
         {
             _enty = PasswordUsers.Invalid;
             _lazy = new Task<PasswordUsers>(() => { return _enty; });
-            Status = GetDefaultError();
+            Status = UserServiceError;
         }
         
-
         public async Task<PasswordUsersService> CreateNewUser( string name, string email, string pass, string? info )
         {
-            StdStream.Out.Write("CreateNewUser():");
             IEnumerator<PasswordUsers> it = _db.PasswordUsers.AsNoTracking().GetEnumerator();
             Status = Status.NoError;
             while ( it.MoveNext() ) {
-                if (it.Current.Name == name) {
+                if( it.Current.Name == name ) {
                     Status = new Status( UsersName.Code,"Already Exists", name ); 
                 break; } 
                 if( it.Current.Mail == email ) {
-                    Status = UserServiceError.WithText("Already Exists").WithData(email) + ResultCode.Mail; 
+                    Status = UserServiceError.WithText( "Already Exists" ).WithData( email ) + ResultCode.Mail; 
                 break; }
             } it.Dispose();
-            if ( Status.Bad ) { StdStream.Out.WriteLine("CreateNewUser():...returns Bad: {0}", Status ); return this;}
+            if ( Status.Bad ) return this;
             _enty = _db.PasswordUsers.Add(
                 new PasswordUsers {
                     Info = info ?? String.Empty,
@@ -84,21 +88,31 @@ namespace PasswordsAPI.Services
             return this;
         }
 
+        public List<PasswordUsers> ListAllUsers()
+        {
+            IEnumerator<PasswordUsers> usinger = _db.PasswordUsers.AsNoTracking().GetEnumerator();
+            List<PasswordUsers> listinger = new List<PasswordUsers>();
+            while (usinger.MoveNext()) {
+                listinger.Add( usinger.Current );
+            } usinger.Dispose();
+            return listinger;
+        }
+
         public async Task<PasswordUsersService> ById( int byId )
         {
+            Status = Status.NoError;
             if (_enty) if (_enty.Id == byId) return this;
             _enty = Status.Unknown;
             _lazy = _db.PasswordUsers.AsNoTracking().SingleOrDefaultAsync(u => u.Id == byId);
-            Status = Status.NoError;
             return this;
         }
 
         public async Task<PasswordUsersService> ByEmail( string email )
         {
-            if ( _enty.IsValid() ) if ( _enty.Mail == email ) return this;
-            _enty = new Status(UserServiceError.Code | ResultCode.Mail | ResultCode.Unknown, "Unknown email address: '{0}'", email);
-            _lazy = _db.PasswordUsers.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);
             Status = Status.NoError;
+            if ( _enty.IsValid() ) if ( _enty.Mail == email ) return this;
+            _enty = new Status(UserServiceError.Code | ResultCode.Mail | ResultCode.Unknown, "Wrong email address: '{0}'", email);
+            _lazy = _db.PasswordUsers.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);
             return this;
         }
 
@@ -106,7 +120,7 @@ namespace PasswordsAPI.Services
         {
             _db.PasswordUsers.Remove( account );
             Status = (Status.Success + ResultCode.User).WithText(
-                $"Successfully removed user account {account.Name} (id:{account.Id}) from db"
+                $"Deleted user {account.Id}: {account.Name} and related data"  
             ).WithData( account );
             _db.SaveChangesAsync();
             return this;
