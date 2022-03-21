@@ -2,9 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using Yps;
+using PasswordsAPI.BaseClasses;
 
-namespace PasswordsAPI
+namespace PasswordsAPI.Models
 {
 
     public class UserPasswords : EntityBase<UserPasswords>
@@ -25,10 +25,6 @@ namespace PasswordsAPI
         public string Pass { get; set; }
 
         //------------------------------//
-
-        public Crypt.Key GetUserKey() {
-            return Crypt.CreateKey( Hash );
-        }
 
         public UserPasswords( Status invalid )
             : base( invalid ) {

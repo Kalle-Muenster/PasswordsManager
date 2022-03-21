@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace PasswordsAPI
+namespace PasswordsAPI.Models
 {
     public class PasswordsDbContext : DbContext
     {
         public PasswordsDbContext( DbContextOptions<PasswordsDbContext> options )
             : base( options )
         {
-
+            
         }
 
         public virtual DbSet<PasswordUsers> PasswordUsers { get; set; }

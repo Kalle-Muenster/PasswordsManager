@@ -2,8 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using PasswordsAPI.BaseClasses;
 
-namespace PasswordsAPI
+namespace PasswordsAPI.Models
 {
     
     public class UserLocations : EntityBase<UserLocations>

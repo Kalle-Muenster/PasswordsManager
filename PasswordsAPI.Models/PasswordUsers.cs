@@ -1,8 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using PasswordsAPI.BaseClasses;
 
-namespace PasswordsAPI
+namespace PasswordsAPI.Models
 {
 
     public class PasswordUsers : EntityBase<PasswordUsers>
