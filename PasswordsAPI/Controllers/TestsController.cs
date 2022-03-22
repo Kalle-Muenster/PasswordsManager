@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.IO;
-using System.Runtime.CompilerServices;
 using Yps;
 
 namespace PasswordsAPI.Controllers

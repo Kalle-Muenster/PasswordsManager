@@ -1,11 +1,10 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using PasswordsAPI.BaseClasses;
+using PasswordsAPI.Abstracts;
 
 namespace PasswordsAPI.Models
 {
-
     public class PasswordUsers : EntityBase<PasswordUsers>
     {
         public new static readonly PasswordUsers Invalid = new PasswordUsers(

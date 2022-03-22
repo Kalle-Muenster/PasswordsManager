@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PasswordsAPI.BaseClasses
+namespace PasswordsAPI.Abstracts
 {
     public static class Extensions
     {

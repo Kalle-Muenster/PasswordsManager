@@ -1,4 +1,4 @@
-﻿namespace PasswordsAPI.BaseClasses
+﻿namespace PasswordsAPI.Abstracts
 {
 
     public interface IEntityBase

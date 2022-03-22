@@ -1,11 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using PasswordsAPI.BaseClasses;
+﻿using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Consola;
-using PasswordsAPI.Database;
 
-namespace PasswordsAPI.Services
+namespace PasswordsAPI.Abstracts
 {
 
     public interface IPasswordsApiService<D> 

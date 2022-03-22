@@ -2,7 +2,6 @@
 #define USE_MSSQL
 #endif
 
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,15 +11,14 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-//#if USE_SQLITE
 using System.IO;
 using Constringer = Microsoft.Data.Sqlite.SqliteConnectionStringBuilder;
 using Connectione = Microsoft.Data.Sqlite.SqliteConnection;
-//#endif
+using PasswordsAPI.Abstracts;
 using PasswordsAPI.Services;
-using PasswordsAPI.Models;
-using PasswordsAPI.BaseClasses;
+
 using PasswordsAPI.Database;
+using PasswordsAPI.Models;
 
 namespace PasswordsAPI
 {

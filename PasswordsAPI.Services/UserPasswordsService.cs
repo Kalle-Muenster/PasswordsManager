@@ -1,8 +1,7 @@
 ﻿using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using PasswordsAPI.BaseClasses;
-using PasswordsAPI.Database;
+using PasswordsAPI.Abstracts;
 using PasswordsAPI.Models;
 using Yps;
 

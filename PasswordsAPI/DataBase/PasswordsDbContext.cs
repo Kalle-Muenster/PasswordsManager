@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PasswordsAPI.Abstracts;
 using PasswordsAPI.Models;
-using PasswordsAPI.Services;
+
 
 namespace PasswordsAPI.Database
 {

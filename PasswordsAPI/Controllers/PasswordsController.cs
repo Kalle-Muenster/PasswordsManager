@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using PasswordsAPI.BaseClasses;
+using PasswordsAPI.Abstracts;
 using PasswordsAPI.Services;
 using PasswordsAPI.Database;
 

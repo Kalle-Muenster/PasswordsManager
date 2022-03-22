@@ -1,10 +1,8 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using PasswordsAPI.BaseClasses;
 
 
-namespace PasswordsAPI.Database
+namespace PasswordsAPI.Abstracts
 {
     public interface IPasswordaApiDbContext<CTX> where CTX : DbContext
     {
