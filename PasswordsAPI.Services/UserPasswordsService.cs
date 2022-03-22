@@ -2,14 +2,16 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PasswordsAPI.BaseClasses;
+using PasswordsAPI.Database;
 using PasswordsAPI.Models;
 using Yps;
 
 
 namespace PasswordsAPI.Services
 {
-    public class UserPasswordsService 
-        : AbstractApiService<UserPasswords,UserPasswordsService,PasswordsDbContext>, IPasswordsApiService<UserPasswords,UserPasswordsService,PasswordsDbContext>
+    public class UserPasswordsService<CTX>
+        : AbstractApiService<UserPasswords,UserPasswordsService<CTX>,CTX>
+        where CTX : PasswordsApiDbContext<CTX>
     {
         private readonly Status PasswordServiceError = new Status(ResultCode.Service|ResultCode.Password|ResultCode.IsError);
         private readonly Status InvalidId = new Status(ResultCode.Service|ResultCode.Password|ResultCode.User|ResultCode.Invalid, "Invalid User.Id: {0}");
@@ -17,14 +19,16 @@ namespace PasswordsAPI.Services
         protected override Status GetDefaultError() { return PasswordServiceError; }
 
 
-        private PasswordUsersService _usrs;
+        private PasswordUsersService<CTX>        _usrs;
+        private DbSet<UserPasswords> DbSet;
 
-        public UserPasswordsService( PasswordsDbContext ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService,PasswordsDbContext> usr )
+        public UserPasswordsService( CTX ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> usr )
             : base(ctx)
         {
             _usrs = usr.serve();
             _enty = UserPasswords.Invalid;
             _lazy = new Task<UserPasswords>(() => { return _enty; });
+            DbSet = ctx.EntitiesSet<UserPasswords>();
         }
 
         public override UserPasswords Entity {
@@ -47,7 +51,7 @@ namespace PasswordsAPI.Services
             }
         }
 
-        public async Task<UserPasswordsService> ForUserAccount( Task<PasswordUsersService> byUser )
+        public async Task<UserPasswordsService<CTX>> ForUserAccount( Task<PasswordUsersService<CTX>> byUser )
         {
             PasswordUsers user = byUser.IsCompleted ? byUser.Result.Entity : (await byUser).Entity;
             if( !user.IsValid() ) { _enty = user.Is().Status;
@@ -60,13 +64,13 @@ namespace PasswordsAPI.Services
             } else if( _enty.User != user.Id ) {
                 Status = Status.NoError;
                 _enty= Status.Unknown;
-                _lazy  = _db.UserPasswords
+                _lazy  = DbSet
                          .AsNoTracking()
                          .SingleOrDefaultAsync(p => p.User == user.Id);
             } return this;
         }
 
-        public async Task<UserPasswordsService> SetMasterKey( int userId, string pass )
+        public async Task<UserPasswordsService<CTX>> SetMasterKey( int userId, string pass )
         {
             if( !( await ForUserAccount(_usrs.ById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
@@ -77,7 +81,7 @@ namespace PasswordsAPI.Services
                     _enty.User = userId;
                     _enty.Pass = "";
                     _enty.Id = 0;
-                    _db.UserPasswords.AddAsync(_enty);
+                    DbSet.AddAsync(_enty);
                     _db.SaveChangesAsync();
                     return this;
                 } else {
@@ -86,7 +90,7 @@ namespace PasswordsAPI.Services
                 }
             } else {
                 _enty.Hash = Crypt.CalculateHash(pass);
-                _db.UserPasswords.Update( _enty );
+                DbSet.Update( _enty );
                 _db.SaveChangesAsync();
                 return this;
             }
@@ -125,17 +129,12 @@ namespace PasswordsAPI.Services
             }
         }
 
-        //public Crypt.Key GetUserKey()
-        //{
-        //    return Crypt.CreateKey( Entity.Hash );
-        //}
-
-        public async Task<UserPasswordsService> ByUserId( int ofUser )
+        public async Task<UserPasswordsService<CTX>> ByUserId( int ofUser )
         {
             if ( Entity ) if ( Entity.User == ofUser ) return this;
             Status = Status.NoError;
             Entity = Status.Unknown;
-            _lazy  = _db.UserPasswords.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
+            _lazy  = DbSet.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
             return this;
         }
     } 

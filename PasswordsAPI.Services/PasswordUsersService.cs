@@ -4,12 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PasswordsAPI.BaseClasses;
+using PasswordsAPI.Database;
 using PasswordsAPI.Models;
 
 namespace PasswordsAPI.Services
 {
-    public class PasswordUsersService 
-        : AbstractApiService<PasswordUsers,PasswordUsersService,PasswordsDbContext> //, IPasswordsApiService<PasswordUsers,PasswordUsersService>
+    public class PasswordUsersService<CTX>
+        : AbstractApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> 
+        where CTX : DbContext, IPasswordaApiDbContext<CTX>
     {
         private static readonly Status UserServiceError = new Status(ResultCode.User|ResultCode.Service|ResultCode.Invalid); 
         private static readonly Status InvalidId = new Status(UserServiceError.Code|ResultCode.Id,"Invalid User.Id: {0}");
@@ -17,32 +19,34 @@ namespace PasswordsAPI.Services
 
         protected override Status GetDefaultError() { return UserServiceError; }
 
+        private DbSet<PasswordUsers> DbSet; 
+
         public int GetUserId( string nameOrId )
         {
             int id = 0;
             if ( !int.TryParse( nameOrId, out id ) ) {
-                _enty = _db.PasswordUsers.AsNoTracking().SingleOrDefault(u => u.Name == nameOrId) ??
+                _enty = _db.EntitiesSet<PasswordUsers>().AsNoTracking().SingleOrDefault(u => u.Name == nameOrId) ??
                       UsersName.WithData( nameOrId );
                 Status = _enty.Is().Status;
                 return _enty?.Id ?? -1;
             } if( Entity ) if ( Entity.Id == id ) return id;
-            Entity = _db.PasswordUsers.AsNoTracking().SingleOrDefault(u => u.Id == id)
+            Entity = DbSet.AsNoTracking().SingleOrDefault(u => u.Id == id)
                       ?? UserServiceError.WithText($"Invalid User.Id '{id}'");
             if (Entity) if (Entity.Id == id) return id;
             return -1;
         }
 
-        public async Task<PasswordUsersService> ByNameOrId( string nameOrId )
+        public async Task<PasswordUsersService<CTX>> ByNameOrId( string nameOrId )
         {
             int id = 0;
             if ( int.TryParse( nameOrId, out id ) ) {
                 if ( _enty ) if (_enty.Id == id) return this;
                 _enty = Status.Unknown;
-                _lazy = _db.PasswordUsers.AsNoTracking().SingleOrDefaultAsync( u => u.Id == id );
+                _lazy = DbSet.AsNoTracking().SingleOrDefaultAsync( u => u.Id == id );
             } else {
                 if ( _enty ) if ( _enty.Name == nameOrId ) return this;
                 _enty = Status.Unknown;
-                _lazy = _db.PasswordUsers.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
+                _lazy = DbSet.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
             } Status = Status.NoError;
             return this;
         }
@@ -56,17 +60,18 @@ namespace PasswordsAPI.Services
                 else Status = value.Is().Status; }
         }
 
-        public PasswordUsersService(PasswordsDbContext ctx)
+        public PasswordUsersService( CTX ctx )
             : base(ctx)
         {
             _enty = PasswordUsers.Invalid;
             _lazy = new Task<PasswordUsers>(() => { return _enty; });
             Status = UserServiceError;
+            DbSet = _db.EntitiesSet<PasswordUsers>();
         }
         
-        public async Task<PasswordUsersService> CreateNewUser( string name, string email, string pass, string? info )
+        public async Task<PasswordUsersService<CTX>> CreateNewUser( string name, string email, string pass, string? info )
         {
-            IEnumerator<PasswordUsers> it = _db.PasswordUsers.AsNoTracking().GetEnumerator();
+            IEnumerator<PasswordUsers> it = DbSet.AsNoTracking().GetEnumerator();
             Status = Status.NoError;
             while ( it.MoveNext() ) {
                 if( it.Current.Name == name ) {
@@ -77,7 +82,7 @@ namespace PasswordsAPI.Services
                 break; }
             } it.Dispose();
             if ( Status.Bad ) return this;
-            _enty = _db.PasswordUsers.Add(
+            _enty = DbSet.Add(
                 new PasswordUsers {
                     Info = info ?? String.Empty,
                     Mail = email,
@@ -90,7 +95,8 @@ namespace PasswordsAPI.Services
 
         public List<PasswordUsers> ListAllUsers()
         {
-            IEnumerator<PasswordUsers> usinger = _db.PasswordUsers.AsNoTracking().GetEnumerator();
+
+            IEnumerator<PasswordUsers> usinger = _db.EntitiesSet<PasswordUsers>().AsNoTracking().GetEnumerator();
             List<PasswordUsers> listinger = new List<PasswordUsers>();
             while (usinger.MoveNext()) {
                 listinger.Add( usinger.Current );
@@ -98,27 +104,27 @@ namespace PasswordsAPI.Services
             return listinger;
         }
 
-        public async Task<PasswordUsersService> ById( int byId )
+        public async Task<PasswordUsersService<CTX>> ById( int byId )
         {
             Status = Status.NoError;
             if (_enty) if (_enty.Id == byId) return this;
             _enty = Status.Unknown;
-            _lazy = _db.PasswordUsers.AsNoTracking().SingleOrDefaultAsync(u => u.Id == byId);
+            _lazy = DbSet.AsNoTracking().SingleOrDefaultAsync(u => u.Id == byId);
             return this;
         }
 
-        public async Task<PasswordUsersService> ByEmail( string email )
+        public async Task<PasswordUsersService<CTX>> ByEmail( string email )
         {
             Status = Status.NoError;
             if ( _enty.IsValid() ) if ( _enty.Mail == email ) return this;
             _enty = new Status(UserServiceError.Code | ResultCode.Mail | ResultCode.Unknown, "Wrong email address: '{0}'", email);
-            _lazy = _db.PasswordUsers.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);
+            _lazy = DbSet.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);
             return this;
         }
 
-        public async Task<PasswordUsersService> RemoveUser( PasswordUsers account )
+        public async Task<PasswordUsersService<CTX>> RemoveUser( PasswordUsers account )
         {
-            _db.PasswordUsers.Remove( account );
+            DbSet.Remove( account );
             Status = (Status.Success + ResultCode.User).WithText(
                 $"Deleted user {account.Id}: {account.Name} and related data"  
             ).WithData( account );

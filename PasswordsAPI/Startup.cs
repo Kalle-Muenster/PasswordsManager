@@ -20,6 +20,7 @@ using Connectione = Microsoft.Data.Sqlite.SqliteConnection;
 using PasswordsAPI.Services;
 using PasswordsAPI.Models;
 using PasswordsAPI.BaseClasses;
+using PasswordsAPI.Database;
 
 namespace PasswordsAPI
 {
@@ -51,9 +52,9 @@ namespace PasswordsAPI
             });
 
 
-            services.AddScoped<IPasswordsApiService<PasswordUsers,PasswordUsersService,PasswordsDbContext>,PasswordUsersService>();
-            services.AddScoped<IPasswordsApiService<UserPasswords,UserPasswordsService,PasswordsDbContext>,UserPasswordsService>();
-            services.AddScoped<IPasswordsApiService<UserLocations,UserLocationsService,PasswordsDbContext>,UserLocationsService>();
+            services.AddScoped< IPasswordsApiService<PasswordUsers,PasswordUsersService<PasswordsDbContext>,PasswordsDbContext>, PasswordUsersService<PasswordsDbContext>>();
+            services.AddScoped<IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext>, UserPasswordsService<PasswordsDbContext>>();
+            services.AddScoped<IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext>, UserLocationsService<PasswordsDbContext>>();
 
             if( DatabaseType == ServerFrameworks.USE_MSSQL )
                 services.AddDbContext<PasswordsDbContext>(

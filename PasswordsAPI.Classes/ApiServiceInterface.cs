@@ -3,12 +3,13 @@ using System.Threading.Tasks;
 using PasswordsAPI.BaseClasses;
 using Microsoft.EntityFrameworkCore;
 using Consola;
+using PasswordsAPI.Database;
 
 namespace PasswordsAPI.Services
 {
 
     public interface IPasswordsApiService<D> 
-        where D : DbContext
+        where D : DbContext, IPasswordaApiDbContext<D>
     {
         Status Status { get; }
         bool  Ok    { get; }
@@ -19,7 +20,7 @@ namespace PasswordsAPI.Services
     public interface IPasswordsApiService<E,D>
         : IPasswordsApiService<D>
         where E : IEntityBase, new()
-        where D : DbContext
+        where D : DbContext, IPasswordaApiDbContext<D>
     {
         IPasswordsApiService<D> srv();
     }
@@ -29,7 +30,7 @@ namespace PasswordsAPI.Services
         : IPasswordsApiService<E,D>
         where E : EntityBase<E>, new()
         where S : IPasswordsApiService<E,D>
-        where D : DbContext
+        where D : DbContext, IPasswordaApiDbContext<D>
     {
         S serve();
         S OnError( IPasswordsApiService<D> malfunctioned );
@@ -41,7 +42,7 @@ namespace PasswordsAPI.Services
         : IPasswordsApiService<E,S,D>
         where E : EntityBase<E>, new()
         where S : AbstractApiService<E,S,D>
-        where D : DbContext
+        where D : DbContext, IPasswordaApiDbContext<D>
     {
         protected D? _db;
 

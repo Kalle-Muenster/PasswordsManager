@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using PasswordsAPI.BaseClasses;
 using PasswordsAPI.Services;
+using PasswordsAPI.Database;
+
 using System;
 using System.Threading.Tasks;
 using PasswordsAPI.Models;
@@ -16,14 +18,14 @@ namespace PasswordsAPI.Controllers
 
         private readonly ILogger<PasswordsController> _logger;
         private PasswordsDbContext   _db;
-        private PasswordUsersService _usrs;
-        private UserPasswordsService _keys;
-        private UserLocationsService _locs;
+        private PasswordUsersService<PasswordsDbContext> _usrs;
+        private UserPasswordsService<PasswordsDbContext> _keys;
+        private UserLocationsService<PasswordsDbContext> _locs;
 
         public PasswordsController( ILogger<PasswordsController> logger, PasswordsDbContext  db, 
-                                    IPasswordsApiService<PasswordUsers,PasswordUsersService,PasswordsDbContext> usrs,
-                                    IPasswordsApiService<UserPasswords,UserPasswordsService,PasswordsDbContext> keys,
-                                    IPasswordsApiService<UserLocations,UserLocationsService,PasswordsDbContext> locs ) {
+                                    IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext> usrs,
+                                    IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext> keys,
+                                    IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext> locs ) {
             _logger = logger;
             _db = db;
             _usrs = usrs.serve();
