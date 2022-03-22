@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PasswordsAPI.Abstracts;
 using PasswordsAPI.Models;
@@ -19,7 +18,7 @@ namespace PasswordsAPI.Services
 
 
         private PasswordUsersService<CTX>        _usrs;
-        private DbSet<UserPasswords> DbSet;
+
 
         public UserPasswordsService( CTX ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> usr )
             : base(ctx)
@@ -27,7 +26,6 @@ namespace PasswordsAPI.Services
             _usrs = usr.serve();
             _enty = UserPasswords.Invalid;
             _lazy = new Task<UserPasswords>(() => { return _enty; });
-            DbSet = ctx.EntitiesSet<UserPasswords>();
         }
 
         public override UserPasswords Entity {
@@ -63,9 +61,7 @@ namespace PasswordsAPI.Services
             } else if( _enty.User != user.Id ) {
                 Status = Status.NoError;
                 _enty= Status.Unknown;
-                _lazy  = DbSet
-                         .AsNoTracking()
-                         .SingleOrDefaultAsync(p => p.User == user.Id);
+                _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == user.Id);
             } return this;
         }
 
@@ -76,11 +72,10 @@ namespace PasswordsAPI.Services
                     Status = Status.NoError;
                     _enty = new UserPasswords();
                     _enty.Hash = Crypt.CalculateHash(pass);
-                    BigInteger big = new BigInteger(_enty.Hash);
                     _enty.User = userId;
                     _enty.Pass = "";
                     _enty.Id = 0;
-                    DbSet.AddAsync(_enty);
+                    _dset.AddAsync(_enty);
                     _db.SaveChangesAsync();
                     return this;
                 } else {
@@ -89,7 +84,7 @@ namespace PasswordsAPI.Services
                 }
             } else {
                 _enty.Hash = Crypt.CalculateHash(pass);
-                DbSet.Update( _enty );
+                _dset.Update( _enty );
                 _db.SaveChangesAsync();
                 return this;
             }
@@ -133,7 +128,7 @@ namespace PasswordsAPI.Services
             if ( Entity ) if ( Entity.User == ofUser ) return this;
             Status = Status.NoError;
             Entity = Status.Unknown;
-            _lazy  = DbSet.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
+            _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
             return this;
         }
     } 

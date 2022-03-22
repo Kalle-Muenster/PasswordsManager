@@ -19,7 +19,6 @@ namespace PasswordsAPI.Abstracts
         where E : IEntityBase, new()
         where D : DbContext, IPasswordaApiDbContext<D>
     {
-        IPasswordsApiService<D> srv();
     }
     
 
@@ -41,31 +40,48 @@ namespace PasswordsAPI.Abstracts
         where S : AbstractApiService<E,S,D>
         where D : DbContext, IPasswordaApiDbContext<D>
     {
-        protected D? _db;
-
-        D IPasswordsApiService<D>.db
-        {
-            get { return _db; }
-        }
+        protected D?         _db;
+        protected E          _enty;
+        protected Task<E>    _lazy;
+        protected DbSet<E>   _dset;
+        protected StdStreams _cons;
+        
+        private Status       state;
 
         protected abstract Status GetDefaultError();
 
-        protected E          _enty;
-        protected Task<E>    _lazy;
-        protected StdStreams _cons;
-
+        D IPasswordsApiService<D>.db => _db;
+        public S serve() { return (S)this; }
         public abstract E Entity { get; set; }
 
-        private Status status;
-        public  Status Status { get => status; 
-            protected set => status = value; }
+
+
+        protected AbstractApiService( D ctx )
+        {
+            _db = ctx;
+            _enty = new E();
+            _cons = new StdStreams();
+            state = GetDefaultError();
+            _enty.Is().Status = state;
+            _dset = ctx.EntitiesSet<E>();
+        }
+
+
+        public Status Status {
+            get => state; 
+            protected set => state = value;
+        }
 
         public virtual bool Ok {
-            get { return (status.Code & ResultCode.IsValid) < ResultCode.Unknown; }
-            protected set { if ( value ) status = Status.Success;
-             else if (status.Code > ResultCode.Success )
-                 status = GetDefaultError();
+            get { return ( state.Code & ResultCode.IsValid ) < ResultCode.Unknown; }
+            protected set { if ( value ) state = Status.Success;
+             else if ( state.Code > ResultCode.Success )
+                 state = GetDefaultError();
             }
+        }
+
+        public static implicit operator bool( AbstractApiService<E, S, D> cast ) {
+            return cast.Ok;
         }
 
         // tunneling an status detected by another service then
@@ -76,14 +92,14 @@ namespace PasswordsAPI.Abstracts
         {
             if ( otherService.Status.Code.HasFlag( ResultCode.Service ) ) {
                 if( otherService.Status.Data.ToString() == "" ) {
-                    status = otherService.Status.WithData( GetType().Name );
+                    state = otherService.Status.WithData( GetType().Name );
                 } else {
-                    status = otherService.Status.WithText(
+                    state = otherService.Status.WithText(
                         $"{GetType().Name}: {otherService.Status.Text}"
                     );
                 }
             } else {
-                status = new Status(
+                state = new Status(
                     ResultCode.Unknown|ResultCode.Service|
                     otherService.Status.Code,
                     otherService.Status.Text,
@@ -92,27 +108,5 @@ namespace PasswordsAPI.Abstracts
             } return this.serve();
         }
 
-        public S serve()
-        {
-            return (S)this;
-        }
-
-        public IPasswordsApiService<D> srv()
-        {
-            return this;
-        }
-
-        protected AbstractApiService( D ctx )
-        {
-            _cons = new StdStreams();
-            _enty = new E();
-            _enty.Is().Status = status = GetDefaultError();
-            _db = ctx;
-        }
-
-        public static implicit operator bool( AbstractApiService<E,S,D> srv )
-        {
-            return srv.Ok;
-        }
     }
 }

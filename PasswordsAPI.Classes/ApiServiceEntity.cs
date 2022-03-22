@@ -13,19 +13,11 @@
     {
         public static readonly EntityBase<E> Invalid = new( new Status( ResultCode.Invalid ) );
 
+
         Status IEntityBase.Status { get; set; }
         public IEntityBase Is() { return this; }
         ET IEntityBase.Entity<ET>() { return (ET)Is(); }
         public E Entity() { return Is().Entity<E>(); }
-        
-
-
-        public static implicit operator bool( EntityBase<E> cast ) {
-            return cast.IsValid();
-        }
-        public static implicit operator EntityBase<E>( Status wasError ) {
-            return new EntityBase<E>( wasError );
-        }
 
 
         public EntityBase()
@@ -33,12 +25,21 @@
             Is().Status = Status.NoError;
         }
 
-        public EntityBase( Status wasError )
+        public EntityBase( Status state )
         {
-            Is().Status = wasError;
+            Is().Status = state;
         }
 
-        public bool IsValid()
+
+        public static implicit operator bool( EntityBase<E> cast ) {
+            return cast.IsValid();
+        }
+        public static implicit operator EntityBase<E>( Status cast ) {
+            return new EntityBase<E>( cast );
+        }
+
+
+        public bool IsValid() 
         {
             return ( Is().Status.Code & ResultCode.IsValid ) < ResultCode.Unknown;
         }
@@ -52,6 +53,7 @@
         {
             return( Is().Status.Code & ResultCode.IsValid ) == ResultCode.Unknown;
         }
+
         public override string ToString()
         {
             return Is().Status.ToString();
