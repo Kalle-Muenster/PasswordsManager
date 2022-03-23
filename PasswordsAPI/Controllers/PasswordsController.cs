@@ -88,7 +88,7 @@ namespace PasswordsAPI.Controllers
         public async Task<IActionResult> PutUserLocationInfo( string user, string area, string info )
         {
             UserLocations location = (await _locs.GetLocationEntity(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity;
-            if ( location.Is().Status.Ok ) {
+            if ( !location.Is().Status.Bad ) {
                 location.Info = info;
                 _db.UserLocations.Update( location );
                 _db.SaveChanges();

@@ -12,7 +12,7 @@ namespace PasswordsAPI.Services
         : AbstractApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> 
         where CTX : DbContext, IPasswordaApiDbContext<CTX>
     {
-        private static readonly Status UserServiceError = new Status(ResultCode.User|ResultCode.Service|ResultCode.Invalid); 
+        private static readonly Status UserServiceError = new Status(ResultCode.User|ResultCode.Service|ResultCode.Invalid, "Invalid User: '{0}'"); 
         private static readonly Status InvalidId = new Status(UserServiceError.Code|ResultCode.Id,"Invalid User.Id: {0}");
         private static readonly Status UsersName = new Status(UserServiceError.Code|ResultCode.Name,"Invalid User.Name {0}");
 
@@ -25,12 +25,11 @@ namespace PasswordsAPI.Services
                 if ( Entity ) if ( Entity.Name == nameOrId ) return Entity.Id;
                 Entity = _dset.AsNoTracking().SingleOrDefault(u => u.Name == nameOrId)
                       ?? UsersName.WithData( nameOrId );
-                Status = _enty.Is().Status;
                 return _enty?.Id ?? -1;
             } 
             if( Entity ) if ( Entity.Id == id ) return id;
             Entity = _dset.AsNoTracking().SingleOrDefault(u => u.Id == id)
-                  ?? InvalidId.WithData( id );
+                  ?? InvalidId.WithData( nameOrId );
             if (Entity) if (Entity.Id == id) return id;
             return -1;
         }
@@ -46,17 +45,17 @@ namespace PasswordsAPI.Services
                 if ( _enty ) if ( _enty.Name == nameOrId ) return this;
                 _enty = Status.Unknown;
                 _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
-            } Status = Status.NoError;
+            } Status = Status.NoError.WithData( nameOrId );
             return this;
         }
 
         public override PasswordUsers Entity {
             get { if (_enty.Is().Status.Waiting) {
                     _enty = _lazy.GetAwaiter().GetResult() ?? UserServiceError;
-                    Status = _enty.Is().Status; }
-                return Ok ? _enty : Status; }
+                    Status += _enty.Is().Status; }
+                return _enty?? Status; }
             set { if ( value ) _enty = value;
-                else Status = value.Is().Status; }
+                else Status += value.Is().Status; }
         }
 
         public PasswordUsersService( CTX ctx )
@@ -103,7 +102,7 @@ namespace PasswordsAPI.Services
 
         public async Task<PasswordUsersService<CTX>> ById( int byId )
         {
-            Status = Status.NoError;
+            Status = Status.NoError.WithData(byId);
             if (_enty) if (_enty.Id == byId) return this;
             _enty = Status.Unknown;
             _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(u => u.Id == byId);
@@ -112,7 +111,7 @@ namespace PasswordsAPI.Services
 
         public async Task<PasswordUsersService<CTX>> ByEmail( string email )
         {
-            Status = Status.NoError;
+            Status = Status.NoError.WithData(email);
             if ( _enty.IsValid() ) if ( _enty.Mail == email ) return this;
             _enty = new Status(UserServiceError.Code | ResultCode.Mail | ResultCode.Unknown, "Wrong email address: '{0}'", email);
             _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);

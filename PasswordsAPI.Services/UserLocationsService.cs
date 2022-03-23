@@ -100,7 +100,7 @@ namespace PasswordsAPI.Services
         {
             string crypt = SetKey( Crypt.CreateKey( masterPass ) ).GetAwaiter().GetResult().GetPassword();
             if ( Crypt.Error ) {
-                Status = new Status( Crypt.Error.Code.ToError(), Crypt.Error.Text, "still encrypted: " + crypt );
+                Status = new Status( ResultCode.Unknown|ResultCode.Cryptic, Crypt.Error.ToString(), "still encrypted: " + crypt );
             } return crypt;
         }
 
