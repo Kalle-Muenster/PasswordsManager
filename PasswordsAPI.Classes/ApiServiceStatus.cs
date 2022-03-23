@@ -97,20 +97,17 @@ namespace PasswordsAPI.Abstracts
 
         public static implicit operator bool( Status cast )
         {
-            return (cast.Code & ResultCode.IsValid) <= ResultCode.Unknown && cast.Code != 0;
+            return (cast.Code & ResultCode.IsValid) <= (ResultCode.Unknown|ResultCode.Success) && cast.Code != 0;
         }
 
-        public static implicit operator string( Status cast )
-        {
-            return string.Format( cast.Text, cast.Data );
-        }
 
         public override string ToString()
         {
             ResultCode masked = Code & ResultCode.IsValid;
-            string status = masked < ResultCode.Unknown 
-              ? "Success" : masked > ResultCode.Unknown
-                ? "Error" : "Status";
+            string status = masked < ResultCode.IsError && ((masked.HasFlag(ResultCode.Unknown) && !masked.HasFlag(ResultCode.Success))||(masked == 0))
+               ? "Status" : masked < ResultCode.IsError 
+              ? "Success" 
+              : "Error";
 
             return string.Format( $"{status}-[{Code.ToUInt32()}]: {Text}", Data );
         }
@@ -140,17 +137,20 @@ namespace PasswordsAPI.Abstracts
 
         public bool Bad
         {
-            get { return (Code & ResultCode.IsValid) > ResultCode.Success; }
+            get { return (int)(Code & ResultCode.IsValid) >
+                         (Code.HasFlag(ResultCode.Success) ? 3 : 1); }
         }
 
         public bool Ok
         {
-            get { return (Code != 0) && (Code & ResultCode.IsValid) < ResultCode.Unknown; }
+            get { return (Code > 0) && ( (Code & ResultCode.IsValid) < ResultCode.IsError ) 
+                                    && ( Code.HasFlag(ResultCode.Success) 
+                                       | !Code.HasFlag(ResultCode.Unknown) ); }
         }
 
         public bool Waiting
         {
-            get { return Code.HasFlag( ResultCode.Unknown ); }
+            get { return (Code & ResultCode.IsValid) == ResultCode.Unknown; }
         }
     }
 }
