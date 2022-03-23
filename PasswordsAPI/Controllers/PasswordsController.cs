@@ -144,11 +144,12 @@ namespace PasswordsAPI.Controllers
         public async Task<IActionResult> GetUserLocationPassword( string user, string area, string master )
         {
             int userId = _usrs.GetUserId( user );
+            if (userId <= 0) return StatusCode(404, _usrs.Status.ToString());
             if ( !(await _locs.GetLocationEntity( userId, area )) )
-                return StatusCode( 500,_locs.Status.ToString() );
+                return StatusCode( 404,_locs.Status.ToString() );
             string pass = _locs.GetPassword( master );
             if ( _locs.Status.Bad ) {
-                return StatusCode( 500, _locs.Status.ToString()  );
+                return StatusCode( 303, _locs.Status.ToString()  );
             } return Ok( pass );
         }
 
@@ -166,9 +167,9 @@ namespace PasswordsAPI.Controllers
                 if( _locs.Entity.IsValid() ) {
                     return new OkObjectResult( _locs.Entity );
                 } else {
-                    return StatusCode( 500, _locs.Status.ToString() ); }
+                    return StatusCode( 404, _locs.Status.ToString() ); }
             } else
-                return StatusCode( 500, _usrs.Status.ToString() );
+                return StatusCode( 404, _usrs.Status.ToString() );
         }
 
         [Produces( "application/json" ), HttpDelete( "{user}/{area}" )]
