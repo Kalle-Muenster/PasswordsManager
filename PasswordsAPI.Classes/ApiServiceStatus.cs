@@ -28,7 +28,7 @@ namespace PasswordsAPI.Abstracts
     [Flags]
     public enum ResultCode : uint
     {
-        NoError = 0,
+        NoState = 0,
         Success = 1,
         Unknown = 2,
         IsError = 4,
@@ -53,7 +53,7 @@ namespace PasswordsAPI.Abstracts
 
     public struct Status
     {
-        public static readonly Status NoError = new Status(ResultCode.NoError);
+        public static readonly Status NoState = new Status(ResultCode.NoState);
         public static readonly Status Unknown = new Status(ResultCode.Unknown);
         public static readonly Status Success = new Status(ResultCode.Success);
         public static readonly Status Invalid = new Status(ResultCode.Invalid);
@@ -100,16 +100,22 @@ namespace PasswordsAPI.Abstracts
             return (cast.Code & ResultCode.IsValid) <= (ResultCode.Unknown|ResultCode.Success) && cast.Code != 0;
         }
 
+        public string Result {
+            get { ResultCode masked = Code & ResultCode.IsValid;
+            return masked < ResultCode.IsError && ((masked.HasFlag(ResultCode.Unknown) && !masked.HasFlag(ResultCode.Success))||(masked == 0))
+               ? "Status" : masked < ResultCode.IsError 
+              ? "Success" : "Error";
+            }
+        }
 
         public override string ToString()
         {
-            ResultCode masked = Code & ResultCode.IsValid;
-            string status = masked < ResultCode.IsError && ((masked.HasFlag(ResultCode.Unknown) && !masked.HasFlag(ResultCode.Success))||(masked == 0))
-               ? "Status" : masked < ResultCode.IsError 
-              ? "Success" 
-              : "Error";
+            return string.Format($"{Result}-[{Code}]: {Text}", Data);
+        }
 
-            return string.Format( $"{status}-[{Code.ToUInt32()}]: {Text}", Data );
+        public static implicit operator string(Status cast)
+        {
+            return string.Format($"{cast.Result}-[{cast.Code.ToUInt32()}]: {cast.Text}", cast.Data);
         }
 
         public static string MessageFromStatusFlags(uint flags)

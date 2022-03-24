@@ -45,7 +45,7 @@ namespace PasswordsAPI.Services
                 if ( _enty ) if ( _enty.Name == nameOrId ) return this;
                 _enty = Status.Unknown;
                 _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
-            } Status = Status.NoError.WithData( nameOrId );
+            } Status = Status.NoState.WithData( nameOrId );
             return this;
         }
 
@@ -69,7 +69,7 @@ namespace PasswordsAPI.Services
         public async Task<PasswordUsersService<CTX>> CreateNewUser( string name, string email, string pass, string? info )
         {
             IEnumerator<PasswordUsers> it = _dset.AsNoTracking().GetEnumerator();
-            Status = Status.NoError;
+            Status = Status.NoState;
             while ( it.MoveNext() ) {
                 if( it.Current.Name == name ) {
                     Status = new Status( UsersName.Code,"Already Exists", name ); 
@@ -102,7 +102,7 @@ namespace PasswordsAPI.Services
 
         public async Task<PasswordUsersService<CTX>> ById( int byId )
         {
-            Status = Status.NoError.WithData(byId);
+            Status = Status.NoState.WithData(byId);
             if (_enty) if (_enty.Id == byId) return this;
             _enty = Status.Unknown;
             _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(u => u.Id == byId);
@@ -111,7 +111,7 @@ namespace PasswordsAPI.Services
 
         public async Task<PasswordUsersService<CTX>> ByEmail( string email )
         {
-            Status = Status.NoError.WithData(email);
+            Status = Status.NoState.WithData(email);
             if ( _enty.IsValid() ) if ( _enty.Mail == email ) return this;
             _enty = new Status(UserServiceError.Code | ResultCode.Mail | ResultCode.Unknown, "Wrong email address: '{0}'", email);
             _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);

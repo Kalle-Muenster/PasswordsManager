@@ -122,7 +122,7 @@ namespace PasswordsAPI.Services
 
         public int GetAreaId( string nameOrId, int usrId )
         {
-            Status = Status.NoError;
+            Status = Status.NoState;
             if ( int.TryParse( nameOrId, out int locId ) ) {
                 if ( Entity.IsValid() )
                     if ( Entity.User == usrId && Entity.Id == locId )
@@ -152,7 +152,7 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService<CTX>> GetLocationEntity( int locationId )
         {
             if ( locationId > 0 ) {
-                Status = Status.NoError;
+                Status = Status.NoState;
                 if (Entity) if (Entity.Id == locationId) return this;
                 _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(l => l.Id == locationId);
                 _enty = Status.Unknown;
@@ -199,12 +199,12 @@ namespace PasswordsAPI.Services
                 // if the location already exists, update with new password set
                 _enty.Pass = Encoding.ASCII.GetBytes( masterKey.Encrypt( pass ) );
                 _dset.Update( _enty );
-                Status = Status.NoError;
+                Status = Status.NoState;
                 _db.SaveChangesAsync();
                 return this;
             } else {
                 // if location not exists yet, add a new location entry therefore
-                _enty = Status = Status.NoError;
+                _enty = Status = Status.NoState;
                 return AddNewLocationEntry( init, pass, masterKey );
             }
         }

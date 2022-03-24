@@ -22,7 +22,7 @@
 
         public EntityBase()
         {
-            Is().Status = Status.NoError;
+            Is().Status = Status.NoState;
         }
 
         public EntityBase( Status state )
@@ -41,17 +41,12 @@
 
         public bool IsValid() 
         {
-            return ( Is().Status.Code & ResultCode.IsValid ) < ResultCode.Unknown;
-        }
-
-        public bool HasInfo()
-        {
-            return ( Is().Status.Code & ResultCode.IsValid ) == ResultCode.Success;
+            return !Is().Status.Bad;
         }
 
         public bool Waiting()
         {
-            return( Is().Status.Code & ResultCode.IsValid ) == ResultCode.Unknown;
+            return Is().Status.Waiting;
         }
 
         public override string ToString()

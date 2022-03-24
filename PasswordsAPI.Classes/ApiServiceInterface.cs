@@ -18,8 +18,7 @@ namespace PasswordsAPI.Abstracts
         : IPasswordsApiService<D>
         where E : IEntityBase, new()
         where D : DbContext, IPasswordaApiDbContext<D>
-    {
-    }
+    {}
     
 
     public interface IPasswordsApiService<E,S,D>

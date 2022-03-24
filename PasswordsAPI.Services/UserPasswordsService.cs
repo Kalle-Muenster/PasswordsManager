@@ -41,9 +41,9 @@ namespace PasswordsAPI.Services
 
         public override bool Ok
         {
-            get { return Entity.IsValid() && Status.Code == ResultCode.NoError; }
-            protected set { if ( value ) Status = _enty.IsValid() ? Status.NoError : _enty.Is().Status;
-                else if (Status.Code == ResultCode.NoError) 
+            get { return Entity.IsValid() && Status.Code == ResultCode.NoState; }
+            protected set { if ( value ) Status = _enty.IsValid() ? Status.NoState : _enty.Is().Status;
+                else if (Status.Code == ResultCode.NoState) 
                     Status = PasswordServiceError;
             }
         }
@@ -59,7 +59,7 @@ namespace PasswordsAPI.Services
                 Status = _usrs.Status + ResultCode.Password;
                 _enty = Status;
             } else if( _enty.User != user.Id ) {
-                Status = Status.NoError;
+                Status = Status.NoState;
                 _enty= Status.Unknown;
                 _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == user.Id);
             } return this;
@@ -69,7 +69,7 @@ namespace PasswordsAPI.Services
         {
             if( !( await ForUserAccount(_usrs.ById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
-                    Status = Status.NoError;
+                    Status = Status.NoState;
                     _enty = new UserPasswords();
                     _enty.Hash = Crypt.CalculateHash(pass);
                     _enty.User = userId;
@@ -96,7 +96,7 @@ namespace PasswordsAPI.Services
                 if( Entity.Hash != Crypt.CalculateHash( masterPassword ) ) {
                     _enty = Status = HashValue.WithData( masterPassword );
                     return false;
-                } else Status = Status.NoError;
+                } else Status = Status.NoState;
                 return true;
             } return false;
         }
@@ -115,7 +115,7 @@ namespace PasswordsAPI.Services
         private Crypt.Key CreateKey( UserPasswords masterdata )
         {
             if( masterdata.IsValid() ) {
-                Status = Status.NoError;
+                Status = Status.NoState;
                 return Crypt.CreateKey( masterdata.Hash );
             } else {
                 Status = masterdata.Is().Status;
@@ -126,7 +126,7 @@ namespace PasswordsAPI.Services
         public async Task<UserPasswordsService<CTX>> ByUserId( int ofUser )
         {
             if ( Entity ) if ( Entity.User == ofUser ) return this;
-            Status = Status.NoError;
+            Status = Status.NoState;
             Entity = Status.Unknown;
             _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
             return this;
