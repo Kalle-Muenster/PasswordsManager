@@ -46,7 +46,7 @@ namespace PasswordsAPI.Models
         {
             Area = String.Empty;
             Pass = Array.Empty<byte>();
-            Is().Status = invalid.Code == ResultCode.NoError
+            Is().Status = invalid.Code == ResultCode.NoState
                   ? Invalid.Is().Status : invalid;
             Id = -1;
         }
