@@ -28,7 +28,7 @@ namespace PasswordsAPI.Services
 
         public override UserLocations Entity {
             get {
-                if (_enty.Is().Status.Waiting)
+                if (_enty.Is().Status.IsWaiting)
                     _enty = _lazy.GetAwaiter().GetResult() 
                         ?? LocationServiceError;
                 return Ok ? _enty : Status;
