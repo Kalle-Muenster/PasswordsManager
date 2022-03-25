@@ -37,13 +37,13 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpGet( "User")]
         public IActionResult GetUser()
         {
-            return new OkObjectResult( _usrs.ListAllUsers() );
+            return new OkObjectResult( _usrs.ListUserAccounts() );
         }
 
         [Produces(  "application/json" ), HttpGet( "{user}/Info" )]
         public async Task<IActionResult> GetUserInfo(string user)
         {
-            if ( (await _usrs.ByNameOrId( user )).Entity.Is().Status.Bad ) {
+            if ( (await _usrs.GetUserByNameOrId( user )).Entity.Is().Status.Bad ) {
                 return StatusCode( 400, _usrs.Status.ToString() );
             } else {
                 return Ok( _usrs.Entity.Info );
@@ -53,7 +53,7 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpPut( "{user}/Info" )]
         public async Task<IActionResult> PutUserInfo(string user,string info)
         {
-            if ( (await _usrs.ByNameOrId(user)).Entity.IsValid() ) {
+            if ( (await _usrs.GetUserByNameOrId(user)).Entity.IsValid() ) {
                 PasswordUsers usr = _usrs.Entity;
                 usr.Info = info;
                 _db.Update( usr );
@@ -65,7 +65,7 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpPut( "{user}/Pass" )]
         public async Task<ActionResult> SetUserPassword( string user, string oldpass, string newpass )
         {
-            if( await _keys.ForUserAccount( _usrs.ByNameOrId(user) ) ) {
+            if( await _keys.ForUserAccount( _usrs.GetUserByNameOrId(user) ) ) {
                 if ( _keys.VerifyPassword( _usrs.Entity.Id, oldpass ) )
                     return new OkObjectResult(
                (await _keys.SetMasterKey(_usrs.Entity.Id, newpass)).Status.ToString()
@@ -109,7 +109,7 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json"), HttpPost("User")]
         public async Task<IActionResult> NewUser( string name, string email, string pass )
         {
-            PasswordUsers user = (await _usrs.CreateNewUser( name, email, pass, "")).Entity;
+            PasswordUsers user = (await _usrs.CreateNewAccount( name, email,"" )).Entity;
             if ( user.IsValid() ) {
                 // as soon user has been add, set the users master password
                 // (or a password hash, if user keys residing client sided)
@@ -156,13 +156,13 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpPost( "{user}/Locations" )]
         public async Task<IActionResult> NewUserLocation( string user, string name, string pass, string? login, string? info )
         {
-            if( await _usrs.ByNameOrId( user ) ) {
+            if( await _usrs.GetUserByNameOrId( user ) ) {
                 UserLocations newArea = new UserLocations();
                 newArea.Area = name;
                 newArea.User = _usrs.Entity.Id;
                 newArea.Info = info ?? String.Empty;
                 newArea.Name = login ?? String.Empty;
-                await _locs.SetLocationPassword(_usrs.ByNameOrId(user), newArea, pass );
+                await _locs.SetLocationPassword(_usrs.GetUserByNameOrId(user), newArea, pass );
                 await _locs.GetLocationEntity( newArea.User, newArea.Area );
                 if( _locs.Entity.IsValid() ) {
                     return new OkObjectResult( _locs.Entity );
@@ -175,7 +175,7 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpDelete( "{user}/{area}" )]
         public async Task<IActionResult> RemoveLocation( string user, string area, string masterPass )
         {
-            if( await _locs.RemoveLocation( _usrs.ByNameOrId( user ), area, masterPass ) )
+            if( await _locs.RemoveLocation( _usrs.GetUserByNameOrId( user ), area, masterPass ) )
                 return Ok( $"Successfully removed password for: {area}" );
             else return StatusCode( 500, _locs.Status.ToString() );
         }
@@ -183,10 +183,10 @@ namespace PasswordsAPI.Controllers
         [Produces( "application/json" ), HttpDelete( "{user}" )]
         public async Task<IActionResult> RemoveUserAccount( string user, string mail, string pass )
         {
-            if ( await _usrs.ByNameOrId( user ) ) {
+            if ( await _usrs.GetUserByNameOrId( user ) ) {
                 if ( _usrs.Entity.Mail == mail ) {
-                    if ( (await _keys.ForUserAccount( _usrs.ByNameOrId( user ) )).VerifyPassword( _usrs.Entity.Id, pass ) ) {
-                        if ( await _usrs.RemoveUser(_usrs.Entity ) ) return new OkObjectResult( _usrs.Status.ToString() );
+                    if ( (await _keys.ForUserAccount( _usrs.GetUserByNameOrId( user ) )).VerifyPassword( _usrs.Entity.Id, pass ) ) {
+                        if ( await _usrs.RemoveUserAccount(_usrs.Entity ) ) return new OkObjectResult( _usrs.Status.ToString() );
                         else return StatusCode( 500, "removing user account failed" );
                     } return StatusCode( 303, _keys.Status.ToString() );
                 } return StatusCode( 404, "incorrect Em@il address");

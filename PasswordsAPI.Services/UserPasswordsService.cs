@@ -29,7 +29,7 @@ namespace PasswordsAPI.Services
         }
 
         public override UserPasswords Entity {
-            get { if ( _enty.Is().Status.Waiting )
+            get { if ( _enty.Is().Status.IsWaiting )
                     _enty = _lazy.GetAwaiter().GetResult() 
                              ?? PasswordServiceError;
                 if (_enty.Is().Status.Bad ) Status = _enty.Is().Status;
@@ -67,7 +67,7 @@ namespace PasswordsAPI.Services
 
         public async Task<UserPasswordsService<CTX>> SetMasterKey( int userId, string pass )
         {
-            if( !( await ForUserAccount(_usrs.ById(userId)) ) ) {
+            if( !( await ForUserAccount(_usrs.GetUserById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
                     Status = Status.NoState;
                     _enty = new UserPasswords();
@@ -92,7 +92,7 @@ namespace PasswordsAPI.Services
 
         public bool VerifyPassword( int ofUser, string masterPassword )
         {
-            if ( ForUserAccount( _usrs.ById( ofUser ) ).GetAwaiter().GetResult() ) {
+            if ( ForUserAccount( _usrs.GetUserById( ofUser ) ).GetAwaiter().GetResult() ) {
                 if( Entity.Hash != Crypt.CalculateHash( masterPassword ) ) {
                     _enty = Status = HashValue.WithData( masterPassword );
                     return false;
@@ -106,7 +106,7 @@ namespace PasswordsAPI.Services
             UserPasswords pwd = Entity;
             if ( pwd ) if ( pwd.User == ofUser ) 
                 return CreateKey( pwd );
-            if ( ForUserAccount( _usrs.ById( ofUser ) ).GetAwaiter().GetResult() )
+            if ( ForUserAccount( _usrs.GetUserById( ofUser ) ).GetAwaiter().GetResult() )
                 return Crypt.CreateKey( pwd.Hash );
             else
                 return null;

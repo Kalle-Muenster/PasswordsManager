@@ -18,39 +18,8 @@ namespace PasswordsAPI.Services
 
         protected override Status GetDefaultError() { return UserServiceError; }
 
-        public int GetUserId( string nameOrId )
-        {
-            int id = 0;
-            if ( !int.TryParse( nameOrId, out id ) ) {
-                if ( Entity ) if ( Entity.Name == nameOrId ) return Entity.Id;
-                Entity = _dset.AsNoTracking().SingleOrDefault(u => u.Name == nameOrId)
-                      ?? UsersName.WithData( nameOrId );
-                return _enty?.Id ?? -1;
-            } 
-            if( Entity ) if ( Entity.Id == id ) return id;
-            Entity = _dset.AsNoTracking().SingleOrDefault(u => u.Id == id)
-                  ?? InvalidId.WithData( nameOrId );
-            if (Entity) if (Entity.Id == id) return id;
-            return -1;
-        }
-
-        public async Task<PasswordUsersService<CTX>> ByNameOrId( string nameOrId )
-        {
-            int id = 0;
-            if ( int.TryParse( nameOrId, out id ) ) {
-                if ( _enty ) if (_enty.Id == id) return this;
-                _enty = Status.Unknown;
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Id == id );
-            } else {
-                if ( _enty ) if ( _enty.Name == nameOrId ) return this;
-                _enty = Status.Unknown;
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
-            } Status = Status.NoState.WithData( nameOrId );
-            return this;
-        }
-
         public override PasswordUsers Entity {
-            get { if (_enty.Is().Status.Waiting) {
+            get { if (_enty.Is().Status.IsWaiting) {
                     _enty = _lazy.GetAwaiter().GetResult() ?? UserServiceError;
                     Status += _enty.Is().Status; }
                 return _enty?? Status; }
@@ -65,8 +34,38 @@ namespace PasswordsAPI.Services
             _enty = PasswordUsers.Invalid;
             _lazy = new Task<PasswordUsers>(()=>_enty);
         }
-        
-        public async Task<PasswordUsersService<CTX>> CreateNewUser( string name, string email, string pass, string? info )
+
+        public int GetUserId( string nameOrId )
+        {
+            int id = 0;
+            if( !int.TryParse(nameOrId, out id) ) {
+                if (Entity) if (Entity.Name == nameOrId) return Entity.Id;
+                Entity = _dset.AsNoTracking().SingleOrDefault( u => u.Name == nameOrId )
+                         ?? UsersName.WithData( nameOrId );
+                return _enty?.Id ?? -1;
+            } if (Entity) if (Entity.Id == id) return id;
+            Entity = _dset.AsNoTracking().SingleOrDefault( u => u.Id == id )
+                     ?? InvalidId.WithData( nameOrId );
+            if (Entity) if (Entity.Id == id) return id;
+            return -1;
+        }
+
+        public async Task<PasswordUsersService<CTX>> GetUserByNameOrId( string nameOrId )
+        {
+            int id = 0;
+            if ( int.TryParse( nameOrId, out id ) ) {
+                if (_enty) if (_enty.Id == id) return this;
+                _enty = Status.Unknown;
+                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Id == id );
+            } else {
+                _enty = Status.Unknown;
+                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
+                if (_enty) if (_enty.Name == nameOrId) return this;
+            } Status = Status.NoState.WithData( nameOrId );
+            return this;
+        }
+
+        public async Task<PasswordUsersService<CTX>> CreateNewAccount( string name, string email, string? info )
         {
             IEnumerator<PasswordUsers> it = _dset.AsNoTracking().GetEnumerator();
             Status = Status.NoState;
@@ -87,20 +86,21 @@ namespace PasswordsAPI.Services
                     Icon = Array.Empty<byte>() }
             ).Entity;
             _db.SaveChanges();
+            Status = Status.NoState.WithData( "MasterKey" );
             return this;
         }
 
-        public List<PasswordUsers> ListAllUsers()
+        public List<PasswordUsers> ListUserAccounts()
         {
             IEnumerator<PasswordUsers> usinger = _dset.AsNoTracking().GetEnumerator();
             List<PasswordUsers> listinger = new List<PasswordUsers>();
-            while (usinger.MoveNext()) {
+            while ( usinger.MoveNext() ) {
                 listinger.Add( usinger.Current );
             } usinger.Dispose();
             return listinger;
         }
 
-        public async Task<PasswordUsersService<CTX>> ById( int byId )
+        public async Task<PasswordUsersService<CTX>> GetUserById( int byId )
         {
             Status = Status.NoState.WithData(byId);
             if (_enty) if (_enty.Id == byId) return this;
@@ -109,16 +109,16 @@ namespace PasswordsAPI.Services
             return this;
         }
 
-        public async Task<PasswordUsersService<CTX>> ByEmail( string email )
+        public async Task<PasswordUsersService<CTX>> GetUserByEmail( string email )
         {
             Status = Status.NoState.WithData(email);
             if ( _enty.IsValid() ) if ( _enty.Mail == email ) return this;
-            _enty = new Status(UserServiceError.Code | ResultCode.Mail | ResultCode.Unknown, "Wrong email address: '{0}'", email);
+            _enty = new Status( ResultCode.Unknown|ResultCode.Mail, "Wrong email address: '{0}'", email );
             _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);
             return this;
         }
 
-        public async Task<PasswordUsersService<CTX>> RemoveUser( PasswordUsers account )
+        public async Task<PasswordUsersService<CTX>> RemoveUserAccount( PasswordUsers account )
         {
             _dset.Remove( account );
             Status = (Status.Success + ResultCode.User).WithText(
