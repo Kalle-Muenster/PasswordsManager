@@ -141,13 +141,17 @@ namespace PasswordsAPI.Controllers
         }
 
         [Produces( "application/json" ), HttpGet( "{user}/{area}/Password" )]
-        public async Task<IActionResult> GetUserLocationPassword( string user, string area, string master )
+        public async Task<IActionResult> GetUserLocationPassword( string user, string area, string crypt )
         {
             int userId = _usrs.GetUserId( user );
             if (userId <= 0) return StatusCode(404, _usrs.Status.ToString());
             if ( !(await _locs.GetLocationEntity( userId, area )) )
                 return StatusCode( 404,_locs.Status.ToString() );
-            string pass = _locs.GetPassword( master );
+            Yps.Crypt.Key key = (await _keys.ForUserAccount(_usrs.GetUserById(userId))).GetMasterKey(userId);
+            if (!key.IsValid()) return StatusCode( 303, _keys.Status );
+            string master = key.Decrypt( crypt );
+            if ( master == null ) return StatusCode(303, "master password invalid" );
+            string pass = _locs.GetPassword( master.Substring(3) );
             if ( _locs.Status.Bad ) {
                 return StatusCode( 303, _locs.Status.ToString()  );
             } return Ok( pass );
