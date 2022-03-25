@@ -30,7 +30,7 @@ namespace PasswordsAPI.Models
 
         public PasswordUsers( Status code )
             : base( code ) {
-            Is().Status = code.Code > 0 
+            Is().Status = code.Code > ResultCode.Success 
                   ? code : Invalid.Is().Status;
             Info = String.Empty;
             Name = String.Empty;
@@ -44,8 +44,7 @@ namespace PasswordsAPI.Models
         }
 
         public override string ToString() {
-            return string.Format("{{0}}",
-                $"\"Id\":{Id},\"Name\":\"{Name}\"" );
+            return "{"+ $"\"Id\":{Id},\"Name\":\"{Name}\"" + "}";
         }
     }
 }

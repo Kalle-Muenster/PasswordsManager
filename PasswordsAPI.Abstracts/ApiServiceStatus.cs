@@ -78,16 +78,21 @@ namespace PasswordsAPI.Abstracts
         public Status( ResultCode code, string text )
         {
             Code = code;
-            Text = text.Contains( "{0}" ) ? text : text + " {0}";
+            Text = text.Contains("{0}") ? text : text + " {0}";
             Data = String.Empty;
         }
-        private Status( in Status status, object with )
-            : this( status.Code, status.Text, with )
-        { }
         public Status( ResultCode code, string text, object data )
-            : this( code, text )
-        { Data = data; }
-
+        {
+            Code = code;
+            Text = text.Contains("{0}") ? text : text + " {0}";
+            Data = data;
+        }
+        private Status(in Status status, object with)
+        {
+            Code = status.Code;
+            Text = status.Text;
+            Data = with;
+        }
 
 
         public Status WithData( object with )
@@ -109,9 +114,11 @@ namespace PasswordsAPI.Abstracts
 
         public ResultState Result {
             get { ResultCode masked = Code & ResultCode.IsValid;
-            return masked < ResultCode.IsError && ((masked.HasFlag(ResultCode.Unknown) && !masked.HasFlag(ResultCode.Success))||(masked == 0))
-               ? ResultState.Status : masked < ResultCode.IsError 
-              ? ResultState.Success : ResultState.Error;
+            return masked >= ResultCode.IsError
+                 ? ResultState.Error
+                 : ((masked.HasFlag(ResultCode.Unknown) && !masked.HasFlag(ResultCode.Success))||(masked == 0))
+                 ? ResultState.Status  
+                 : ResultState.Success;
             }
         }
 
@@ -125,7 +132,7 @@ namespace PasswordsAPI.Abstracts
             return string.Format($"{cast.Result}-[{cast.Code.ToUInt32()}]: {cast.Text}", cast.Data);
         }
 
-        public static string MessageFromStatusFlags(uint flags)
+        public static string MessageFromStatusFlags( uint flags )
         {
             return ((ResultCode) flags).ToString();
         } 
@@ -145,7 +152,7 @@ namespace PasswordsAPI.Abstracts
 
         public static Status operator + ( Status status, ResultCode code )
         {
-            return new Status( status.Code|code, status.Text, status.Data );
+            return new Status( status.Code|code, status.Text, status.Data.ToString() );
         }
 
         public bool Bad
