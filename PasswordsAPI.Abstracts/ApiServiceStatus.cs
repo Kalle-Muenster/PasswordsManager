@@ -51,6 +51,11 @@ namespace PasswordsAPI.Abstracts
         Icon    = 0x00400000
     }
 
+    public enum ResultState : uint
+    {
+        Status,Success,Waiting,Error
+    }
+
     public struct Status
     {
         public static readonly Status NoState = new Status(ResultCode.NoState);
@@ -59,6 +64,8 @@ namespace PasswordsAPI.Abstracts
         public static readonly Status Invalid = new Status(ResultCode.Invalid);
         public static readonly Status Cryptic = new Status(ResultCode.Cryptic|ResultCode.Data,"Data Encrypted");
         public static readonly Status Service = new Status(ResultCode.Service);
+        public static readonly Status Waiting = new Status(ResultCode.Success|ResultCode.Unknown);
+
 
         public readonly ResultCode Code;
         public readonly string     Text;
@@ -100,11 +107,11 @@ namespace PasswordsAPI.Abstracts
             return (cast.Code & ResultCode.IsValid) <= (ResultCode.Unknown|ResultCode.Success) && cast.Code != 0;
         }
 
-        public string Result {
+        public ResultState Result {
             get { ResultCode masked = Code & ResultCode.IsValid;
             return masked < ResultCode.IsError && ((masked.HasFlag(ResultCode.Unknown) && !masked.HasFlag(ResultCode.Success))||(masked == 0))
-               ? "Status" : masked < ResultCode.IsError 
-              ? "Success" : "Error";
+               ? ResultState.Status : masked < ResultCode.IsError 
+              ? ResultState.Success : ResultState.Error;
             }
         }
 
@@ -154,7 +161,7 @@ namespace PasswordsAPI.Abstracts
                                        | !Code.HasFlag(ResultCode.Unknown) ); }
         }
 
-        public bool Waiting
+        public bool IsWaiting
         {
             get { return (Code & ResultCode.IsValid) == ResultCode.Unknown; }
         }

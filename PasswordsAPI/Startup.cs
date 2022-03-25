@@ -16,7 +16,6 @@ using Constringer = Microsoft.Data.Sqlite.SqliteConnectionStringBuilder;
 using Connectione = Microsoft.Data.Sqlite.SqliteConnection;
 using PasswordsAPI.Abstracts;
 using PasswordsAPI.Services;
-
 using PasswordsAPI.Database;
 using PasswordsAPI.Models;
 
@@ -50,7 +49,7 @@ namespace PasswordsAPI
             });
 
 
-            services.AddScoped< IPasswordsApiService<PasswordUsers,PasswordUsersService<PasswordsDbContext>,PasswordsDbContext>, PasswordUsersService<PasswordsDbContext>>();
+            services.AddScoped<IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext>, PasswordUsersService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext>, UserPasswordsService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext>, UserLocationsService<PasswordsDbContext>>();
 
@@ -58,7 +57,7 @@ namespace PasswordsAPI
                 services.AddDbContext<PasswordsDbContext>(
                 options => options.UseSqlServer( Configuration.GetConnectionString( "DerBanan" ), null ) );
 
-            if( DatabaseType==ServerFrameworks.USE_SQLITE )
+            if( DatabaseType == ServerFrameworks.USE_SQLITE )
                 services.AddDbContext<PasswordsDbContext>(
                 options => options.UseSqlite(
                     new Connectione(

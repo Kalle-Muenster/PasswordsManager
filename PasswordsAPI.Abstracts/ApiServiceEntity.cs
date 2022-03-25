@@ -46,7 +46,7 @@
 
         public bool Waiting()
         {
-            return Is().Status.Waiting;
+            return Is().Status.IsWaiting;
         }
 
         public override string ToString()

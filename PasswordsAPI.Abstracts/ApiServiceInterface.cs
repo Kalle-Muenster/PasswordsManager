@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Security;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Consola;
 
@@ -66,9 +67,11 @@ namespace PasswordsAPI.Abstracts
         }
 
 
-        public Status Status {
-            get => state; 
-            protected set => state = value;
+        public Status Status
+        {
+        //    get { return state.Result == ResultState.Waiting ? state = Entity.Is().Status : state; }
+            get { return state.Code == ResultCode.NoState ? state.Data != string.Empty ? state += Entity.Is().Status : state : state; }
+            protected set { state = value; }
         }
 
         public virtual bool Ok {
