@@ -141,8 +141,7 @@ namespace Services.Tests
             PasswordUsersService<Test.Context> service = new PasswordUsersService<Test.Context>(Test.CurrentContext);
 
             // Act
-            Status result = service.CreateNewAccount("ElNamo", "El@Mailo.de", "ElInfo").GetAwaiter().GetResult()
-            .Status;
+            Status result = service.CreateNewAccount("ElNamo", "El@Mailo.de", "ElInfo").GetAwaiter().GetResult().Status;
             PasswordUsers account = service.Entity;
             
             // Assert
