@@ -86,7 +86,7 @@ namespace PasswordsAPI.Controllers
         {
             StringBuilder result = new StringBuilder("Testing Yps.Crypt\nTest Data: This is test data which consists from a System.String which contains 90 characters of text\n");
 
-            Crypt.Key key = Crypt.CreateKey("YpsCryptTest");
+            CryptKey key = Crypt.CreateKey("YpsCryptTest");
             string cryptisch = Crypt.Encrypt(key,System.Text.Encoding.Default.GetBytes("This is test data which consists from a System.String which contains 90 characters of text"));
             result.Append( "Encrypred: " );
             result.Append( cryptisch + "\n" );

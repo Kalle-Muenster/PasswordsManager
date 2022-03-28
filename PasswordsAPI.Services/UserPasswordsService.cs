@@ -101,7 +101,7 @@ namespace PasswordsAPI.Services
             } return false;
         }
 
-        public Crypt.Key GetMasterKey( int ofUser )
+        public CryptKey GetMasterKey( int ofUser )
         {
             UserPasswords pwd = Entity;
             if ( pwd ) if ( pwd.User == ofUser ) 
@@ -112,7 +112,7 @@ namespace PasswordsAPI.Services
                 return null;
         }
 
-        private Crypt.Key CreateKey( UserPasswords masterdata )
+        private CryptKey CreateKey( UserPasswords masterdata )
         {
             if( masterdata.IsValid() ) {
                 Status = Status.NoState;

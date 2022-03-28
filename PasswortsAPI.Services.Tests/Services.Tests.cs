@@ -1,5 +1,4 @@
 ﻿using System;
-using Consola;
 using System.IO;
 using Xunit;
 using PasswordsAPI.Abstracts;
@@ -8,7 +7,6 @@ using PasswordsAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using Yps;
 using Constringer = Microsoft.Data.Sqlite.SqliteConnectionStringBuilder;
@@ -51,16 +49,6 @@ namespace Services.Tests
                 if (state) running = true;
                 return state;
             }
-        }
-
-        
-        public static void AssertInvalidCase<M>(M modelclass) where M : EntityBase<M>, new()
-        {
-            Assert.False(modelclass, modelclass.ToString());
-            Assert.False(modelclass.IsValid(), modelclass.ToString());
-            Assert.False(modelclass.Waiting(), modelclass.ToString());
-            Assert.False(modelclass.Is().Status.Ok, modelclass.ToString());
-            Assert.True(modelclass.Is().Status.Bad, modelclass.ToString());
         }
 
         public class Context : PasswordsApiDbContext<Context>
@@ -125,12 +113,21 @@ namespace Services.Tests
     public class PasswordUsersServiceTests
     {
 
-        public void AssertUserAccount( PasswordUsers account, ITuple expects )
+        public static void AssertUserAccount( PasswordUsers account, ITuple expects )
         {
             Assert.True( account.Id == (int)expects[0], "Id" );
             Assert.True( account.Name.Equals(expects[1]), "Name" );
             Assert.True( account.Mail.Equals(expects[2]), "Mail" );
             Assert.True( account.Info.Equals(expects[3]), "Info" );
+        }
+
+        public static void AssertInvalidCase<M>( M modelclass ) where M : EntityBase<M>, new()
+        {
+            Assert.False(modelclass, modelclass.ToString());
+            Assert.False(modelclass.IsValid(), modelclass.ToString());
+            Assert.False(modelclass.Waiting(), modelclass.ToString());
+            Assert.False(modelclass.Is().Status.Ok, modelclass.ToString());
+            Assert.True(modelclass.Is().Status.Bad, modelclass.ToString());
         }
 
         [Fact]
@@ -231,7 +228,7 @@ namespace Services.Tests
             PasswordUsers account = service.GetUserById(23).GetAwaiter().GetResult().Entity;
 
             // Assert
-            Test.AssertInvalidCase( account );
+            AssertInvalidCase( account );
 
             Test.CurrentContext.Finished();
         }
@@ -247,7 +244,7 @@ namespace Services.Tests
 
             // Assert
             Assert.False( service.Status, service.Status.ToString() );
-            Test.AssertInvalidCase( account );
+            AssertInvalidCase( account );
 
             Test.CurrentContext.Finished();
         }
@@ -263,7 +260,7 @@ namespace Services.Tests
 
             // Assert
             Assert.False( service, service.ToString() );
-            Test.AssertInvalidCase( account );
+            AssertInvalidCase( account );
 
             Test.CurrentContext.Finished();
         }
@@ -312,7 +309,7 @@ namespace Services.Tests
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
             UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
 
-            Crypt.Key key = service.ForUserAccount( usinger.GetUserByNameOrId("ElNamo") ).GetAwaiter().GetResult().GetMasterKey(1);
+            CryptKey key = service.ForUserAccount( usinger.GetUserByNameOrId("ElNamo") ).GetAwaiter().GetResult().GetMasterKey(1);
 
             Assert.True( service, service.Status.ToString() );
             Assert.True( key.IsValid(), service.Status );

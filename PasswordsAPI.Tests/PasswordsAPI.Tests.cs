@@ -12,12 +12,13 @@ namespace Passwords.API.Tests
         public readonly string Configuration;
         public BuildConfig()
         {
-            Architecture = Consola.StdStream.MachineArch().Contains("64bit")
+            Consola.StdStream.Init();
+            Architecture = Consola.Utility.MachineArch().Contains("64bit")
                          ? "x64" : "x86";
 #if DEBUG
             Configuration = "Debug";
 #else
-                Configuration = "Release";
+            Configuration = "Release";
 #endif
         }
     }
@@ -31,16 +32,26 @@ namespace Passwords.API.Tests
             get { return _buildConfig ?? (_buildConfig = new BuildConfig()); }
         }
 
+        private static int resultcode = 0;
+        private static bool resultOk;
+
+        private static void ReceiveResult(int exitCode)
+        {
+            resultcode = exitCode;
+            resultOk = true;
+        }
 
         private static Tuple<int, string> executeLibraryTest(string path, string file)
         {
             ProcessStartInfo startinfo;
+            string command; 
             bool ConsolaTest;
             if (file.EndsWith(".exe")) {
                 ConsolaTest = false;
-                startinfo = new ProcessStartInfo($"{path}\\{file}");
+                startinfo = new ProcessStartInfo(command=$"{path}\\{file}");
             } else if (file.EndsWith(".dll")) {
                 ConsolaTest = true;
+                command = $"\"C:\\Program Files\\dotnet\\dotnet.exe\" \"{path}\\{file}\" --verbose";
                 startinfo = new ProcessStartInfo(
                     "C:\\Program Files\\dotnet\\dotnet.exe",
                     $"{path}\\{file} --verbose" );
@@ -101,6 +112,7 @@ namespace Passwords.API.Tests
                         $"{BuildConfig.Architecture}\\{BuildConfig.Configuration}";
 
             Tuple<int, string> result = executeLibraryTest( path, "test_int24_native_cpp.exe" );
+
             Assert.True(result.Item1 == 0, result.Item1.ToString() + "failures... " + result.Item2);
         }
 
@@ -111,15 +123,18 @@ namespace Passwords.API.Tests
                 $"{BuildConfig.Architecture}\\{BuildConfig.Configuration}\\net5.0";
 
             Tuple<int,string> result = executeLibraryTest( path, "test_int24_dotnet_dll.dll" );
+
             Assert.True(result.Item1 == 0, result.Item2);
         }
 
         [Fact]
         public void RunYpsCryptTests()
         {
-            string path = "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\bin"
-                + $"\\{BuildConfig.Architecture}\\{BuildConfig.Configuration}\\net5.0";
+            string path = $"C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\bin\\tst" +
+                $"\\{BuildConfig.Architecture}\\{BuildConfig.Configuration}\\net5.0";
+
             Tuple<int, string> result = executeLibraryTest( path, "YpsCryps.dll" );
+
             Assert.True( result.Item1 == 0, result.Item2 );
         }
     }

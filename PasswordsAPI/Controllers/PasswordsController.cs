@@ -147,7 +147,7 @@ namespace PasswordsAPI.Controllers
             if (userId <= 0) return StatusCode(404, _usrs.Status.ToString());
             if ( !(await _locs.GetLocationEntity( userId, area )) )
                 return StatusCode( 404,_locs.Status.ToString() );
-            Yps.Crypt.Key key = (await _keys.ForUserAccount(_usrs.GetUserById(userId))).GetMasterKey(userId);
+            Yps.CryptKey key = (await _keys.ForUserAccount(_usrs.GetUserById(userId))).GetMasterKey(userId);
             if (!key.IsValid()) return StatusCode( 303, _keys.Status );
             string master = key.Decrypt( crypt );
             if ( master == null ) return StatusCode(303, "master password invalid" );

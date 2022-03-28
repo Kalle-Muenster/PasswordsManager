@@ -22,7 +22,7 @@ namespace PasswordsAPI.Services
             return LocationServiceError;
         }
 
-        private Crypt.Key?                 _key = null;
+        private CryptKey?                  _key = null;
         private UserPasswordsService<CTX>  _keys;
 
 
@@ -79,7 +79,7 @@ namespace PasswordsAPI.Services
                  : this;
         }
 
-        public async Task<UserLocationsService<CTX>> SetKey( Crypt.Key masterKey )
+        public async Task<UserLocationsService<CTX>> SetKey( CryptKey masterKey )
         {
             if( !masterKey.IsValid() ) {
                 Status = (LocationServiceError + ResultCode.Cryptic).WithText( "Invalid Crypt.Key" );
@@ -108,7 +108,7 @@ namespace PasswordsAPI.Services
         {
             if ( Entity.Id > 0 ) {
                 if ( (await _keys.ByUserId( Entity.User )).VerifyPassword( Entity.User, userMasterPass ) ) {
-                    Crypt.Key key = _keys.GetMasterKey( Entity.User );
+                    CryptKey key = _keys.GetMasterKey( Entity.User );
                     Entity.Pass = Encoding.ASCII.GetBytes( key.Encrypt( newLocationPass ) );
                     _db.Update( Entity );
                     _db.SaveChanges();
@@ -160,7 +160,7 @@ namespace PasswordsAPI.Services
             return this;
         }
 
-        public UserLocationsService<CTX> AddNewLocationEntry( UserLocations init, string passToStore, Crypt.Key masterKey )
+        public UserLocationsService<CTX> AddNewLocationEntry( UserLocations init, string passToStore, CryptKey masterKey )
         {
             if ( Status.Bad ) return this;
             if ( !masterKey.IsValid() ) {
@@ -194,7 +194,7 @@ namespace PasswordsAPI.Services
             if ( ! await _keys.ForUserAccount( usrserv ) )
                 return OnError( _keys );
 
-            Crypt.Key masterKey = _keys.GetMasterKey( usr.Id );
+            CryptKey masterKey = _keys.GetMasterKey( usr.Id );
             if ( await GetLocationEntity( init.User = usr.Id, init.Area ) ) {
                 // if the location already exists, update with new password set
                 _enty.Pass = Encoding.ASCII.GetBytes( masterKey.Encrypt( pass ) );
