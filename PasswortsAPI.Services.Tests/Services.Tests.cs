@@ -58,11 +58,11 @@ namespace Services.Tests
                 lock (Thread.CurrentThread) {
                     Thread.Sleep(2000);
                     string project = "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI";
-                    StdStream.Cwd = project + "\\DataBase\\Tests";
-                    StdStream.ProrammExec("C:\\Windows\\System32\\cmd.exe /c \"del /f /q db.db\"", 0);
-                    StdStream.ProrammExec(
-                        $"C:\\Windows\\System32\\cmd.exe /c \"copy {project}\\DataBase\\Tests\\{database}\\db.db {StdStream.Cwd}\"",
-                        0);
+                    Consola.StdStream.Cwd = project + "\\DataBase\\Tests";
+                    Consola.Utility.CommandExec( "C:\\Windows\\System32\\cmd.exe /c \"del /f /q db.db\"" );
+                    Consola.Utility.CommandExec(
+                        $"C:\\Windows\\System32\\cmd.exe /c \"copy {project}\\DataBase\\Tests\\{database}\\db.db {Consola.StdStream.Cwd}\""
+                    );
                     return new DbContextOptionsBuilder<Context>().UseSqlite(
                         new Connectione(
                             new Constringer(string.Format("Data Source={0}",
@@ -74,23 +74,30 @@ namespace Services.Tests
             public static Context PrepareDataBase( string testcase, string database )
             {
                 if (CurrentContext != null)
-                    if (CurrentContext.Name.Equals(database))
-                        return CurrentContext.Begin();
+                    if ( CurrentContext.Name.Equals( database ) )
+                        return CurrentContext.Begin( testcase );
                 SessionKey key = new SessionKey();
                 lock (key) { 
-                    return CurrentContext = new Context(database,key);
+                    return CurrentContext = new Context( database, testcase, key);
                 }
             }
 
+            public string          Test;
             public readonly string Name;
             private SessionKey     Key;
-            public Context Begin(){ Key.LockSession(); return this; }
+            public Context Begin(string testcase){ if (Key.LockSession()) Test = testcase; return this; }
             public void Finished(){ Key.Unlock( Key ); }
-            public Context(string testcase, SessionKey key) : base(Context.CreateTestOptions(testcase))
+
+            public Context( string database, string testcase, SessionKey key )
+                : base( Context.CreateTestOptions( database ) )
             {
-                Name = testcase;
+                Test = testcase;
+                Name = database;
                 Key = key;
             }
+
+            /////////////////////////////////////////////////////////////////
+            /// this should equal the regularly used PasswordsDbContext 
 
             public DbSet<PasswordUsers> PasswordUsers {
                 get { return EntitiesSet<PasswordUsers>(); }
