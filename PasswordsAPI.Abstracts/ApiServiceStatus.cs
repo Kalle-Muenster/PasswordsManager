@@ -168,9 +168,11 @@ namespace PasswordsAPI.Abstracts
                                        | !Code.HasFlag(ResultCode.Unknown) ); }
         }
 
-        public bool IsWaiting
-        {
-            get { return (Code & ResultCode.IsValid) == ResultCode.Unknown; }
+        public bool IsWaiting {
+            get {
+                ResultCode check = Code & ResultCode.IsValid;
+                return (check < ResultCode.IsError) && check.HasFlag( ResultCode.Unknown ) && (!check.HasFlag(ResultCode.Success));
+            }
         }
     }
 }

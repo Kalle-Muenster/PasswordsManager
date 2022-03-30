@@ -17,15 +17,9 @@ namespace PasswordsAPI.Services
         private static readonly Status UsersName = new Status(UserServiceError.Code|ResultCode.Name,"Invalid User.Name {0}");
 
         protected override Status GetDefaultError() { return UserServiceError; }
+        protected override ResultCode GetServiceFlags() { return ResultCode.User|ResultCode.Service; }
+        protected override PasswordUsers GetStatusEntity( Status cast ) { return cast; }
 
-        public override PasswordUsers Entity {
-            get { if (_enty.Is().Status.IsWaiting) {
-                    _enty = _lazy.GetAwaiter().GetResult() ?? UserServiceError;
-                    Status += _enty.Is().Status; }
-                return _enty?? Status; }
-            set { if ( value ) _enty = value;
-                else Status += value.Is().Status; }
-        }
 
         public PasswordUsersService( CTX ctx )
             : base(ctx)
@@ -58,9 +52,9 @@ namespace PasswordsAPI.Services
                 _enty = Status.Unknown;
                 _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Id == id );
             } else {
+                if (_enty) if (_enty.Name == nameOrId) return this;
                 _enty = Status.Unknown;
                 _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
-                if (_enty) if (_enty.Name == nameOrId) return this;
             } Status = Status.NoState.WithData( nameOrId );
             return this;
         }

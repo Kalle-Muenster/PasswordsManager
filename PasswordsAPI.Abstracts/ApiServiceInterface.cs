@@ -48,12 +48,27 @@ namespace PasswordsAPI.Abstracts
         
         private Status       state;
 
-        protected abstract Status GetDefaultError();
+        protected abstract Status     GetDefaultError();
+        protected abstract E          GetStatusEntity(Status cast);
+        protected abstract ResultCode GetServiceFlags();
 
         D IPasswordsApiService<D>.db => _db;
         public S serve() { return (S)this; }
-        public abstract E Entity { get; set; }
 
+        public E Entity {
+            get {
+                if (_enty.Is().Status.IsWaiting)
+                    _enty = _lazy.GetAwaiter().GetResult()
+                          ?? GetStatusEntity( GetDefaultError() );
+                //return Ok ? _enty : GetStatusEntity( Status );
+                if (_enty.Is().Status.Bad) Status = _enty.Is().Status;
+                return _enty;
+            } set {
+                if (value) { _enty = value;
+                    Status = _enty.Is().Status;
+                } else Status = value.Is().Status;
+            }
+        }
 
 
         protected AbstractApiService( D ctx )
@@ -70,15 +85,17 @@ namespace PasswordsAPI.Abstracts
         public Status Status
         {
         //    get { return state.Result == ResultState.Waiting ? state = Entity.Is().Status : state; }
-            get { return state.Code == ResultCode.NoState ? state.Data != string.Empty ? state += Entity.Is().Status : state : state; }
+            get { if (state.Code == ResultCode.NoState)
+                    if (state.Data.ToString() != string.Empty)
+                        state += Entity.Is().Status;
+                  return state; }
             protected set { state = value; }
         }
 
         public virtual bool Ok {
-            get { return ( state.Code & ResultCode.IsValid ) < ResultCode.Unknown; }
-            protected set { if ( value ) state = Status.Success;
-             else if ( state.Code > ResultCode.Success )
-                 state = GetDefaultError();
+            get { return ( state.Code & ResultCode.IsValid ) < ResultCode.Unknown && state.Code != 0; }
+            protected set { if ( value ) state = Status.Success + GetServiceFlags();
+                else state = GetDefaultError();
             }
         }
 

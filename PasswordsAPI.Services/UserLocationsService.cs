@@ -22,23 +22,17 @@ namespace PasswordsAPI.Services
             return LocationServiceError;
         }
 
+        protected override ResultCode GetServiceFlags() {
+            return ResultCode.Area|ResultCode.Service;
+        }
+
+        protected override UserLocations GetStatusEntity(Status cast) {
+            return cast;
+        }
+
         private CryptKey?                  _key = null;
         private UserPasswordsService<CTX>  _keys;
 
-
-        public override UserLocations Entity {
-            get {
-                if (_enty.Is().Status.IsWaiting)
-                    _enty = _lazy.GetAwaiter().GetResult() 
-                        ?? LocationServiceError;
-                return Ok ? _enty : Status;
-            }
-            set {
-                if ( value ) { _enty = value;
-                    Status = _enty.Is().Status; }
-                else Status = value.Is().Status;
-            }
-        }
 
         public bool Update()
         {
@@ -122,7 +116,7 @@ namespace PasswordsAPI.Services
 
         public int GetAreaId( string nameOrId, int usrId )
         {
-            Status = Status.NoState;
+            Status = Status.NoState.WithData(nameOrId);
             if ( int.TryParse( nameOrId, out int locId ) ) {
                 if ( Entity.IsValid() )
                     if ( Entity.User == usrId && Entity.Id == locId )
@@ -152,8 +146,8 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService<CTX>> GetLocationEntity( int locationId )
         {
             if ( locationId > 0 ) {
-                Status = Status.NoState;
                 if (Entity) if (Entity.Id == locationId) return this;
+                Status = Status.NoState;
                 _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(l => l.Id == locationId);
                 _enty = Status.Unknown;
             } else _enty= Status = LocationServiceError.WithText( $"invalid location id '{locationId}'" );
@@ -162,7 +156,7 @@ namespace PasswordsAPI.Services
 
         public UserLocationsService<CTX> AddNewLocationEntry( UserLocations init, string passToStore, CryptKey masterKey )
         {
-            if ( Status.Bad ) return this;
+            if (Status) return this;
             if ( !masterKey.IsValid() ) {
                 _enty= Status = new Status( LocationServiceError.Code | ResultCode.Cryptic | ResultCode.Password, "Invalid Master Key" );
                 return this;
@@ -173,9 +167,10 @@ namespace PasswordsAPI.Services
                 _enty = Status = new Status( LocationServiceError.Code|Status.Cryptic.Code, Crypt.Error.ToString(), passToStore );
                 return this;
             }
-            // this should be moved to a repository class
+
             _dset.AddAsync( _enty );
             _db.SaveChangesAsync();
+            Status = Status.Success.WithText("new password stored for").WithData( init.Area );
             return this;
         }
 
@@ -211,11 +206,12 @@ namespace PasswordsAPI.Services
 
         public async Task<UserLocationsService<CTX>> SetLoginInfo( int locId, string? login, string? info )
         {
-            if( (await GetLocationEntity( locId )).Entity.Is().Status.Ok ) {
+            if( (await GetLocationEntity( locId )).Entity ) {
                 if (info != null) if (info != String.Empty) _enty.Info = info;
                 if (login != null) if (login != String.Empty) _enty.Name = login;
-                _dset.Update(_enty);
+                _dset.Update( _enty );
                 _db.SaveChangesAsync();
+                Status = Status.Success + GetServiceFlags();
             } return this;
         }
 

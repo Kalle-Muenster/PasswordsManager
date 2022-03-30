@@ -15,6 +15,8 @@ namespace PasswordsAPI.Services
         private readonly Status InvalidId = new Status(ResultCode.Service|ResultCode.Password|ResultCode.User|ResultCode.Invalid, "Invalid User.Id: {0}");
         private readonly Status HashValue = new Status(ResultCode.Service|ResultCode.Password|ResultCode.Id|ResultCode.Invalid, "password incorrct '{0}'" );
         protected override Status GetDefaultError() { return PasswordServiceError; }
+        protected override ResultCode GetServiceFlags() { return ResultCode.Password|ResultCode.Service; }
+        protected override UserPasswords GetStatusEntity(Status cast) { return cast; }
 
 
         private PasswordUsersService<CTX>        _usrs;
@@ -28,16 +30,6 @@ namespace PasswordsAPI.Services
             _lazy = new Task<UserPasswords>(() => { return _enty; });
         }
 
-        public override UserPasswords Entity {
-            get { if ( _enty.Is().Status.IsWaiting )
-                    _enty = _lazy.GetAwaiter().GetResult() 
-                             ?? PasswordServiceError;
-                if (_enty.Is().Status.Bad ) Status = _enty.Is().Status;
-                return _enty; }
-            set { if( value.IsValid() ) _enty = value;
-                Status = _enty.Is().Status; }
-
-        }
 
         public override bool Ok
         {
@@ -103,13 +95,14 @@ namespace PasswordsAPI.Services
 
         public CryptKey GetMasterKey( int ofUser )
         {
-            UserPasswords pwd = Entity;
-            if ( pwd ) if ( pwd.User == ofUser ) 
-                return CreateKey( pwd );
-            if ( ForUserAccount( _usrs.GetUserById( ofUser ) ).GetAwaiter().GetResult() )
-                return Crypt.CreateKey( pwd.Hash );
-            else
-                return null;
+            if (Entity) if ( Entity.User == ofUser ) 
+                return CreateKey( Entity );
+            if ( ForUserAccount(_usrs.GetUserById(ofUser) ).GetAwaiter().GetResult() ) {
+                return CreateKey( Entity );
+            } else {
+                Status = Entity.Is().Status;
+                return Crypt.CreateKey( 0 );
+            }
         }
 
         private CryptKey CreateKey( UserPasswords masterdata )
