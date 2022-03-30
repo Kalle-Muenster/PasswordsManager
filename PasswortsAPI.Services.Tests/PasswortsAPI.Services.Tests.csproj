@@ -23,7 +23,7 @@
       <Private>True</Private>
       <CopyLocal>True</CopyLocal>
     </ProjectReference>
-    <ProjectReference Include="..\..\YpsCrypt\YpssCryptApi\YpsCryptApi.vcxproj">
+    <ProjectReference Include="..\..\YpsCrypt\YpsCrypt\YpsCrypt.vcxproj">
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\PasswordsAPI.Abstracts\PasswordsAPI.Abstracts.csproj">
@@ -31,6 +31,9 @@
     </ProjectReference>
     <ProjectReference Include="..\PasswordsAPI.Models\PasswordsAPI.Models.csproj" />
     <ProjectReference Include="..\PasswordsAPI.Services\PasswordsAPI.Services.csproj" />
+    <ProjectReference Include="..\PasswordsAPI.Tests\Passwords.API.Tests.csproj">
+      <CopyLocal>True</CopyLocal>
+    </ProjectReference>
     <ProjectReference Include="..\PasswordsAPI\Passwords.API.csproj" />
   </ItemGroup>
 

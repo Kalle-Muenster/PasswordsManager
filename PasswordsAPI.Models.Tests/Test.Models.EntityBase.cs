@@ -1,11 +1,9 @@
-﻿using System;
-using Xunit;
+﻿using Xunit;
 using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
 
-namespace Tests.Models
+namespace PasswordsAPI.Models.Tests
 {
-    public class EntityBaseClasses
+    public class EntitieConstructors
     {
         [Fact]
         public void PasswordsConstructor_ShouldBehaveLikeExpected()
@@ -42,22 +40,41 @@ namespace Tests.Models
             Assert.True(location.IsValid(), location.ToString());
             Assert.False(location.Is().Status.Ok);
         }
+    }
 
+    public class EntityInvalidConstants
+    {
         [Fact]
-        public void TestEntityModels2()
+        public void InvalidUserPasswords_ShouldBehaveLikeExpected()
         {
             // Arrange
             UserPasswords password = UserPasswords.Invalid;
-            UserLocations location = UserLocations.Invalid;
-            PasswordUsers user = PasswordUsers.Invalid;
 
             // Assert
             Assert.False(password, password.ToString());
             Assert.False(password.IsValid(), password.ToString());
             Assert.False(password.Waiting(), password.ToString());
+        }
+
+        [Fact]
+        public void InvalidUserLocations_ShouldBehaveLikeExpected()
+        {
+            // Arrange
+            UserLocations location = UserLocations.Invalid;
+
+            // Assert
             Assert.False(location, location.ToString());
             Assert.False(location.IsValid(), location.ToString());
             Assert.False(location.Waiting(), location.ToString());
+        }
+
+        [Fact]
+        public void InvalidPasswordUsers_ShouldBehaveLikeExpected()
+        {
+            // Arrange
+            PasswordUsers user = PasswordUsers.Invalid;
+
+            // Assert
             Assert.False(user, user.ToString());
             Assert.False(user.IsValid(), user.ToString());
             Assert.False(user.Waiting(), user.ToString());
