@@ -124,12 +124,12 @@ namespace PasswordsAPI.Abstracts
 
         public override string ToString()
         {
-            return string.Format($"{Result}-[{Code}]: {Text}", Data);
+            return string.Format($"{Result}-[{Code.ToUInt32()}]: {Text}", Data);
         }
 
         public static implicit operator string(Status cast)
         {
-            return string.Format($"{cast.Result}-[{cast.Code.ToUInt32()}]: {cast.Text}", cast.Data);
+            return string.Format($"{cast.Result}-[{cast.Code}]: {cast.Text}", cast.Data);
         }
 
         public static string MessageFromStatusFlags( uint flags )
