@@ -141,6 +141,19 @@ namespace PasswordsAPI.Services.Tests
             Model.AssertInvalidCase(account);
         }
 
+        [Fact]
+        private void UserService_RemoveUserAccountWorks()
+        {
+            // Arrange
+            Test.Context.PrepareDataBase("UserService", "OneUserOneLocation");
+            PasswordUsersService<Test.Context> service = new PasswordUsersService<Test.Context>(Test.CurrentContext);
+
+            // Act
+            Status result = service.RemoveUserAccount(service.GetUserById(1).GetAwaiter().GetResult().Entity).GetAwaiter().GetResult().Status;
+
+            Assert.True( result, result );
+        }
+
         public void Dispose()
         {
             Test.CurrentContext.Finished();

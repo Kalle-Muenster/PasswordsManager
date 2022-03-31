@@ -129,18 +129,6 @@ namespace PasswordsAPI.Tests.Helpers
         public static Context              CurrentContext;
         public static readonly BuildConfig CurrentConfig = new BuildConfig();
 
-        private static Action changed;
-        private static Action prepare;
-        public static void SetConstructorActions( Action prepareAction )
-        {
-            changed = prepareAction;
-        }
-
-        protected static void ConstructServiceInstances()
-        {
-            prepare?.Invoke();
-        }
-
         public class SessionKey
         {
             private static volatile bool IsRunning;

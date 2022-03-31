@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using Xunit;
+using System.Threading;
 using PasswordsAPI.Models;
 using PasswordsAPI.Tests.Helpers;
-
+using PasswordsAPI.Abstracts;
 
 namespace PasswordsAPI.Services.Tests
 {
@@ -59,7 +60,7 @@ namespace PasswordsAPI.Services.Tests
             UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
-            UserLocations location = service.GetLocationEntity(1).GetAwaiter().GetResult().Entity;
+            UserLocations location = service.GetLocationById(1).GetAwaiter().GetResult().Entity;
 
             Model.AssertSuccessCase( location );
             AssertUserLocation( location, (1, 1, "ElLoco") );
@@ -74,11 +75,11 @@ namespace PasswordsAPI.Services.Tests
             UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
-            UserLocations location = service.GetLocationEntity(1, "ElLoco").GetAwaiter().GetResult().Entity;
+            UserLocations location = service.GetLocationOfUser(1, "ElLoco");
 
-            Model.AssertSuccessCase(location);
-            AssertUserLocation(location, (1, 1, "ElLoco"));
-            Assert.False(System.Text.Encoding.Default.GetString(location.Pass).Equals("ElPasso"), location.ToString());
+            Model.AssertSuccessCase( location );
+            AssertUserLocation( location, (1, 1, "ElLoco") );
+            Assert.False( System.Text.Encoding.Default.GetString( location.Pass ).Equals( "ElPasso" ), location.ToString() );
         }
 
         [Fact]
@@ -91,9 +92,9 @@ namespace PasswordsAPI.Services.Tests
 
             UserLocations location = service.GetUserLocations(1)[0];
 
-            Model.AssertSuccessCase(location);
-            AssertUserLocation(location, (1, 1, "ElLoco"));
-            Assert.False(System.Text.Encoding.Default.GetString(location.Pass).Equals("ElPasso"), location.ToString());
+            Model.AssertSuccessCase( location );
+            AssertUserLocation( location, (1, 1, "ElLoco") );
+            Assert.False( System.Text.Encoding.Default.GetString( location.Pass ).Equals( "ElPasso" ), location.ToString() );
         }
 
         [Fact]
@@ -104,8 +105,7 @@ namespace PasswordsAPI.Services.Tests
             UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
-            UserLocations location = service.GetLocationEntity(1, "ElLoco").GetAwaiter().GetResult().Entity;
-            location = service.SetLoginInfo(location.Id, "ElNamo", "ElInfo").GetAwaiter().GetResult().Entity;
+            UserLocations location = service.SetLoginInfo( service.GetLocationOfUser(1,"ElLoco").Id, "ElNamo", "ElInfo" ).GetAwaiter().GetResult().Entity;
 
             Assert.True( service.Ok, service.ToString() );
             Model.AssertSuccessCase(location);
@@ -120,13 +120,13 @@ namespace PasswordsAPI.Services.Tests
             UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
-            string password = service.GetLocationEntity(1).GetAwaiter().GetResult().SetKey("ElMaestro").GetAwaiter().GetResult().GetPassword();
+            string password = service.GetLocationById(1).GetAwaiter().GetResult().SetKey("ElMaestro").GetAwaiter().GetResult().GetPassword();
 
             Assert.True( password.Equals("ElPasso"), service.ToString() );
         }
 
         [Fact]
-        private void UserLocations_ResetPasswordWorks()
+        private void UserLocations_ChangePasswordWorks()
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
@@ -138,10 +138,25 @@ namespace PasswordsAPI.Services.Tests
             location.Id = 1;
             location.Area = "ElLoco";
             service.SetLocationPassword( usinger.GetUserById(1), location, "ElBongo").GetAwaiter().GetResult();
+            Thread.Sleep(1000);
             string password = usrkeys.GetMasterKey(1).Decrypt( service.GetPassword() );
             
             Assert.True( password.Equals("ElBongo"), password );
         }
+
+        [Fact]
+        private void UserLocations_RemoveLocationWorks()
+        {
+            Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
+            PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
+
+            Status result = service.RemoveLocation( usinger.GetUserById(1), "ElLoco", "ElMaestro" ).GetAwaiter().GetResult().Status;
+            
+            Assert.True( result, result );
+        }
+
 
         public void Dispose()
         {
