@@ -40,7 +40,7 @@ namespace PasswordsAPI.Services
             }
         }
 
-        public async Task<UserPasswordsService<CTX>> ForUserAccount( Task<PasswordUsersService<CTX>> byUser )
+        public async Task<UserPasswordsService<CTX>> LookupPasswordByUserAccount( Task<PasswordUsersService<CTX>> byUser )
         {
             PasswordUsers user = byUser.IsCompleted ? byUser.Result.Entity : (await byUser).Entity;
             if( !user.IsValid() ) { _enty = user.Is().Status;
@@ -59,7 +59,7 @@ namespace PasswordsAPI.Services
 
         public async Task<UserPasswordsService<CTX>> SetMasterKey( int userId, string pass )
         {
-            if( !( await ForUserAccount(_usrs.GetUserById(userId)) ) ) {
+            if( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
                     Status = Status.NoState;
                     _enty = new UserPasswords();
@@ -84,7 +84,7 @@ namespace PasswordsAPI.Services
 
         public bool VerifyPassword( int ofUser, string masterPassword )
         {
-            if ( ForUserAccount( _usrs.GetUserById( ofUser ) ).GetAwaiter().GetResult() ) {
+            if ( LookupPasswordByUserAccount( _usrs.GetUserById( ofUser ) ).GetAwaiter().GetResult() ) {
                 if( Entity.Hash != Crypt.CalculateHash( masterPassword ) ) {
                     _enty = Status = HashValue.WithData( masterPassword );
                     return false;
@@ -95,9 +95,9 @@ namespace PasswordsAPI.Services
 
         public CryptKey GetMasterKey( int ofUser )
         {
-            if (Entity) if ( Entity.User == ofUser ) 
+            if ( Entity ) if ( Entity.User == ofUser ) 
                 return CreateKey( Entity );
-            if ( ForUserAccount(_usrs.GetUserById(ofUser) ).GetAwaiter().GetResult() ) {
+            if ( LookupPasswordByUserAccount(_usrs.GetUserById( ofUser ) ).GetAwaiter().GetResult() ) {
                 return CreateKey( Entity );
             } else {
                 Status = Entity.Is().Status;
@@ -116,12 +116,12 @@ namespace PasswordsAPI.Services
             }
         }
 
-        public async Task<UserPasswordsService<CTX>> ByUserId( int ofUser )
+        public async Task<UserPasswordsService<CTX>> LookupUserPasswodById( int ofUser )
         {
             if ( Entity ) if ( Entity.User == ofUser ) return this;
             Status = Status.NoState;
             Entity = Status.Unknown;
-            _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == ofUser);
+            _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync( p => p.User == ofUser );
             return this;
         }
     } 

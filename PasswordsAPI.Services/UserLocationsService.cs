@@ -56,7 +56,7 @@ namespace PasswordsAPI.Services
             return returnList;
         }
 
-        public UserLocationsService(CTX ctx, IPasswordsApiService<UserPasswords,UserPasswordsService<CTX>,CTX> pwd )
+        public UserLocationsService( CTX ctx, IPasswordsApiService<UserPasswords,UserPasswordsService<CTX>,CTX> pwd )
             : base( ctx )
         {
             _keys = pwd.serve();
@@ -101,7 +101,7 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService<CTX>> SetPassword( string userMasterPass, string newLocationPass )
         {
             if ( Entity.Id > 0 ) {
-                if ( (await _keys.ByUserId( Entity.User )).VerifyPassword( Entity.User, userMasterPass ) ) {
+                if ( (await _keys.LookupUserPasswodById( Entity.User )).VerifyPassword( Entity.User, userMasterPass ) ) {
                     CryptKey key = _keys.GetMasterKey( Entity.User );
                     Entity.Pass = Encoding.ASCII.GetBytes( key.Encrypt( newLocationPass ) );
                     _db.Update( Entity );
@@ -134,16 +134,16 @@ namespace PasswordsAPI.Services
             else return -1;
         }
 
-        public async Task<UserLocationsService<CTX>> GetLocationEntity( int userId, string location )
+        public UserLocations GetLocationOfUser( int userId, string location )
         {
             if ( userId > 0 ) {
                 if ( GetAreaId( location, userId ) == -1 ) Status = LocationServiceError.WithText( $"invalid location '{location}'" );
             } else {
                 _enty = Status = LocationServiceError.WithText( $"invalid user '{userId}'" ) + ResultCode.User;
-            } return this;
+            } return Entity;
         }
 
-        public async Task<UserLocationsService<CTX>> GetLocationEntity( int locationId )
+        public async Task<UserLocationsService<CTX>> GetLocationById( int locationId )
         {
             if ( locationId > 0 ) {
                 if (Entity) if (Entity.Id == locationId) return this;
@@ -170,7 +170,7 @@ namespace PasswordsAPI.Services
 
             _dset.AddAsync( _enty );
             _db.SaveChangesAsync();
-            Status = Status.Success.WithText("new password stored for").WithData( init.Area );
+            Status = Status.Success.WithText( "new password stored for" ).WithData( init.Area );
             return this;
         }
 
@@ -186,11 +186,11 @@ namespace PasswordsAPI.Services
                 return this;
             }
 
-            if ( ! await _keys.ForUserAccount( usrserv ) )
+            if ( ! await _keys.LookupPasswordByUserAccount( usrserv ) )
                 return OnError( _keys );
 
             CryptKey masterKey = _keys.GetMasterKey( usr.Id );
-            if ( await GetLocationEntity( init.User = usr.Id, init.Area ) ) {
+            if ( GetLocationOfUser( init.User = usr.Id, init.Area ) ) {
                 // if the location already exists, update with new password set
                 _enty.Pass = Encoding.ASCII.GetBytes( masterKey.Encrypt( pass ) );
                 _dset.Update( _enty );
@@ -206,7 +206,7 @@ namespace PasswordsAPI.Services
 
         public async Task<UserLocationsService<CTX>> SetLoginInfo( int locId, string? login, string? info )
         {
-            if( (await GetLocationEntity( locId )).Entity ) {
+            if( (await GetLocationById( locId )).Entity ) {
                 if (info != null) if (info != String.Empty) _enty.Info = info;
                 if (login != null) if (login != String.Empty) _enty.Name = login;
                 _dset.Update( _enty );
@@ -229,16 +229,23 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService<CTX>> RemoveLocation( Task<PasswordUsersService<CTX>> userserv, string area, string master )
         {
             PasswordUsers user = (await userserv).Entity;
-            UserPasswords password = ( await _keys.ForUserAccount( userserv ) ).Entity;
-            if ( password.Is().Status.Ok ) {
+            UserPasswords password = ( await _keys.LookupPasswordByUserAccount( userserv ) ).Entity;
+            if ( password.IsValid() ) {
                 if( _keys.VerifyPassword( user.Id, master ) ) {
-                    if ( await GetLocationEntity( user.Id, area ) ) {
+                    if ( GetLocationOfUser( user.Id, area ) ) {
                         _dset.Remove( Entity );
                         _db.SaveChanges();
-                    } else Status = LocationServiceError.WithText( "Location '{0}' not exists" ).WithData( area );
-                } else Status = LocationServiceError.WithData( master ).WithText( 
-                  "For Deleting a Passwords, the owning users master password is needed"
-                ) + ( ResultCode.Invalid | ResultCode.User | ResultCode.Password );
+                        Status = Status.Success.WithData( area ).WithText(
+                            "Successfully removed location '{0}' of user " + user.Name
+                        ) + GetServiceFlags();
+                    } else {
+                        Status = LocationServiceError.WithText( "Location '{0}' not exists" ).WithData( area );
+                    }
+                } else { 
+                    Status = LocationServiceError.WithData( master ).WithText( 
+                        "For Deleting a Passwords, the owning users master password is needed"
+                    ) + ( ResultCode.Invalid | ResultCode.User | ResultCode.Password );
+                }
             } return this;
         }
     }
