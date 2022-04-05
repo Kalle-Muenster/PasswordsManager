@@ -20,14 +20,15 @@ namespace PasswordsAPI.Services
 
 
         private PasswordUsersService<CTX>        _usrs;
+        private Yps.CryptKey                     _apky;
 
-
-        public UserPasswordsService( CTX ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> usr )
+        public UserPasswordsService( CTX ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> usr, CryptKey api )
             : base(ctx)
         {
             _usrs = usr.serve();
             _enty = UserPasswords.Invalid;
             _lazy = new Task<UserPasswords>(() => { return _enty; });
+            _apky = api;
         }
 
 
@@ -59,11 +60,20 @@ namespace PasswordsAPI.Services
 
         public async Task<UserPasswordsService<CTX>> SetMasterKey( int userId, string pass )
         {
-            if( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
+
+            if ( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
+                    string usersMasterPassword = _apky.Decrypt(pass);
+                    if ( Crypt.Error )
+                    {
+                        Status = new Status( ResultCode.Cryptic |
+                            ResultCode.Invalid | ResultCode.Service,
+                            "{0} - ApiKey Invalid", Crypt.Error.ToString() );
+                        return this;
+                    }
                     Status = Status.NoState;
                     _enty = new UserPasswords();
-                    _enty.Hash = Crypt.CalculateHash(pass);
+                    _enty.Hash = Crypt.CalculateHash( usersMasterPassword );
                     _enty.User = userId;
                     _enty.Pass = "";
                     _enty.Id = 0;
@@ -75,7 +85,7 @@ namespace PasswordsAPI.Services
                     return this;
                 }
             } else {
-                _enty.Hash = Crypt.CalculateHash(pass);
+                _enty.Hash = Crypt.CalculateHash( pass );
                 _dset.Update( _enty );
                 _db.SaveChangesAsync();
                 return this;

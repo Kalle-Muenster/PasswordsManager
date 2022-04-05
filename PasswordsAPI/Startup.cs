@@ -18,6 +18,7 @@ using PasswordsAPI.Abstracts;
 using PasswordsAPI.Services;
 using PasswordsAPI.Database;
 using PasswordsAPI.Models;
+using Yps;
 
 namespace PasswordsAPI
 {
@@ -28,11 +29,13 @@ namespace PasswordsAPI
         }
 
         public ServerFrameworks DatabaseType { get; } 
+        private string ApplicationKey { get; }
 
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
             string usedServerType = Configuration[ "ServerFramework:"+Configuration["UsedServerFramework"] ];
             DatabaseType = (ServerFrameworks) System.Enum.Parse( typeof(ServerFrameworks), usedServerType );
+            ApplicationKey = Configuration["ApplicationKey"];
         }
 
         public IConfiguration Configuration { get; }
@@ -48,7 +51,7 @@ namespace PasswordsAPI
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" });
             });
 
-
+            services.AddSingleton( Crypt.CreateKey(ApplicationKey) );
             services.AddScoped<IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext>, PasswordUsersService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext>, UserPasswordsService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext>, UserLocationsService<PasswordsDbContext>>();
