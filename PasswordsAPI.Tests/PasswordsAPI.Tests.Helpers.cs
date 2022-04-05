@@ -1,13 +1,13 @@
 ﻿using System;
 using System.IO;
 using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using Xunit;
 using Constringer = Microsoft.Data.Sqlite.SqliteConnectionStringBuilder;
 using Connectione = Microsoft.Data.Sqlite.SqliteConnection;
+using PasswordsAPI.Models;
 
 namespace PasswordsAPI.Tests.Helpers
 {
@@ -126,9 +126,9 @@ namespace PasswordsAPI.Tests.Helpers
 
     public class Test
     {
-        public static Context              CurrentContext;
-        public static readonly BuildConfig CurrentConfig = new BuildConfig();
-
+        public static Context               CurrentContext;
+        public static readonly BuildConfig  CurrentConfig = new BuildConfig();
+        public static readonly Yps.CryptKey CurrentApikey = Yps.Crypt.CreateKey("cb2df853b8194e4ff64af32f9131a6318b1e9d5c966fcd7cb5398470ed71e270");
         public class SessionKey
         {
             private static volatile bool IsRunning;
