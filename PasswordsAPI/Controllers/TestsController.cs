@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.IO;
 using Yps;
+using PasswordsAPI.Tests.Helpers;
 
 namespace PasswordsAPI.Controllers
 {
@@ -62,50 +63,41 @@ namespace PasswordsAPI.Controllers
             return Ok("Test");
         }
 
-        [HttpGet("Tests/Int24TypeLib")]
+        [HttpGet("Tests/Int24NativeTypes")]
         public IActionResult TestInt24TypeLib()
         {
-            Tuple<int,string> result = executableTest("test_int24_dotnet_dll");
-            string resp = "{\"Int24Tests\":{\"result\":\"" + (result.Item1 == 0 ? "PASS" : "FAIL") + "\",\"failure\":\"" + result.Item1 +
-                          "\",\"outputstring:\":\"" + result.Item2 + "\"}}";
-            return Ok(resp);
+            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\native\\" +
+                $"{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}";
+
+            ExternalTestrun testrun = new ExternalTestrun(path, "test_int24_native_cpp.exe");
+
+            if (testrun.FailedTests == 0) return Ok(testrun.TestResults);
+            else return StatusCode(500 + testrun.FailedTests, testrun.TestResults);
         }
 
 
         [HttpGet("Tests/YpsCryptLib")]
         public IActionResult CryptLibTest()
         {
-            Tuple<int,string> result = executableTest("YpsTests"); 
-            string resp = "{\"YpsCryptTest\":{\"result\":\"" + (result.Item1 == 0 ? "PASS":"FAIL") + "\",\"failure\":\"" + result.Item1.ToString() +
-                          "\",\"outputstring:\":\"" + result.Item2 + "\"}}";
-            return Ok(resp);
+            string path = $"C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\bin\\tst" +
+                $"\\{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}\\net5.0";
+
+            ExternalTestrun test = new ExternalTestrun(path, "YpsTest.dll");
+
+            if (test.FailedTests == 0) return Ok(test.TestResults);
+            else return StatusCode(500 + test.FailedTests, test.TestResults);
         }
 
-        [HttpGet( "Tests/Crypting" )]
+        [HttpGet("Tests/Int24DotnetTypes")]
         public IActionResult GetSchmett()
         {
-            StringBuilder result = new StringBuilder("Testing Yps.Crypt\nTest Data: This is test data which consists from a System.String which contains 90 characters of text\n");
+            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\core5\\test\\" +
+                $"{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}\\net5.0";
 
-            CryptKey key = Crypt.CreateKey("YpsCryptTest");
-            string cryptisch = Crypt.Encrypt(key,System.Text.Encoding.Default.GetBytes("This is test data which consists from a System.String which contains 90 characters of text"));
-            result.Append( "Encrypred: " );
-            result.Append( cryptisch + "\n" );
-            sbyte[] resultdata = Crypt.Decrypt<sbyte>(key, cryptisch);
-            if ( Crypt.Error )
-            {
-                result.Append( "Status: " );
-                cryptisch = Crypt.Error.ToString();
-            }
-            else unsafe
-            {
-                result.Append( "Decrypted: " );
-                fixed ( sbyte* p = &resultdata[0] )
-                {
-                    result.Append( new string( p, 0, resultdata.Length ) );
-                }
-            }
-            return Ok( result.ToString() );
+            ExternalTestrun test = new ExternalTestrun(path, "test_int24_dotnet_dll.dll");
 
+            if (test.FailedTests == 0) return Ok(test.TestResults);
+            else return StatusCode(500 + test.FailedTests, test.TestResults);
         }
     }
 }
