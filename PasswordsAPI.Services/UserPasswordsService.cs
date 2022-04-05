@@ -40,7 +40,7 @@ namespace Passwords.API.Services
         {
             get { return Entity.IsValid() && Status.Code == ResultCode.NoState; }
             protected set { if ( value ) Status = _enty.IsValid() ? Status.NoState : _enty.Is().Status;
-                else if (Status.Code == ResultCode.NoState) 
+                else if (Status.Code == ResultCode.NoState)
                     Status = PasswordServiceError;
             }
         }
@@ -77,7 +77,7 @@ namespace Passwords.API.Services
         {
             bool nounce = false;
             if ( nounce = Entity.IsValid() ) {
-                // try decrypting queryparameter by hashvalue of current users masterkey 
+                // try decrypting queryparameter by hashvalue of current users masterkey
                 data = GetMasterKey( Entity.User ).Decrypt( data );
             } else {
                 // if there's no user in context actually, then decrypt queryparameters
@@ -105,7 +105,7 @@ namespace Passwords.API.Services
         }
 
         public Status GetYpsEnumerator( string yps_parameters )
-        { 
+        {
             CryptBuffer cryptic = new CryptBuffer( System.Text.Encoding.Default.GetBytes( yps_parameters ) );
             CryptBuffer.OuterCrypticStringEnumerator ypser;
             bool usingAppKey = !Entity.IsValid();
@@ -131,6 +131,14 @@ namespace Passwords.API.Services
 
             if ( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
+                    string usersMasterPassword = _apky.Decrypt(pass);
+                    if ( Crypt.Error )
+                    {
+                        Status = new Status( ResultCode.Cryptic |
+                            ResultCode.Invalid | ResultCode.Service,
+                            "{0} - ApiKey Invalid", Crypt.Error.ToString() );
+                        return this;
+                    }
                     Status = Status.NoState;
                     _enty = new UserPasswords();
                     _enty.Hash = Crypt.CalculateHash( pass );
@@ -164,7 +172,7 @@ namespace Passwords.API.Services
 
         public CryptKey GetMasterKey( int ofUser )
         {
-            if ( Entity ) if ( Entity.User == ofUser ) 
+            if ( Entity ) if ( Entity.User == ofUser )
                 return CreateKey( Entity );
             if ( LookupPasswordByUserAccount(_usrs.GetUserById( ofUser ) ).GetAwaiter().GetResult() ) {
                 return CreateKey( Entity );
@@ -210,11 +218,11 @@ namespace Passwords.API.Services
             string path = new FileInfo(System.Reflection.Assembly.GetEntryAssembly().Location).Directory.FullName;
             FileInfo dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db");
             Directory.CreateDirectory( path+"\\Exporte" );
-            int tries = 3; 
+            int tries = 3;
             while( _db.Database.CurrentTransaction != null && --tries >= 0 )
                 System.Threading.Thread.Sleep( 1000 );
             if( dbfile.Exists ) {
-                CryptKey useKey = Entity.IsValid() ? Crypt.CreateKey( Entity.Hash ) : _apky; 
+                CryptKey useKey = Entity.IsValid() ? Crypt.CreateKey( Entity.Hash ) : _apky;
                 if( Crypt.EncryptFile( useKey, dbfile ) > 0 ) {
                     dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db.yps");
                     Status = Status.Success.WithText("Db core exportet");
@@ -225,5 +233,5 @@ namespace Passwords.API.Services
                         "Error when encrypting database" ).WithData( Crypt.Error );
             return Status;
         }
-    } 
+    }
 }
