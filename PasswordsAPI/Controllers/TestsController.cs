@@ -9,9 +9,9 @@ namespace Passwords.Controllers
 {
     public class TestsController : Controller
     {
-        private static string path = new FileInfo( 
+        private static string path = new FileInfo(
             System.Reflection.Assembly.GetExecutingAssembly().Location
-                                                  ).Directory.FullName;  
+                                                  ).Directory.FullName;
 
         public IActionResult Index()
         {
