@@ -77,8 +77,8 @@ namespace PasswordsAPI.Services
                     _enty.User = userId;
                     _enty.Pass = "";
                     _enty.Id = 0;
-                    _dset.AddAsync(_enty);
-                    _db.SaveChangesAsync();
+                    _dset.Add(_enty);
+                    _db.SaveChanges();
                     return this;
                 } else {
                     _enty = PasswordServiceError;
