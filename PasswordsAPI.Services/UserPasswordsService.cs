@@ -131,7 +131,7 @@ namespace Passwords.API.Services
 
             if ( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
-                    string usersMasterPassword = _apky.Decrypt(pass);
+                    string usersMasterPassword = _apky.Decrypt( pass );
                     if ( Crypt.Error )
                     {
                         Status = new Status( ResultCode.Cryptic |
