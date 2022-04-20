@@ -76,7 +76,7 @@ namespace PasswordsAPI.Services
         public async Task<UserLocationsService<CTX>> SetKey( CryptKey masterKey )
         {
             if( !masterKey.IsValid() ) {
-                Status = (LocationServiceError + ResultCode.Cryptic).WithText( "Invalid Crypt.Key" );
+                Status = (LocationServiceError + ResultCode.Cryptic).WithText( "CryptKey structure invalid" );
                 _key = null;
             } else {
                 Ok = true;
@@ -218,20 +218,20 @@ namespace PasswordsAPI.Services
         public override string ToString()
         {
             if ( Status.Bad || Entity.Is().Status.Bad ) return Status.ToString();
-            StringBuilder str = new StringBuilder("{ Id:");
-            str.Append( _enty.Id ).Append( ", User:" ).Append( _enty.User ).Append( ", Name:'" ).Append( _enty.Area );
-            if ( _enty.Info != null ) str.Append( "', Info:'" ).Append( _enty.Info );
-            if ( _enty.Name != null ) str.Append( "', LoginName:'" ).Append( _enty.Name );
-            str.Append( "', Password:'" ).Append( GetPassword() ).Append( "' }" );
+            StringBuilder str = new StringBuilder("{ \"Id\":");
+            str.Append( _enty.Id ).Append( ", \"User\":" ).Append( _enty.User ).Append( ", \"Name\":\"" ).Append( _enty.Area );
+            if ( _enty.Info != null ) str.Append( "\", \"Info\":\"" ).Append( _enty.Info );
+            if ( _enty.Name != null ) str.Append( "\", \"LoginName\":\"" ).Append( _enty.Name );
+            str.Append( "\", \"Password\":\"" ).Append( GetPassword() ).Append( "\" }" );
             return str.ToString();
         }
 
-        public async Task<UserLocationsService<CTX>> RemoveLocation( Task<PasswordUsersService<CTX>> userserv, string area, string master )
+        public async Task<UserLocationsService<CTX>> RemoveLocation( Task<PasswordUsersService<CTX>> userserv, string area, string pass )
         {
             PasswordUsers user = (await userserv).Entity;
             UserPasswords password = ( await _keys.LookupPasswordByUserAccount( userserv ) ).Entity;
             if ( password.IsValid() ) {
-                if( _keys.VerifyPassword( user.Id, master ) ) {
+                if( _keys.VerifyPassword( user.Id, pass ) ) {
                     if ( GetLocationOfUser( user.Id, area ) ) {
                         _dset.Remove( Entity );
                         _db.SaveChanges();
@@ -242,8 +242,8 @@ namespace PasswordsAPI.Services
                         Status = LocationServiceError.WithText( "Location '{0}' not exists" ).WithData( area );
                     }
                 } else { 
-                    Status = LocationServiceError.WithData( master ).WithText( 
-                        "For Deleting a Passwords, the owning users master password is needed"
+                    Status = LocationServiceError.WithData( pass ).WithText( 
+                        "For Deleting a Passwords, the owning users masterkey is needed"
                     ) + ( ResultCode.Invalid | ResultCode.User | ResultCode.Password );
                 }
             } return this;

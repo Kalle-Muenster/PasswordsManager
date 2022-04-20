@@ -20,7 +20,6 @@ namespace PasswordsAPI.Services
         protected override ResultCode GetServiceFlags() { return ResultCode.User|ResultCode.Service; }
         protected override PasswordUsers GetStatusEntity( Status cast ) { return cast; }
 
-
         public PasswordUsersService( CTX ctx )
             : base(ctx)
         {
