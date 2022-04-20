@@ -73,7 +73,7 @@ namespace PasswordsAPI.Tests.Helpers
                 string dotnet = Test.CurrentConfig.Architecture == "x86"
                               ? "C:\\Program Files (x86)\\dotnet\\dotnet.exe"
                               : "C:\\Program Files\\dotnet\\dotnet.exe";
-                startinfo = new ProcessStartInfo( dotnet, $"{path}\\{file} --verbose" );
+                startinfo = new ProcessStartInfo( dotnet, $"{path}\\{file} --verbose --xml" );
             } else
                 _result = new Tuple<int,string>( int.MaxValue, file+" is not executable" );
 
