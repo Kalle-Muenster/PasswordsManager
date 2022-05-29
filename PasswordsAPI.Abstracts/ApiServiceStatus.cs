@@ -92,7 +92,7 @@ namespace Passwords.API.Abstracts
 
         public Status WithData( object with )
         {
-            return new Status( this, with );
+            return new Status( Code, Text, with );
         }
 
         public Status WithText( string text )

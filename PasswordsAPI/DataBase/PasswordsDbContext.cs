@@ -5,7 +5,7 @@ using Passwords.API.Models;
 
 namespace Passwords.API.Database
 {
-    public class PasswordsDbContext 
+    public class PasswordsDbContext
         : PasswordsApiDbContext<PasswordsDbContext>
     {
         public PasswordsDbContext( DbContextOptions<PasswordsDbContext> options )

@@ -4,7 +4,6 @@ using Passwords.API.Tests.Helpers;
 
 namespace Passwords.API.Tests
 {
-        
     public class ExternalLibraries
     {
         public static readonly string BuildFolder;
@@ -12,10 +11,10 @@ namespace Passwords.API.Tests
         static ExternalLibraries()
         {
             BuildFolder = Test.CurrentConfig.ProjectFolder + "\\bin\\"
-                        + Test.CurrentConfig.Architecture + "\\" 
+                        + Test.CurrentConfig.Architecture + "\\"
                         + Test.CurrentConfig.Configuration + "\\net5.0";
         }
-        
+
         [Fact]
         public void RunInt24TypesTest()
         {

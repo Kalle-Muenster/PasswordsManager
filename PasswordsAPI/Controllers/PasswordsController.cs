@@ -299,5 +299,12 @@ namespace Passwords.Controllers
             else
                 return StatusCode(_keys.Status.Http, _keys.Status.Text);
         }
+
+        [Produces("application/json"), HttpGet("ypserror/{code}")]
+        public async Task<IActionResult> GetYpsingError( uint code )
+        {
+            Status textFromErrorCode = new Status( ResultCode.Cryptic, "message from yps crypt: {0}", Yps.Error.GetText( (int)code ) );
+            return Ok( textFromErrorCode.ToString() );
+        }
     }
 }
