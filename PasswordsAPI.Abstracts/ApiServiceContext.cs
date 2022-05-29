@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 
 
-namespace PasswordsAPI.Abstracts
+namespace Passwords.API.Abstracts
 {
     public interface IPasswordaApiDbContext<CTX> where CTX : DbContext
     {

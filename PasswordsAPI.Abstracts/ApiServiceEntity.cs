@@ -1,4 +1,4 @@
-﻿namespace PasswordsAPI.Abstracts
+﻿namespace Passwords.API.Abstracts
 {
 
     public interface IEntityBase
@@ -46,7 +46,7 @@
 
         public bool Waiting()
         {
-            return Is().Status.IsWaiting;
+            return Is().Status.Intermediate;
         }
 
         public override string ToString()

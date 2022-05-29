@@ -1,6 +1,6 @@
 ﻿using System;
 using Xunit;
-using PasswordsAPI.Tests.Helpers;
+using Passwords.API.Tests.Helpers;
 
 namespace Passwords.API.Tests
 {
@@ -15,7 +15,7 @@ namespace Passwords.API.Tests
 
             ExternalTestrun testrun = new ExternalTestrun( path, "test_int24_native_cpp.exe" );
 
-            Assert.True( testrun.FailedTests == 0, testrun.TestResults );
+            Assert.True( testrun.FailedTests == 0, testrun.TestResults + "\n" + $"Failed Tests: {testrun.FailedTests}");
         }
 
         [Fact]
@@ -26,7 +26,7 @@ namespace Passwords.API.Tests
 
             ExternalTestrun test = new ExternalTestrun( path, "test_int24_dotnet_dll.dll" );
 
-            Assert.True( test.FailedTests == 0, test.TestResults );
+            Assert.True( test.FailedTests == 0, test.TestResults + "\n" + $"Failed Tests: {test.FailedTests}");
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace Passwords.API.Tests
 
             ExternalTestrun test = new ExternalTestrun( path, "YpsTest.dll" );
 
-            Assert.True( test.FailedTests == 0, test.TestResults );
+            Assert.True( test.FailedTests == 0, test.TestResults + "\n" + $"Failed Tests: {test.FailedTests}");
         }
     }
 }

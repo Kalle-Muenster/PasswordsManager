@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Consola;
 
-namespace PasswordsAPI.Abstracts
+namespace Passwords.API.Abstracts
 {
 
     public interface IPasswordsApiService<D> 
@@ -49,18 +49,17 @@ namespace PasswordsAPI.Abstracts
         private Status       state;
 
         protected abstract Status     GetDefaultError();
-        protected abstract E          GetStatusEntity(Status cast);
+        protected abstract E          GetStatusEntity( Status cast );
         protected abstract ResultCode GetServiceFlags();
 
         D IPasswordsApiService<D>.db => _db;
-        public S serve() { return (S)this; }
+        public S serve() { return this as S; }
 
         public E Entity {
             get {
-                if (_enty.Is().Status.IsWaiting)
+                if (_enty.Is().Status.Intermediate)
                     _enty = _lazy.GetAwaiter().GetResult()
                           ?? GetStatusEntity( GetDefaultError() );
-                //return Ok ? _enty : GetStatusEntity( Status );
                 if (_enty.Is().Status.Bad) Status = _enty.Is().Status;
                 return _enty;
             } set {
@@ -84,7 +83,6 @@ namespace PasswordsAPI.Abstracts
 
         public Status Status
         {
-        //    get { return state.Result == ResultState.Waiting ? state = Entity.Is().Status : state; }
             get { if (state.Code == ResultCode.NoState)
                     if (state.Data.ToString() != string.Empty)
                         state += Entity.Is().Status;
@@ -124,8 +122,15 @@ namespace PasswordsAPI.Abstracts
                     otherService.Status.Text,
                     GetType().Name
                 );
-            } return this.serve();
+            } return this as S;
         }
 
+        public Status Save()
+        {
+            if ( Entity.Is().Status ) {
+                _db.Update(_enty);
+                _db.SaveChanges();
+            } return Status;
+        }
     }
 }

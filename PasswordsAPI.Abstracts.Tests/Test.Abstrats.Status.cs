@@ -1,7 +1,7 @@
 ﻿using Xunit;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Tests
+namespace Passwords.Tests
 {
     public class BaseClasses
     {
@@ -16,7 +16,7 @@ namespace PasswordsAPI.Tests
             Assert.False(nostate, nostate.ToString()); // if nothing there IS, than nothing could pass
             Assert.False(nostate.Bad, nostate); // if nothing there IS, then there's nothing Bad
             Assert.False(nostate.Ok, nostate); // if nothing there IS, for what is it Good for?
-            Assert.False(nostate.IsWaiting, nostate); // as long nothing has been initiated, nothing awaited will happen (e.g. no cause - no effect)
+            Assert.False(nostate.Intermediate, nostate); // as long nothing has been initiated, nothing awaited will happen (e.g. no cause - no effect)
             Assert.True(nostate.ToString().StartsWith("Status"), nostate);
         }
 
@@ -25,7 +25,7 @@ namespace PasswordsAPI.Tests
             Assert.True(success, success ); // passes silently, sure
             Assert.False(success.Bad, success); // no, it's ok
             Assert.True(success.Ok, success); // yes that it is
-            Assert.False(success.IsWaiting, success); // for what at all?
+            Assert.False(success.Intermediate, success); // for what at all?
             Assert.True(success.ToString().StartsWith("Success"),success);
         }
 
@@ -34,7 +34,7 @@ namespace PasswordsAPI.Tests
             Assert.True(unknown, unknown.ToString()); // as long there aren't explicit questions about it..
             Assert.True(unknown.Bad, unknown); // I don't know if it's ok,... so could be maybe Bad
             Assert.False(unknown.Ok, unknown); // one cannot say it would be ok for sure yet..
-            Assert.True(unknown.IsWaiting, unknown); // not yet evaluable, so wait till gets known
+            Assert.True(unknown.Intermediate, unknown); // not yet evaluable, so wait till gets known
             Assert.True(unknown.ToString().StartsWith("Status"), unknown);
         }
 
@@ -43,7 +43,7 @@ namespace PasswordsAPI.Tests
             Assert.False(invalid, invalid ); // should not pass silently
             Assert.True(invalid.Bad, invalid); // is 'Bad' in any case
             Assert.False(invalid.Ok, invalid); // is NOT Ok at all
-            Assert.False(invalid.IsWaiting, invalid); // No, it's already evaluated being 'Invalid'
+            Assert.False(invalid.Intermediate, invalid); // No, it's already evaluated being 'Invalid'
             Assert.True(invalid.ToString().StartsWith("Error"), invalid );
         }
 

@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
+using Passwords.API.Abstracts;
+using Passwords.API.Models;
 using Yps;
 
 
-namespace PasswordsAPI.Services
+namespace Passwords.API.Services
 {
     public class UserPasswordsService<CTX>
         : AbstractApiService<UserPasswords,UserPasswordsService<CTX>,CTX>
@@ -20,7 +20,8 @@ namespace PasswordsAPI.Services
 
 
         private PasswordUsersService<CTX>        _usrs;
-        private Yps.CryptKey                     _apky;
+        private CryptKey                         _apky;
+        private CryptBuffer                      _data;
 
         public UserPasswordsService( CTX ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> usr, CryptKey api )
             : base(ctx)
@@ -29,6 +30,7 @@ namespace PasswordsAPI.Services
             _enty = UserPasswords.Invalid;
             _lazy = new Task<UserPasswords>(() => { return _enty; });
             _apky = api;
+            _data = new CryptBuffer(512);
         }
 
 
@@ -58,22 +60,43 @@ namespace PasswordsAPI.Services
             } return this;
         }
 
+        public Status DecryptParameter( string data )
+        {
+            bool usingAppKey = !Entity.IsValid();
+            if ( usingAppKey ) {
+                data = _apky.Decrypt( data );
+            } else {
+                data = GetMasterKey( Entity.Id ).Decrypt( data );
+            }
+
+            if( Crypt.Error ) {
+                return Status = new Status(
+                    ResultCode.Cryptic | ResultCode.Invalid |
+                    ResultCode.Service, $"{Crypt.Error} - ApiKey Invalid",
+                    System.Array.Empty<string>()
+                );
+            } else {
+                return Status.Success.WithData(
+                    usingAppKey ? data.Split(".~.")
+                   : data.Substring(3).Split(".~.")
+                );
+            }
+            // TODO: so machen:
+            //CryptBuffer outer = new CryptBuffer( System.Text.Encoding.Default.GetBytes(data) );
+            //CryptBuffer.OuterCrypticStringEnumerator it = outer.GetOuterCrypticStringEnumerator(key, 0);
+            //it.Search = new StringSearch24(name);
+            //while ( it.MoveNext() );
+            //if ( it.Search.Found ) it.Position = it.Search.FoundAt( it.Position )/4;
+        }
+
         public async Task<UserPasswordsService<CTX>> SetMasterKey( int userId, string pass )
         {
 
             if ( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
-                    string usersMasterPassword = _apky.Decrypt( pass );
-                    if ( Crypt.Error )
-                    {
-                        Status = new Status( ResultCode.Cryptic |
-                            ResultCode.Invalid | ResultCode.Service,
-                            "{0} - ApiKey Invalid", Crypt.Error.ToString() );
-                        return this;
-                    }
                     Status = Status.NoState;
                     _enty = new UserPasswords();
-                    _enty.Hash = Crypt.CalculateHash( usersMasterPassword );
+                    _enty.Hash = Crypt.CalculateHash( pass );
                     _enty.User = userId;
                     _enty.Pass = "";
                     _enty.Id = 0;
@@ -87,7 +110,7 @@ namespace PasswordsAPI.Services
             } else {
                 _enty.Hash = Crypt.CalculateHash( pass );
                 _dset.Update( _enty );
-                _db.SaveChangesAsync();
+                _db.SaveChanges();
                 return this;
             }
         }

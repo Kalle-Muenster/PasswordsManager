@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
+using Passwords.API.Abstracts;
+using Passwords.API.Models;
 using Yps;
 
-namespace PasswordsAPI.Services
+namespace Passwords.API.Services
 {
     public class UserLocationsService<CTX>
         : AbstractApiService<UserLocations,UserLocationsService<CTX>,CTX>
@@ -73,14 +73,15 @@ namespace PasswordsAPI.Services
                  : this;
         }
 
-        public async Task<UserLocationsService<CTX>> SetKey( CryptKey masterKey )
+        public async Task<UserLocationsService<CTX>> SetKey( Task<UserPasswordsService<CTX>> keyService )
         {
-            if( !masterKey.IsValid() ) {
+            CryptKey set = (await keyService).GetMasterKey( Entity.User );
+            if( !set.IsValid() ) {
                 Status = (LocationServiceError + ResultCode.Cryptic).WithText( "CryptKey structure invalid" );
                 _key = null;
             } else {
                 Ok = true;
-                _key = masterKey;
+                _key = set;
             } return this;
         }
 
@@ -92,9 +93,11 @@ namespace PasswordsAPI.Services
 
         public string GetPassword( string masterPass )
         {
-            string crypt = SetKey( Crypt.CreateKey( masterPass ) ).GetAwaiter().GetResult().GetPassword();
+            string crypt = SetKey( masterPass ).GetAwaiter().GetResult().GetPassword();
             if ( Crypt.Error ) {
                 Status = new Status( ResultCode.Unknown|ResultCode.Cryptic, Crypt.Error.ToString(), "still encrypted: " + crypt );
+            } else {
+                Status = Status.Success;
             } return crypt;
         }
 
@@ -195,7 +198,7 @@ namespace PasswordsAPI.Services
                 _enty.Pass = Encoding.ASCII.GetBytes( masterKey.Encrypt( pass ) );
                 _dset.Update( _enty );
                 Status = Status.NoState;
-                _db.SaveChangesAsync();
+                _db.SaveChanges();
                 return this;
             } else {
                 // if location not exists yet, add a new location entry therefore
@@ -210,7 +213,7 @@ namespace PasswordsAPI.Services
                 if (info != null) if (info != String.Empty) _enty.Info = info;
                 if (login != null) if (login != String.Empty) _enty.Name = login;
                 _dset.Update( _enty );
-                _db.SaveChangesAsync();
+                _db.SaveChanges();
                 Status = Status.Success + GetServiceFlags();
             } return this;
         }

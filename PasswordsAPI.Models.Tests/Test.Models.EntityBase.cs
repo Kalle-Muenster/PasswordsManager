@@ -1,7 +1,7 @@
 ﻿using Xunit;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Models.Tests
+namespace Passwords.API.Models.Tests
 {
     public class EntitieConstructors
     {

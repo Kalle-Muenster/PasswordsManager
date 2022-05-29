@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PasswordsAPI.Abstracts
+namespace Passwords.API.Abstracts
 {
     public static class Extensions
     {
@@ -42,13 +42,15 @@ namespace PasswordsAPI.Abstracts
         User    = 0x00000100,
         Area    = 0x00000200,
         Password = 0x00000400,
-        
+        Json    = 0x00000800,
+        Html    = 0x00001000,
         Id      = 0x00020000,
         Data    = 0x00040000,
         Name    = 0x00080000,
         Mail    = 0x00100000,
         Info    = 0x00200000,
-        Icon    = 0x00400000
+        Icon    = 0x00400000,
+        Xaml    = 0x00800000,
     }
 
     public enum ResultState : uint
@@ -97,14 +99,12 @@ namespace PasswordsAPI.Abstracts
 
         public Status WithData( object with )
         {
-            return new Status( this, with );
+            return new Status( Code, Text, with );
         }
 
         public Status WithText( string text )
         {
-            return new Status( Code, text.Contains("{0}") 
-                             ? text : text + " {0}"
-                             , Data );
+            return new Status( Code, text, Data );
         }
 
         public static implicit operator bool( Status cast )
@@ -168,7 +168,7 @@ namespace PasswordsAPI.Abstracts
                                        | !Code.HasFlag(ResultCode.Unknown) ); }
         }
 
-        public bool IsWaiting {
+        public bool Intermediate {
             get {
                 ResultCode check = Code & ResultCode.IsValid;
                 return (check < ResultCode.IsError) && check.HasFlag( ResultCode.Unknown ) && (!check.HasFlag(ResultCode.Success));

@@ -2,11 +2,11 @@
 using System.Runtime.CompilerServices;
 using Xunit;
 using System.Threading;
-using PasswordsAPI.Models;
-using PasswordsAPI.Tests.Helpers;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Models;
+using Passwords.API.Tests.Helpers;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Services.Tests
+namespace Passwords.API.Services.Tests
 {
     public class UserLocationsServiceTests : IDisposable
     {

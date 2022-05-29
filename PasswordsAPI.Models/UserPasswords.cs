@@ -2,9 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Models
+namespace Passwords.API.Models
 {
     public class UserPasswords : EntityBase<UserPasswords>
     {

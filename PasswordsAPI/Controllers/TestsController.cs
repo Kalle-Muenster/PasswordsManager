@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.IO;
 using Yps;
-using PasswordsAPI.Tests.Helpers;
+using Passwords.API.Tests.Helpers;
 
-namespace PasswordsAPI.Controllers
+namespace Passwords.Controllers
 {
     public class TestsController : Controller
     {

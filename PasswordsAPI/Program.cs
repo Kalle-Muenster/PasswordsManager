@@ -1,22 +1,56 @@
+#if     DEBUG
+#define BUILD_AS_DEAMON
+#else
+#define BUILD_AS_SERVICE
+#endif
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
+using System.ServiceProcess;
 
-namespace PasswordsAPI
+namespace Passwords
 {
-    public class Program
+    namespace API
     {
-        public static void Main(string[] args)
+        public class Program
         {
-            Consola.StdStream.Init(
-                Consola.CreationFlags.AppendLog
-               |Consola.CreationFlags.NoInputLog
-               |Consola.CreationFlags.UseConsole
-            );
-            CreateHostBuilder(args).Build().Run();
-        }
+            public static void Main(string[] args)
+            {
+                Consola.StdStream.Init(
+                     Consola.CreationFlags.AppendLog
+                   | Consola.CreationFlags.NoInputLog
+                   | Consola.CreationFlags.UseConsole
+                );
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
-                webBuilder => { webBuilder.UseStartup<Startup>(); }  );
+                Consola.StdStream.Cwd = Consola.Utility.ProgramPath();
+
+                List<string> Args = new List<string>(args);
+                if (Args.Contains("--key"))
+                {
+                    int argn = Args.IndexOf("--key") + 1;
+                    System.IO.FileInfo keyfile = new System.IO.FileInfo(Args[argn]);
+                    if (keyfile.Exists)
+                    {
+                        args[argn] = keyfile.OpenText().ReadLine();
+                    }
+                }
+
+#if BUILD_AS_SERVICE
+            ServiceBase[] ServicesToRun;
+            ServicesToRun = new ServiceBase[] {
+                new Service()
+            };
+            ServiceBase.Run( ServicesToRun );
+        }
+#elif BUILD_AS_DEAMON
+                CreateHostBuilder(args).Build().Run();
+            }
+
+            public static IHostBuilder CreateHostBuilder(string[] args) =>
+                Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
+                    webBuilder => { webBuilder.UseStartup<Startup>(); });
+#endif
+        }
     }
 }

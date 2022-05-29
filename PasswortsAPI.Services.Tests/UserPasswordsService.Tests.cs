@@ -1,11 +1,11 @@
 ﻿using System;
 using Xunit;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Tests.Helpers;
+using Passwords.API.Abstracts;
+using Passwords.API.Tests.Helpers;
 using Yps;
 
 
-namespace PasswordsAPI.Services.Tests
+namespace Passwords.API.Services.Tests
 {
     public class UserPasswordsServiceTests : IDisposable
     {

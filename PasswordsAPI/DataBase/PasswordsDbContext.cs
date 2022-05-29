@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
+using Passwords.API.Abstracts;
+using Passwords.API.Models;
 
 
-namespace PasswordsAPI.Database
+namespace Passwords.API.Database
 {
     public class PasswordsDbContext : PasswordsApiDbContext<PasswordsDbContext>
     {
@@ -13,7 +13,7 @@ namespace PasswordsAPI.Database
 
         public virtual DbSet<PasswordUsers> PasswordUsers
         {
-            get { return EntitiesSet<PasswordUsers>();}
+            get { return EntitiesSet<PasswordUsers>(); }
             set { SetEntities(value); }
         }
         public virtual DbSet<UserPasswords> UserPasswords

@@ -14,13 +14,13 @@ using Microsoft.OpenApi.Models;
 using System.IO;
 using Constringer = Microsoft.Data.Sqlite.SqliteConnectionStringBuilder;
 using Connectione = Microsoft.Data.Sqlite.SqliteConnection;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Services;
-using PasswordsAPI.Database;
-using PasswordsAPI.Models;
+using Passwords.API.Abstracts;
+using Passwords.API.Services;
+using Passwords.API.Database;
+using Passwords.API.Models;
 using Yps;
 
-namespace PasswordsAPI
+namespace Passwords.API
 {
     public class Startup
     {

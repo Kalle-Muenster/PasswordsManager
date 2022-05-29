@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace PasswordsAPI.Migrations
+namespace Passwords.API.Migrations
 {
     public partial class RemoveUserIcon : Migration
     {

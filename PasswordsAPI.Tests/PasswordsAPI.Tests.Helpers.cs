@@ -1,15 +1,15 @@
 ﻿using System;
 using System.IO;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using Xunit;
 using Constringer = Microsoft.Data.Sqlite.SqliteConnectionStringBuilder;
 using Connectione = Microsoft.Data.Sqlite.SqliteConnection;
-using PasswordsAPI.Models;
+using Passwords.API.Models;
 
-namespace PasswordsAPI.Tests.Helpers
+namespace Passwords.API.Tests.Helpers
 {
     public class BuildConfig
     {
