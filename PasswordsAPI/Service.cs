@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 #define BUILD_AS_DEAMON
 #else
 #define BUILD_AS_SERVICE
