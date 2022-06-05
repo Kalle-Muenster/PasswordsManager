@@ -51,7 +51,7 @@ namespace Passwords.API
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" });
             });
 
-            services.AddSingleton( Crypt.CreateKey(ApplicationKey) );
+            services.AddSingleton( PasswordServer.Instance.TheKey );// Crypt.CreateKey( ApplicationKey ) );
             services.AddScoped<IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext>, PasswordUsersService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext>, UserPasswordsService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext>, UserLocationsService<PasswordsDbContext>>();
