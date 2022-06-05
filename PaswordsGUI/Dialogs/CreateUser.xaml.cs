@@ -14,7 +14,7 @@ namespace Passwords.GUI {
     {
         private bool neu = true;
 
-        ThePasswordsTheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
+        ThePasswords_TheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
         IThePasswords_TheGUI_ADialog<PasswordUsers>.ItsReturnAction IThePasswords_TheGUI_ADialog<PasswordUsers>.TheAction { get; set; }
         IEntityBase ThePasswords_TheGUI_ItsDialogs_TheInterface.TheData { get; set; }
         public ThePasswords_TheGUI_ItsDialogs_TheInterface theDialog() { return this; }
@@ -35,7 +35,7 @@ namespace Passwords.GUI {
             }
         }
 
-        public CreateUser( ThePasswordsTheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<PasswordUsers>.ItsReturnAction action )
+        public CreateUser( ThePasswords_TheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<PasswordUsers>.ItsReturnAction action )
         {
             theDialog().TheGUI = main;
             theDialog().TheReturnAction( action ); 

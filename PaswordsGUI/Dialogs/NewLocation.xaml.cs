@@ -14,7 +14,7 @@ namespace Passwords.GUI
     /// </summary>
     public partial class NewLocation : Window, IThePasswords_TheGUI_ADialog<UserLocations>
     {
-        ThePasswordsTheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
+        ThePasswords_TheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
         IThePasswords_TheGUI_ADialog<UserLocations>.ItsReturnAction IThePasswords_TheGUI_ADialog<UserLocations>.TheAction { get; set; }
         IEntityBase ThePasswords_TheGUI_ItsDialogs_TheInterface.TheData { get; set; }
         public ThePasswords_TheGUI_ItsDialogs_TheInterface theDialog() { return this; }
@@ -40,7 +40,7 @@ namespace Passwords.GUI
             }
         }
 
-        public NewLocation(ThePasswordsTheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<UserLocations>.ItsReturnAction action)
+        public NewLocation(ThePasswords_TheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<UserLocations>.ItsReturnAction action)
         {
             theDialog().TheGUI = main;
             theDialog().TheData = UserLocations.Invalid;

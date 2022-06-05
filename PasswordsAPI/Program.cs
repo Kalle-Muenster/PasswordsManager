@@ -23,7 +23,7 @@ namespace Passwords
                    | Consola.CreationFlags.UseConsole
                 );
 
-                Consola.StdStream.Cwd = Consola.Utility.ProgramPath();
+                Consola.StdStream.Cwd = Consola.Utility.PathOfTheCommander();
 
                 List<string> Args = new List<string>(args);
                 if (Args.Contains("--key"))

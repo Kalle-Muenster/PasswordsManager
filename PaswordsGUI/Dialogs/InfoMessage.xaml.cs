@@ -36,7 +36,7 @@ namespace Passwords.GUI
 
         private Message message;
 
-        ThePasswordsTheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
+        ThePasswords_TheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
         IThePasswords_TheGUI_ADialog<Message>.ItsReturnAction IThePasswords_TheGUI_ADialog<Message>.TheAction { get; set; }
         IEntityBase ThePasswords_TheGUI_ItsDialogs_TheInterface.TheData { get; set; }
         public ThePasswords_TheGUI_ItsDialogs_TheInterface theDialog() { return this; }
@@ -59,7 +59,7 @@ namespace Passwords.GUI
         }
 
 
-        public InfoMessage( ThePasswordsTheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<Message>.ItsReturnAction action ) 
+        public InfoMessage( ThePasswords_TheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<Message>.ItsReturnAction action ) 
         {
             
             theDialog().TheGUI = main;

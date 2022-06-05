@@ -146,15 +146,15 @@ namespace Passwords.Controllers
                 Status yps = DecryptQueryParameter( _usrs.Entity.Id, yps_area_pass_opt_login_info );
                 if ( yps.Bad ) return BadRequest( yps.ToString() );
                 string[] args = (string[])yps.Data;
-                if ( args.Length < 2 ) return BadRequest("expected paramerter: locationName.~.locationPass");
+                if ( args.Length < 2 ) return BadRequest("expected at least 2 paramerter: locationName.~.locationPass");
                 UserLocations newArea = new UserLocations();
                 newArea.Area = args[0];
                 newArea.User = _usrs.Entity.Id;
-                newArea.Info = args.Length > 2 ? args[2] : String.Empty;
-                newArea.Name = args.Length > 3 ? args[3] : String.Empty;
+                newArea.Name = args.Length > 2 ? args[2] : String.Empty;
+                newArea.Info = args.Length > 3 ? args[3] : String.Empty;
                 await _locs.SetLocationPassword(_usrs.GetUserByNameOrId(user), newArea, args[1]);
-                if (_locs.GetLocationOfUser(newArea.User, newArea.Area).IsValid()) {
-                    return Ok(XamlView.Serialize(_locs.Entity));
+                if (_locs.GetLocationOfUser( _usrs.Entity.Id, args[0] ).IsValid() ) {
+                    return Ok( XamlView.Serialize( _locs.Entity ) );
                 } else {
                     return StatusCode(404, _locs.Status.ToString());
                 }
@@ -211,8 +211,8 @@ namespace Passwords.Controllers
             UserLocations location = (await _locs.GetLocationById(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity;
             if ( !location.Is().Status.Bad ) {
                 Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_info );
-                if (yps.Bad) return BadRequest( yps.ToString() );
-                location.Info = ((string[])yps.Data)[0];
+                if( yps.Bad ) return BadRequest( yps.ToString() );
+                location.Info = ( (string[])yps.Data )[0];
                 _db.UserLocations.Update( location );
                 _db.SaveChanges();
                 return Ok( XamlView.Serialize( location ) );
@@ -224,14 +224,14 @@ namespace Passwords.Controllers
         {
             if (_locs.GetLocationOfUser( _usrs.GetUserId(user), area ) ) {
                 Status yps = DecryptQueryParameter( _usrs.Entity.Id, yps_upass_apass);
-                if (yps.Bad) return StatusCode( 304, yps.ToString() );
+                if ( yps.Bad ) return StatusCode( 304, yps.ToString() );
                 string[] args = (string[])yps.Data;
                 if( args.Length < 2 )
-                    return BadRequest("expected parameter: masterPass and locationPass");
-                if (!(await _locs.SetPassword( args[0], args[1] )).Status.Bad) {
+                    return BadRequest("expected parameter: usersMasterPass and newLocationPass");
+                if ( !(await _locs.SetPassword( args[0], args[1] )).Status.Bad ) {
                     return Ok(_locs.Status.ToString());
                 }
-            } return StatusCode(404, _locs.Status.ToString());
+            } return StatusCode( 404, _locs.Status.ToString() );
         }
 
         private Status DecryptQueryParameter( int userId, string encrypted )

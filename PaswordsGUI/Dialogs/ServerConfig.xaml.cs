@@ -38,7 +38,7 @@ namespace Passwords.GUI
         }
 
 
-        ThePasswordsTheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
+        ThePasswords_TheAPI_TheGUI ThePasswords_TheGUI_ItsDialogs_TheInterface.TheGUI { get; set; }
         IThePasswords_TheGUI_ADialog<Model>.ItsReturnAction IThePasswords_TheGUI_ADialog<Model>.TheAction { get; set; }
         IEntityBase ThePasswords_TheGUI_ItsDialogs_TheInterface.TheData { get; set; }
         public ThePasswords_TheGUI_ItsDialogs_TheInterface theDialog() { return this; }
@@ -67,7 +67,7 @@ namespace Passwords.GUI
         }
 
 
-        public ServerConfig( ThePasswordsTheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<Model>.ItsReturnAction action )
+        public ServerConfig( ThePasswords_TheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<Model>.ItsReturnAction action )
         {
             theDialog().TheGUI = main;
             theDialog().TheData = Model.Invalid;

@@ -34,7 +34,7 @@ namespace Passwords.GUI
         DialogReturnState Status { get; }
         ThePasswords_TheGUI_ItsDialogs_TheInterface theDialog();
         IEntityBase TheData { get; set; }
-        ThePasswordsTheAPI_TheGUI TheGUI { get; set; }
+        ThePasswords_TheAPI_TheGUI TheGUI { get; set; }
         
         void Show();
         void Hide();

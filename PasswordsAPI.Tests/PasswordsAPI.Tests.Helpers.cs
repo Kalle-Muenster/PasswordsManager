@@ -20,7 +20,7 @@ namespace Passwords.API.Tests.Helpers
         public BuildConfig()
         {
             ProjectFolder = "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI";
-            Architecture = Consola.Utility.MachineArch().Contains("64bit") ? "x64" : "x86";
+            Architecture = Consola.Utility.ArchitectureOfChip().Contains("64bit") ? "x64" : "x86";
 #if DEBUG
             Configuration = "Debug";
 #else
@@ -181,8 +181,8 @@ namespace Passwords.API.Tests.Helpers
                 {
                     Thread.Sleep(2000);
                     Consola.StdStream.Cwd = CurrentConfig.ProjectFolder + "\\DataBase\\Tests";
-                    Consola.Utility.CommandExec( "C:\\Windows\\System32\\cmd.exe /c \"del /f /q db.db\"" );
-                    Consola.Utility.CommandExec(
+                    Consola.Utility.CommandLine( "C:\\Windows\\System32\\cmd.exe /c \"del /f /q db.db\"" );
+                    Consola.Utility.CommandLine(
                         $"C:\\Windows\\System32\\cmd.exe /c \"copy {CurrentConfig.ProjectFolder}\\DataBase\\Tests\\{database}\\db.db {Consola.StdStream.Cwd}\""
                     );
                     return new DbContextOptionsBuilder<Context>().UseSqlite(
