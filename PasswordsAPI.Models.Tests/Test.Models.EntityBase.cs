@@ -18,7 +18,7 @@ namespace Passwords.API.Models.Tests
         }
 
         [Fact]
-        public void PasswordConstructor_ShouldBehaveLikeExpected()
+        public void UsersConstructor_ShouldBehaveLikeExpected()
         {
             // Arrange
             var user = new PasswordUsers();

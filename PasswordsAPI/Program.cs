@@ -20,7 +20,7 @@ namespace Passwords
                 Consola.StdStream.Init(
                      Consola.CreationFlags.AppendLog
                    | Consola.CreationFlags.NoInputLog
-                   | Consola.CreationFlags.UseConsole
+                   | Consola.CreationFlags.NewConsole
                 );
 
                 Consola.StdStream.Cwd = Consola.Utility.PathOfTheCommander();
@@ -47,9 +47,14 @@ namespace Passwords
                 CreateHostBuilder(args).Build().Run();
             }
 
-            public static IHostBuilder CreateHostBuilder(string[] args) =>
-                Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
-                    webBuilder => { webBuilder.UseStartup<Startup>(); });
+            public static IHostBuilder CreateHostBuilder( string[] args ) =>
+            Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
+                 webBuilder => {
+                     webBuilder.UseUrls(new string[] {
+                         "http://dergeraet:5000"
+                     });
+                     webBuilder.UseStartup<Startup>();
+            } );
 #endif
         }
     }

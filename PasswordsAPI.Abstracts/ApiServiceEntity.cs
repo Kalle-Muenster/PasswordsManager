@@ -3,17 +3,22 @@
 
     public interface IEntityBase
     {
+        Status DefaultStatus { get; }
         Status Status { get; set; }
         IEntityBase Is();
         E Entity<E>() where E : IEntityBase;
     }
 
 
-    public class EntityBase<E> : IEntityBase where E : EntityBase<E>, new()
+    public class EntityBase<E> 
+        : IEntityBase
+    where E
+        : EntityBase<E>
+        , new()
     {
         public static readonly EntityBase<E> Invalid = new( new Status( ResultCode.Invalid ) );
 
-
+        Status IEntityBase.DefaultStatus { get { return new Status(ResultCode.Empty); } }
         Status IEntityBase.Status { get; set; }
         public IEntityBase Is() { return this; }
         ET IEntityBase.Entity<ET>() { return (ET)Is(); }
@@ -22,7 +27,7 @@
 
         public EntityBase()
         {
-            Is().Status = Status.NoState;
+            Is().Status = Is().DefaultStatus;
         }
 
         public EntityBase( Status state )

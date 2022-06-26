@@ -9,13 +9,14 @@ namespace Passwords.API.Services
 {
     public class UserPasswordsService<CTX>
         : AbstractApiService<UserPasswords,UserPasswordsService<CTX>,CTX>
-        where CTX : PasswordsApiDbContext<CTX>
+    where CTX
+        : PasswordsApiDbContext<CTX>
     {
         private readonly Status PasswordServiceError = new Status(ResultCode.Service|ResultCode.Password|ResultCode.IsError);
         private readonly Status InvalidId = new Status(ResultCode.Service|ResultCode.Password|ResultCode.User|ResultCode.Invalid, "Invalid User.Id: {0}");
         private readonly Status HashValue = new Status(ResultCode.Service|ResultCode.Password|ResultCode.Id|ResultCode.Invalid, "password incorrct '{0}'" );
         protected override Status GetDefaultError() { return PasswordServiceError; }
-        protected override ResultCode GetServiceFlags() { return ResultCode.Password|ResultCode.Service; }
+        protected override ResultCode GetServiceFlags() { return ResultCode.Password; }
         protected override UserPasswords GetStatusEntity(Status cast) { return cast; }
 
 
@@ -43,16 +44,27 @@ namespace Passwords.API.Services
             }
         }
 
+        public async Task<UserPasswordsService<CTX>> LookupPasswordByUserAccount( int byUserId )
+        {
+            PasswordUsers user = (await _usrs.GetUserById(byUserId)).Entity;
+            if( !user.IsValid() ) {
+                _enty = user.Is().Status + ResultCode.Password;
+                Status = _enty.Is().Status;
+                return this;
+            } else if( _enty.User != user.Id ) {
+                Status = Status.NoState;
+                _enty = Status.Unknown;
+                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == user.Id);
+            } return this;
+        }
+
         public async Task<UserPasswordsService<CTX>> LookupPasswordByUserAccount( Task<PasswordUsersService<CTX>> byUser )
         {
             PasswordUsers user = byUser.IsCompleted ? byUser.Result.Entity : (await byUser).Entity;
-            if( !user.IsValid() ) { _enty = user.Is().Status;
+            if( !user.IsValid() ) {
+                _enty = user.Is().Status + ResultCode.Password;
                 Status = _enty.Is().Status;
                 return this;
-            }
-            if( _usrs.Status ) {
-                Status = _usrs.Status + ResultCode.Password;
-                _enty = Status;
             } else if( _enty.User != user.Id ) {
                 Status = Status.NoState;
                 _enty= Status.Unknown;
@@ -81,12 +93,28 @@ namespace Passwords.API.Services
                    : data.Substring(3).Split(".~.")
                 );
             }
-            // TODO: so machen:
-            //CryptBuffer outer = new CryptBuffer( System.Text.Encoding.Default.GetBytes(data) );
-            //CryptBuffer.OuterCrypticStringEnumerator it = outer.GetOuterCrypticStringEnumerator(key, 0);
-            //it.Search = new StringSearch24(name);
-            //while ( it.MoveNext() );
-            //if ( it.Search.Found ) it.Position = it.Search.FoundAt( it.Position )/4;
+        }
+
+        public Status GetYpsEnumerator( string yps_parameters )
+        { 
+            CryptBuffer cryptic = new CryptBuffer( System.Text.Encoding.Default.GetBytes( yps_parameters ) );
+            CryptBuffer.OuterCrypticStringEnumerator ypser;
+            bool usingAppKey = !Entity.IsValid();
+            if ( usingAppKey ) {
+                 ypser = cryptic.GetOuterCrypticStringEnumerator( _apky, 0 );
+            } else {
+                 ypser = cryptic.GetOuterCrypticStringEnumerator( GetMasterKey(Entity.Id), 3 );
+            }
+
+            if( Crypt.Error ) {
+                return Status = new Status(
+                    ResultCode.Cryptic | ResultCode.Invalid |
+                    ResultCode.Service, $"{Crypt.Error} - ApiKey Invalid",
+                    System.Array.Empty<string>()
+                );
+            } else {
+                return Status.Success.WithData( ypser );
+            }
         }
 
         public async Task<UserPasswordsService<CTX>> SetMasterKey( int userId, string pass )
@@ -156,6 +184,37 @@ namespace Passwords.API.Services
             Entity = Status.Unknown;
             _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync( p => p.User == ofUser );
             return this;
+        }
+
+        public System.IO.FileStream GetCrypticDbExport(string export)
+        {
+            System.IO.FileInfo dbfile = new System.IO.FileInfo($"{export}\\DataBase\\SqLite\\db.db");
+            export += "\\Exporte";
+            System.IO.FileInfo dbexport = new System.IO.FileInfo( System.IO.Directory.CreateDirectory( export ).FullName+"\\DbCore.yps" );
+
+            while( _db.Database.CurrentTransaction != null ) System.Threading.Thread.Sleep(1000);
+            if( dbfile.Exists ) {
+                System.IO.FileStream dbstream = dbfile.OpenRead();
+                System.IO.FileStream dboutput = dbexport.OpenWrite();
+                CryptBuffer header = Crypt.CreateHeader(_apky,CrypsFlags.Encrypt);
+                dboutput.Write( header.GetCopy<byte>() );
+                CryptFrame frame = new CryptFrame();
+                int read = 0;
+                while( read != -1 ) {
+                    for( int i = 0; i < 3; ++i ) {
+                        if( ( read = dbstream.ReadByte() ) >= 0 ) {
+                            frame[i] = (byte)read;
+                        } else break;
+                    } frame.bin = Crypt.EncryptFrame24(_apky, frame.bin);
+                    for( int i = 0; i < 4; ++i ) {
+                        dboutput.WriteByte(frame[i]);
+                    }
+                } dbstream.Close();
+                dboutput.Flush();
+                dboutput.Close();
+                Status = Status.Success.WithText("Encrüpted!");
+                return dbexport.OpenRead();
+            } else return null;
         }
     } 
 }

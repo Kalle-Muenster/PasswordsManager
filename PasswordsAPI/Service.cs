@@ -10,13 +10,20 @@ using System.ServiceProcess;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
+using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Threading;
+//using System.Windows.Forms;
+
 namespace Passwords.API
 {
     public partial class Service : ServiceBase
     {
         private System.ComponentModel.IContainer components = null;
-
-        internal System.Threading.Tasks.Task task; 
+        internal System.Threading.Tasks.Task task;
+        internal IHost app;
 
         protected override void Dispose(bool disposing)
         {
@@ -30,7 +37,6 @@ namespace Passwords.API
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            
         }
 
         public Service()
@@ -44,26 +50,29 @@ namespace Passwords.API
 
         protected override void OnStart( string[] args )
         {
-            task = new System.Threading.Tasks.Task(() =>
-            {
-                CreateHostBuilder(args).Build().Run();
-            });
-            task.Start();
+            app = CreateHostBuilder(args).Build();
+            task = app.RunAsync();
             EventLog.Log = "Started!";
         }
 
         protected override void OnStop()
         {
-            EventLog.Log = "Shutting down";
-            ExitCode = 0;
-            task.Wait( 100 );
+            EventLog.Log = "Stopped!";
+            ExitCode = 1;
+            app.StopAsync();
+            task.Wait( 1000 );
+            app.WaitForShutdown();
             task.Dispose();
-            //base.Stop();
         }
 
         public static IHostBuilder CreateHostBuilder( string[] args ) =>
             Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
-                 webBuilder => { webBuilder.UseStartup<Startup>(); } );
+                 webBuilder => {
+                     webBuilder.UseUrls(new string[] {
+                         "http://dergeraet:5000"
+                     });
+                     webBuilder.UseStartup<Startup>();
+        } );
     }
 }
 #endif

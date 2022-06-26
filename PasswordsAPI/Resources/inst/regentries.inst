@@ -1,0 +1,10 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\ThePasswords]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\ThePasswords\TheAPI]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\ThePasswords\TheAPI\TheClients]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\ThePasswords\TheAPI\TheService]
+"ThePort"=dword:00001388

@@ -19,7 +19,7 @@ namespace Passwords.GUI
             public Message() : this(API.Abstracts.Status.Unknown) { }
             public Message( Status code ) : base( code ) {
                 if ( code.Code.HasFlag( ResultCode.Xaml ) ) {
-                    dialog.Title = code.Text;
+                    dialog.Title = code.GetText();
                     dialog.txt_Content.Visibility = Visibility.Collapsed;
                     dialog.pnl_Content.Visibility = Visibility.Visible;
                     string xaml = (string)code.Data;
@@ -29,7 +29,7 @@ namespace Passwords.GUI
                 } else {
                     dialog.txt_Content.Visibility = Visibility.Visible;
                     dialog.pnl_Content.Visibility = Visibility.Collapsed;
-                    Text = string.Format( code.Text, code.Data );
+                    Text = string.Format( code.GetText(), code.Data );
                 }
             }
         }
@@ -82,6 +82,8 @@ namespace Passwords.GUI
                 message.Is().Status = new Status( ResultCode.Success, txt_Content.Content.ToString(), txt_Input.Text );
                 txt_Input.Clear();
                 txt_Input.Visibility = Visibility.Collapsed;
+            } else {
+                message.Is().Status = Passwords.API.Abstracts.Status.Success;
             } theDialog().Returns();
         }
 
@@ -106,6 +108,7 @@ namespace Passwords.GUI
             if ( info.Intermediate ) {
                 SetImage("WARN","Gelb");
                 btn_Decline.Visibility = Visibility.Visible;
+                btn_Confirm.Visibility = Visibility.Visible;
                 txt_Input.Visibility = Visibility.Visible;
             } else if ( info.Ok ) {
                 SetImage("PASS","Green");

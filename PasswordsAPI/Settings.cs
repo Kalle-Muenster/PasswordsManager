@@ -95,6 +95,7 @@ namespace Passwords.API
         internal ulong UnPackData( byte[] data )
         {
             data = Crypt.BinaryDecrypt( theKey, data );
+            if( data == null ) return 0;
             ulong value = 0;
             unsafe {
                 byte* ptr = (byte*)&value;
@@ -106,7 +107,7 @@ namespace Passwords.API
 
         internal byte[] PackValue( ulong value )
         {
-            byte[] data = new byte[8];
+            byte[] data = new byte[9];
             unsafe { byte* ptr = (byte*)&value;
                 for( int i = 0; i < 8; ++i ) {
                     data[i] = ptr[i];

@@ -34,7 +34,8 @@ namespace Passwords.API.Services.Tests
             location.User = 1;
             location.Area = "ElLoco";
             location.Name = "ElNamo";
-            location = service.SetLocationPassword(usinger.GetUserById(location.User), location, "ElPasso").GetAwaiter().GetResult().Entity;
+            location.Info = "ElInfo";
+            location = service.SetLocationPassword( usinger.GetUserById(location.User), location, "ElPasso").GetAwaiter().GetResult().Entity;
 
             Assert.True(service, service.Status);
         }
@@ -108,8 +109,8 @@ namespace Passwords.API.Services.Tests
             UserLocations location = service.SetLoginInfo( service.GetLocationOfUser(1,"ElLoco").Id, "ElNamo", "ElInfo" ).GetAwaiter().GetResult().Entity;
 
             Assert.True( service.Ok, service.ToString() );
-            Model.AssertSuccessCase(location);
-            AssertUserLocation(location, (1, 1, "ElLoco","ElNamo","ElInfo"));
+            Model.AssertSuccessCase( location );
+            AssertUserLocation( location, (1, 1, "ElLoco","ElNamo","ElInfo") );
         }
 
         [Fact]
@@ -152,9 +153,9 @@ namespace Passwords.API.Services.Tests
             UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
-            Status result = service.RemoveLocation( usinger.GetUserById(1), "ElLoco", "ElMaestro" ).GetAwaiter().GetResult().Status;
+            Status result = service.RemoveLocation( 1, "ElLoco", "ElMaestro" ).GetAwaiter().GetResult().Status;
             
-            Assert.True( result, result );
+            Assert.False( result.Bad, result );
         }
 
 

@@ -24,7 +24,7 @@ namespace Passwords.GUI
         }
         void ThePasswords_TheGUI_ItsDialogs_TheInterface.TheReturnAction<T>(IThePasswords_TheGUI_ADialog<T>.ItsReturnAction onProcced)
         {
-            if (typeof(T) == typeof(UserLocations)) {
+            if ( typeof(T) == typeof(UserLocations) ) {
                 (this as IThePasswords_TheGUI_ADialog<UserLocations>).TheAction = onProcced
                       as IThePasswords_TheGUI_ADialog<UserLocations>.ItsReturnAction;
             } else throw new Exception( "the dialog it's data type is not: " + typeof(T).Name );
@@ -32,8 +32,7 @@ namespace Passwords.GUI
 
         public DialogReturnState Status
         {
-            get
-            {
+            get {
                 return theDialog().TheData.Status
                      ? DialogReturnState.Ok
                      : DialogReturnState.Canceled;
@@ -48,13 +47,13 @@ namespace Passwords.GUI
             InitializeComponent();
         }
 
-        private void btn_Cancel_Click(object sender, RoutedEventArgs e)
+        private void btn_Cancel_Click( object sender, RoutedEventArgs e )
         {
             theDialog().TheData = UserLocations.Invalid;
             theDialog().Returns();
         }
 
-        private void btn_Ok_Click(object sender, RoutedEventArgs e)
+        private void btn_Ok_Click( object sender, RoutedEventArgs e )
         {
             UserLocations data = new UserLocations();
             data.Area = txt_LocationName.Text;
@@ -85,6 +84,5 @@ namespace Passwords.GUI
                     btn_Ok.IsEnabled = false;
             }
         }
-
     }
 }

@@ -63,19 +63,6 @@ namespace Passwords.Controllers
             return Ok("Test");
         }
 
-        [HttpGet("Tests/Int24NativeTypes")]
-        public IActionResult TestInt24TypeLib()
-        {
-            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\native\\" +
-                $"{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}";
-
-            ExternalTestrun testrun = new ExternalTestrun(path, "test_int24_native_cpp.exe");
-
-            if (testrun.FailedTests == 0) return Ok(testrun.TestResults);
-            else return StatusCode(500 + testrun.FailedTests, testrun.TestResults);
-        }
-
-
         [HttpGet("Tests/YpsCryptLib")]
         public IActionResult CryptLibTest()
         {
@@ -91,10 +78,10 @@ namespace Passwords.Controllers
         [HttpGet("Tests/Int24DotnetTypes")]
         public IActionResult GetSchmett()
         {
-            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\core5\\test\\" +
+            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\core5\\" +
                 $"{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}\\net5.0";
 
-            ExternalTestrun test = new ExternalTestrun(path, "test_int24_dotnet_dll.dll");
+            ExternalTestrun test = new ExternalTestrun(path, "Int24Tests.dll");
 
             if (test.FailedTests == 0) return Ok(test.TestResults);
             else return StatusCode(500 + test.FailedTests, test.TestResults);

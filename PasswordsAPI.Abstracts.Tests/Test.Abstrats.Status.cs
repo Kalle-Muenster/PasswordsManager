@@ -14,7 +14,7 @@ namespace Passwords.Tests
         public void AssertNoStateCase(Status nostate)
         {
             Assert.False(nostate, nostate.ToString()); // if nothing there IS, than nothing could pass
-            Assert.False(nostate.Bad, nostate); // if nothing there IS, then there's nothing Bad
+            Assert.False(nostate.Bad, nostate); // if nothing there 'is', then there's nothing Bad
             Assert.False(nostate.Ok, nostate); // if nothing there IS, for what is it Good for?
             Assert.False(nostate.Intermediate, nostate); // as long nothing has been initiated, nothing awaited will happen (e.g. no cause - no effect)
             Assert.True(nostate.ToString().StartsWith("Status"), nostate);
@@ -76,7 +76,7 @@ namespace Passwords.Tests
             // Assert status 'Unknown' for the status of context related item data   
             Status Chicken  = Status.NoState.WithText("Chicken or").WithData("Egg") + Status.Unknown;
             AssertUnknownCase( Chicken );
-            Assert.True( Chicken.ToString().EndsWith("Chicken or Egg"), Chicken.ToString() );
+            Assert.True( Chicken.Text.EndsWith("Chicken or Egg"), Chicken.ToString() );
 
             // Asserting correct behavior on status transition to a different context  
             Status Banana = Chicken.WithText("Banana is") + ResultCode.Info + Status.Invalid;
@@ -88,8 +88,8 @@ namespace Passwords.Tests
             // Appending descriptive data to a status af transitioned contexts  
             Banana = Chicken.WithText("Banana is") + Status.Success.WithData("Gelb");
             AssertSuccessCase( Banana );
-            Assert.False(Banana.Text.StartsWith("Chicken"), Banana.ToString());
-            Assert.True(Banana.ToString().EndsWith("Gelb"), Banana.ToString());
+            Assert.False(Banana.Text.StartsWith("Chicken"), Banana.Text);
+            Assert.True(Banana.Text.EndsWith("Gelb"), Banana.Text);
         }
     }
 }

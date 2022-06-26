@@ -37,20 +37,21 @@ namespace Passwords.Controllers
         }
 
 
-        [Produces("application/json"), HttpPut("User")]
-        public async Task<IActionResult> NewUser(string app_user_email_pass)
+        [Produces("application/json"), HttpPatch("User")]
+        public async Task<IActionResult> NewUser( string app_user_email_pass )
         {
             Status yps = _keys.DecryptParameter( app_user_email_pass );
             if( yps.Bad ) return BadRequest( yps.ToString() );
+
             string[] plain = (string[])yps.Data;
             PasswordUsers user = (await _usrs.CreateNewAccount( plain[0], plain[1],
-                                              plain.Length > 3 ? plain[3] : string.Empty)
+                                              plain.Length > 3 ? plain[3] : string.Empty )
                                    ).Entity;
             if ( user.IsValid() ) {
                 // as soon user has been add, set the users master password
                 // (or a password hash, if user keys residing client sided)
                 if ( await _keys.SetMasterKey( user.Id, plain[2] ) ) {
-                    return Ok(SerializeAsXaml(user));
+                    return Ok( SerializeAsXaml(user) );
                 } else {
                     _db.PasswordUsers.Remove( user );
                     _db.SaveChanges();
@@ -65,8 +66,8 @@ namespace Passwords.Controllers
             return new OkObjectResult( _usrs.ListUserAccounts() );
         }
 
-        [Produces("application/json"), HttpPut("{user}/Info")]
-        public async Task<IActionResult> PutUserInfo(string user, string yps_info)
+        [Produces("application/json"), HttpPatch("{user}/Info")]
+        public async Task<IActionResult> PatchUserInfo(string user, string yps_info)
         {
             if( (await _usrs.GetUserByNameOrId(user)).Entity.IsValid() ) {
                 PasswordUsers usr = _usrs.Entity;
@@ -79,8 +80,8 @@ namespace Passwords.Controllers
             } else return StatusCode( 400, _usrs.Status.ToString() );
         }
 
-        [Produces("application/json"), HttpPut("{user}/Mail")]
-        public async Task<IActionResult> PutUserMail(string user, string yps_mail)
+        [Produces("application/json"), HttpPatch("{user}/Mail")]
+        public async Task<IActionResult> PatchUserMail(string user, string yps_mail)
         {
             if ((await _usrs.GetUserByNameOrId(user)).Entity.IsValid())
             {
@@ -105,7 +106,7 @@ namespace Passwords.Controllers
             }
         }
 
-        [Produces("application/json"), HttpPut("{user}/Pass")]
+        [Produces("application/json"), HttpPatch("{user}/Pass")]
         public async Task<ActionResult> SetUserPassword(string user, string yps_oldpass_newpass)
         {
             if (await _keys.LookupPasswordByUserAccount(_usrs.GetUserByNameOrId(user))) {
@@ -139,7 +140,7 @@ namespace Passwords.Controllers
 
 
 
-        [Produces("application/json"), HttpPut("{user}/Area")]
+        [Produces("application/json"), HttpPatch("{user}/Area")]
         public async Task<IActionResult> NewUserLocation( string user, string yps_area_pass_opt_login_info )
         {
             if ((await _usrs.GetUserByNameOrId(user)).Entity) {
@@ -156,9 +157,9 @@ namespace Passwords.Controllers
                 if (_locs.GetLocationOfUser( _usrs.Entity.Id, args[0] ).IsValid() ) {
                     return Ok( XamlView.Serialize( _locs.Entity ) );
                 } else {
-                    return StatusCode(404, _locs.Status.ToString());
+                    return StatusCode(_locs.Status.Http,_locs.Status.Text);
                 }
-            } else return StatusCode(404, _usrs.Status.ToString());
+            } else return StatusCode(_usrs.Status.Http, _usrs.Status.Text);
         }
 
         [Produces("application/json"), HttpGet("{user}/Area")]
@@ -183,30 +184,32 @@ namespace Passwords.Controllers
             Status yps = DecryptQueryParameter(_usrs.GetUserId(user), yps_upass_apass );
             if (yps.Bad) return StatusCode( 304, yps.ToString() );
             string[] args = (string[])yps.Data;
-            if (args.Length < 2) return BadRequest("Expected masterpass and location password");
-            if (await _locs.SetKey(_keys.LookupPasswordByUserAccount(_usrs.GetUserById(_usrs.Entity.Id))))
-               if (args[1] != _locs.GetPassword()) return BadRequest("Wrong location password");
-            if (await _locs.RemoveLocation(_usrs.GetUserByNameOrId(user), area, args[0]))
+            if (args.Length < 2) return StatusCode( 400, "Expected masterpass and location password");
+            if( _locs.GetLocationOfUser(_usrs.Entity.Id, area).Is().Status.Bad )
+                return StatusCode( _locs.Status.Http, _locs.Status.Text );
+            if (await _locs.SetKey( _keys.LookupPasswordByUserAccount( _usrs.Entity.Id ) ))
+               if (args[1] != _locs.GetPassword()) return StatusCode( 400, "Wrong location password" );
+            if((await _locs.RemoveLocation( _usrs.Entity.Id, area, args[0] ) ).Status.Ok)
                 return Ok($"Successfully removed password for: {area}");
             else return StatusCode(500, _locs.Status.ToString());
         }
 
-        [Produces(  "application/json" ), HttpPut( "{user}/{area}/Name" )]
-        public async Task<IActionResult> PutUserLocationLogin( string user, string area, string yps_name )
+        [Produces(  "application/json" ), HttpPatch( "{user}/{area}/Name" )]
+        public async Task<IActionResult> PatchUserLocationLogin( string user, string area, string yps_name )
         {
             if( !_locs.GetLocationOfUser( _usrs.GetUserId(user), area) ) {
-                return StatusCode( 400, _locs.Status.ToString() );
+                return StatusCode( _locs.Status.Http, _locs.Status.ToString() );
             } else {
                 Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_name);
                 if (yps.Bad) return BadRequest( yps.ToString() );
                 yps_name = ((string[])yps.Data)[0];
                 _locs.Entity.Name = yps_name;
                 if ( _locs.Update() ) return Ok( XamlView.Serialize(_locs.Entity) ); 
-            } return StatusCode( 500, _locs.Status.ToString() );
+            } return StatusCode(_locs.Status.Http, _locs.Status.ToString() );
         }
 
-        [Produces( "application/json" ), HttpPut( "{user}/{area}/Info" )]
-        public async Task<IActionResult> PutUserLocationInfo( string user, string area, string yps_info )
+        [Produces( "application/json" ), HttpPatch( "{user}/{area}/Info" )]
+        public async Task<IActionResult> PatchUserLocationInfo( string user, string area, string yps_info )
         {
             UserLocations location = (await _locs.GetLocationById(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity;
             if ( !location.Is().Status.Bad ) {
@@ -216,11 +219,11 @@ namespace Passwords.Controllers
                 _db.UserLocations.Update( location );
                 _db.SaveChanges();
                 return Ok( XamlView.Serialize( location ) );
-            } else return StatusCode( 404, location.Is().Status.ToString() );
+            } else return StatusCode( location.Is().Status.Http, location.Is().Status.Text );
         }
 
-        [Produces("application/json"), HttpPut("{user}/{area}/Pass")]
-        public async Task<IActionResult> PutUserLocationPassword( string user, string area, string yps_upass_apass )
+        [Produces("application/json"), HttpPatch("{user}/{area}/Pass")]
+        public async Task<IActionResult> PatchUserLocationPassword( string user, string area, string yps_upass_apass )
         {
             if (_locs.GetLocationOfUser( _usrs.GetUserId(user), area ) ) {
                 Status yps = DecryptQueryParameter( _usrs.Entity.Id, yps_upass_apass);
@@ -231,7 +234,7 @@ namespace Passwords.Controllers
                 if ( !(await _locs.SetPassword( args[0], args[1] )).Status.Bad ) {
                     return Ok(_locs.Status.ToString());
                 }
-            } return StatusCode( 404, _locs.Status.ToString() );
+            } return StatusCode( _locs.Status.Http, _locs.Status.Text );
         }
 
         private Status DecryptQueryParameter( int userId, string encrypted )
@@ -268,12 +271,12 @@ namespace Passwords.Controllers
             int userId = _usrs.GetUserId(user);
             if (userId <= 0) return StatusCode( 404, _usrs.Status.ToString() );
             if (!_locs.GetLocationOfUser(userId, area))
-                return StatusCode( 404, _locs.Status.ToString());
+                return StatusCode( _locs.Status.Http, _locs.Status.Text );
             Status masterPass = DecryptQueryParameter( userId, yps );
             if (masterPass.Bad) return StatusCode(500, masterPass);
             string pass = _locs.GetPassword( ((string[])masterPass.Data)[0] );
             if (_locs.Status.Bad) {
-                return StatusCode( 303, _locs.Status.ToString() );
+                return StatusCode( _locs.Status.Http, _locs.Status.Text );
             } return Ok( pass );
         }
 
@@ -282,7 +285,7 @@ namespace Passwords.Controllers
         {
             Status textFromErrorCode = new Status((ResultCode) code, "message from error code: {0}", (ResultCode) code);
             if (textFromErrorCode.Ok) return Ok( textFromErrorCode.ToString() );
-            if (textFromErrorCode.Bad) return StatusCode( 404, textFromErrorCode.ToString() );
+            if (textFromErrorCode.Bad) return StatusCode( textFromErrorCode.Http, textFromErrorCode.Text );
             else return StatusCode( 500, textFromErrorCode.ToString() ); 
         }
 
@@ -291,6 +294,14 @@ namespace Passwords.Controllers
         {
             Status textFromErrorCode = new Status( ResultCode.Cryptic, "message from yps crypt: {0}", Yps.Error.GetText( (int)code ) );
             return Ok( textFromErrorCode.ToString() );
+        }
+
+        [Produces("application/json"), HttpGet("Export")]
+        public async Task<IActionResult> ExportData()
+        {
+            System.IO.FileStream export = _keys.GetCrypticDbExport(Consola.Utility.PathOfTheCommander());
+            if( _keys.Status.Bad ) return StatusCode( _keys.Status.Http, _keys.Status.ToString() );
+            return File( export, "application/binary" );
         }
     }
 }

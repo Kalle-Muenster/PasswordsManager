@@ -18,16 +18,16 @@
         <ImageSource x:Key="Red">pack://application:,,,/Resources/Red.ico</ImageSource>
         <ImageSource x:Key="Island">pack://application:,,,/Resources/location.ico</ImageSource>
         <System:String x:Key="GetUser">Passwords/User</System:String>
-        <System:String x:Key="PutUser">Passwords/User?app_user_email_pass={0}</System:String>
-        <System:String x:Key="PutUserInfo">Passwords/{0}/Info?yps_info={1}</System:String>
-        <System:String x:Key="PutUserPass">Passwords/{0}/Pass?yps_oldpass_newpass={1}</System:String>
-        <System:String x:Key="PutUserMail">Passwords/{0}/Mail?yps_mail={1}</System:String>
+        <System:String x:Key="PatchUser">Passwords/User?app_user_email_pass={0}</System:String>
+        <System:String x:Key="PatchUserInfo">Passwords/{0}/Info?yps_info={1}</System:String>
+        <System:String x:Key="PatchUserPass">Passwords/{0}/Pass?yps_oldpass_newpass={1}</System:String>
+        <System:String x:Key="PatchUserMail">Passwords/{0}/Mail?yps_mail={1}</System:String>
         <System:String x:Key="GetArea">Passwords/{0}/Area</System:String>
-        <System:String x:Key="PutArea">Passwords/{0}/Area?yps_area_pass_opt_login_info={1}</System:String>
+        <System:String x:Key="PatchArea">Passwords/{0}/Area?yps_area_pass_opt_login_info={1}</System:String>
         <System:String x:Key="GetAreaPass">Passwords/{0}/{1}/Pass?yps_upass={2}</System:String>
-        <System:String x:Key="PutAreaInfo">Passwords/{0}/{1}/Info?yps_info={2}</System:String>
-        <System:String x:Key="PutAreaName">Passwords/{0}/{1}/Name?yps_name={2}</System:String>
-        <System:String x:Key="PutAreaPass">Passwords/{0}/{1}/Pass?yps_upass_apass={2}</System:String>
+        <System:String x:Key="PatchAreaInfo">Passwords/{0}/{1}/Info?yps_info={2}</System:String>
+        <System:String x:Key="PatchAreaName">Passwords/{0}/{1}/Name?yps_name={2}</System:String>
+        <System:String x:Key="PatchAreaPass">Passwords/{0}/{1}/Pass?yps_upass_apass={2}</System:String>
         <System:String x:Key="DeleteArea">Passwords/{0}/{1}?yps_upass_apass={2}</System:String>
         <System:String x:Key="DeleteUser">Passwords/{0}?yps_pass_mail={1}</System:String>
     </Application.Resources>

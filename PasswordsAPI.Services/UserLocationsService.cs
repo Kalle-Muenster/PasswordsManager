@@ -11,19 +11,20 @@ using Yps;
 namespace Passwords.API.Services
 {
     public class UserLocationsService<CTX>
-        : AbstractApiService<UserLocations,UserLocationsService<CTX>,CTX>
-        where CTX : PasswordsApiDbContext<CTX>
+        : AbstractApiService< UserLocations, UserLocationsService<CTX>, CTX >
+    where CTX
+        : PasswordsApiDbContext<CTX>
     {
         private static readonly Status LocationServiceError = new Status(
                                     ResultCode.Area | ResultCode.Service |
-                                    ResultCode.Invalid,"Invalid Location" );
+                                    ResultCode.Invalid, "Invalid Location" );
 
         protected override Status GetDefaultError() {
             return LocationServiceError;
         }
 
         protected override ResultCode GetServiceFlags() {
-            return ResultCode.Area|ResultCode.Service;
+            return ResultCode.Area;
         }
 
         protected override UserLocations GetStatusEntity(Status cast) {
@@ -75,7 +76,8 @@ namespace Passwords.API.Services
 
         public async Task<UserLocationsService<CTX>> SetKey( Task<UserPasswordsService<CTX>> keyService )
         {
-            CryptKey set = (await keyService).GetMasterKey( Entity.User );
+            UserPasswords keyserved = (await keyService).Entity;
+            CryptKey set = (await keyService).GetMasterKey( keyserved.User );
             if( !set.IsValid() ) {
                 Status = (LocationServiceError + ResultCode.Cryptic).WithText( "CryptKey structure invalid" );
                 _key = null;
@@ -209,7 +211,7 @@ namespace Passwords.API.Services
 
         public async Task<UserLocationsService<CTX>> SetLoginInfo( int locId, string? login, string? info )
         {
-            if( (await GetLocationById( locId )).Entity ) {
+            if( (await GetLocationById( locId )).Entity.IsValid() ) {
                 if (info != null) if (info != String.Empty) _enty.Info = info;
                 if (login != null) if (login != String.Empty) _enty.Name = login;
                 _dset.Update( _enty );
@@ -229,17 +231,16 @@ namespace Passwords.API.Services
             return str.ToString();
         }
 
-        public async Task<UserLocationsService<CTX>> RemoveLocation( Task<PasswordUsersService<CTX>> userserv, string area, string pass )
+        public async Task<UserLocationsService<CTX>> RemoveLocation( int userId, string area, string pass )
         {
-            PasswordUsers user = (await userserv).Entity;
-            UserPasswords password = ( await _keys.LookupPasswordByUserAccount( userserv ) ).Entity;
+            UserPasswords password = ( await _keys.LookupPasswordByUserAccount( userId ) ).Entity;
             if ( password.IsValid() ) {
-                if( _keys.VerifyPassword( user.Id, pass ) ) {
-                    if ( GetLocationOfUser( user.Id, area ) ) {
+                if( _keys.VerifyPassword( userId, pass ) ) {
+                    if ( GetLocationOfUser( userId, area ).IsValid() ) {
                         _dset.Remove( Entity );
                         _db.SaveChanges();
                         Status = Status.Success.WithData( area ).WithText(
-                            "Successfully removed location '{0}' of user " + user.Name
+                            "Successfully removed location '{0}' of user " + userId
                         ) + GetServiceFlags();
                     } else {
                         Status = LocationServiceError.WithText( "Location '{0}' not exists" ).WithData( area );

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Yps;
-using System.Text;
-
 using Microsoft.Win32;
 
 namespace Passwords.GUI
@@ -38,11 +36,11 @@ namespace Passwords.GUI
 
         internal byte[] PackValue( ulong value )
         {
-            byte[] data = new byte[8];
+            byte[] data = new byte[9];
             unsafe { byte* ptr = (byte*)&value;
                 for( int i = 0; i < 8; ++i ) {
                     data[i] = ptr[i];
-                }
+                } data[8] = 0;
             } return Crypt.BinaryEncrypt( theKey, data );
         }
 
@@ -54,39 +52,53 @@ namespace Passwords.GUI
         {
             // The Passwords -> The API -> The GUI  only can act as a Passwords Client (fetching Passwords via Passwords API
             // from a Passwords Server) if application is registered with
-            // it's unique client id which the software installer autogenerates during setting up a Password Gui Client
-            // app for actually running Desktop sessions user account.       
+            // it's unique client id which the software installer autogenerates during installation of the client application
+            // and which then will be registered with actually running Desktop sessions user account.       
             string client = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheAgent", string.Empty ).ToString();
             
-            // If actually running desktop session cannot provide a valid PasswordsAPI Client Id (which should be registered
-            // for this application during installation process) the application will not run and will terminate itself then.
+            // If actually running desktop session cannot provide a valid PasswordsAPI Client key (which should be registered
+            // for this application during installation progress) the application will not run and the process will terminate.
             if (client.Length == 0) App.Current.Shutdown();
             
             // if desktop session provides a valid registration id the application then generates a cryption key by using
             // it's registration id value then for that keys password value (which only desktop session user, the system 
-            // and the application itself should be able knowing that password) and which it can use for identifying itself
-            // at PasswordsAPI Servers as a PasswordsAPI Client which is allowed feching encrypted password data for the
-            // desktop sessions user who stored passwords on such a server
+            // and the application itself should be able knowing that password) so it is NOT the users own master password
+            // these never will be stored anywhere else then in a users very own mind - instead this is agent-key is used
+            // for identifying clients/useragents at the PasswordsAPI Servers and authorizes these for being allowed feching
+            // encrypted password data for the actually running desktop session owning user who stores passwords on that server
             theKey = Crypt.CreateKey( client );
             client = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheName", string.Empty ).ToString();
-            if( client.Length == 0 ) Registry.SetValue( TheRegistry.TheRoot, TheRegistry.TheSelf + "\\TheName",
-                                                        Consola.Utility.NameOfTheMachinery(), RegistryValueKind.String );
+            if( client.Length == 0 ) 
+                Registry.SetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheName",
+                                   Consola.Utility.NameOfTheMachinery(),
+                                   RegistryValueKind.String );
+
+            string start = Consola.Utility.PathOfTheCommander();
+            client = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "ThePath", string.Empty).ToString();
+            if( client != start )
+                Registry.SetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "ThePath",
+                                   start, RegistryValueKind.String );
 
             // when is clear that current running process is a valid PasswordsAPI Client application, the actually configured
             // dataset will be loaded from the clients list of known server connections, which defines connection credentials 
             string theOne = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheList, "TheHost", string.Empty ).ToString();
             theOne = string.Format( TheRegistry.TheHost, TheRegistry.TheRoot, theOne );
             byte[] crypic = Registry.GetValue( theOne, "TheKey", Array.Empty<byte>() ) as byte[];
+            if( crypic.Length == 0 ) {
+                TheAPI = "";
+            } else {
+                ulong hash = UnPackData( crypic );
 
-            // from that dataset then an authenticator for all further traffic with the server gets initialzed
-            PasswordServer.SelectedServer = new PasswordServer(
-                Registry.GetValue( theOne, "TheServer", string.Empty ).ToString(),
-                (int)Registry.GetValue( theOne, "ThePort", 0 ), UnPackData( crypic )
-            );
+                // from that dataset then an authenticator for all further traffic with the server gets initialzed
+                PasswordServer.SelectedServer = new PasswordServer(
+                    Registry.GetValue(theOne, "TheServer", string.Empty).ToString(),
+                    (int)Registry.GetValue(theOne, "ThePort", 0), hash
+                );
 
-            // at least name of that server connection is set as flag signaling
-            // that connection is configured and application is ready to use now 
-            TheAPI = PasswordServer.SelectedServer.Name;
+                // at least name of that server connection is set as flag signaling
+                // that connection is configured and application is ready to use now 
+                TheAPI = PasswordServer.SelectedServer.Name;
+            }
         }
     }
 

@@ -7,7 +7,9 @@ namespace Passwords.API.Abstracts
 {
 
     public interface IPasswordsApiService<D> 
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where D
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {
         Status Status { get; }
         bool  Ok    { get; }
@@ -17,16 +19,25 @@ namespace Passwords.API.Abstracts
 
     public interface IPasswordsApiService<E,D>
         : IPasswordsApiService<D>
-        where E : IEntityBase, new()
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where E
+        : IEntityBase
+        , new()
+    where D
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {}
     
 
     public interface IPasswordsApiService<E,S,D>
         : IPasswordsApiService<E,D>
-        where E : EntityBase<E>, new()
-        where S : IPasswordsApiService<E,D>
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where E 
+        : EntityBase<E>
+        , new()
+    where S 
+        : IPasswordsApiService<E,D>
+    where D 
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {
         S serve();
         S OnError( IPasswordsApiService<D> malfunctioned );
@@ -36,9 +47,14 @@ namespace Passwords.API.Abstracts
 
     public abstract class AbstractApiService<E,S,D>
         : IPasswordsApiService<E,S,D>
-        where E : EntityBase<E>, new()
-        where S : AbstractApiService<E,S,D>
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where E
+        : EntityBase<E>
+        , new()
+    where S
+        : AbstractApiService<E,S,D>
+    where D
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {
         protected D?         _db;
         protected E          _enty;
@@ -63,7 +79,7 @@ namespace Passwords.API.Abstracts
                 if (_enty.Is().Status.Bad) Status = _enty.Is().Status;
                 return _enty;
             } set {
-                if (value) { _enty = value;
+                if( value.IsValid() ) { _enty = value;
                     Status = _enty.Is().Status;
                 } else Status = value.Is().Status;
             }
@@ -91,13 +107,14 @@ namespace Passwords.API.Abstracts
         }
 
         public virtual bool Ok {
-            get { return ( state.Code & ResultCode.IsValid ) < ResultCode.Unknown && state.Code != 0; }
+            get { ResultCode check = state.Code & ResultCode.IsValid;
+                return ( check > ResultCode.Unknown && check < ResultCode.IsError ); }
             protected set { if ( value ) state = Status.Success + GetServiceFlags();
                 else state = GetDefaultError();
             }
         }
 
-        public static implicit operator bool( AbstractApiService<E, S, D> cast ) {
+        public static implicit operator bool( AbstractApiService<E,S,D> cast ) {
             return cast.Ok;
         }
 
@@ -127,7 +144,7 @@ namespace Passwords.API.Abstracts
 
         public Status Save()
         {
-            if ( Entity.Is().Status ) {
+            if ( Entity.IsValid() ) {
                 _db.Update(_enty);
                 _db.SaveChanges();
             } return Status;

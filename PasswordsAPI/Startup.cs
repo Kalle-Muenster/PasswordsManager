@@ -24,14 +24,16 @@ namespace Passwords.API
 {
     public class Startup
     {
+        string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public enum ServerFrameworks {
-            USE_MSSQL = 0, USE_SQLITE = 1
+            USE_MSSQL = 0,
+            USE_SQLITE = 1
         }
-
         public ServerFrameworks DatabaseType { get; } 
-        private string ApplicationKey { get; }
 
-        public Startup(IConfiguration configuration) {
+        // kann weg
+        private string ApplicationKey { get; }
+        public Startup( IConfiguration configuration ) {
             Configuration = configuration;
             string usedServerType = Configuration[ "ServerFramework:"+Configuration["UsedServerFramework"] ];
             DatabaseType = (ServerFrameworks) System.Enum.Parse( typeof(ServerFrameworks), usedServerType );
@@ -46,12 +48,34 @@ namespace Passwords.API
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
 
+            services.AddCors(
+                options => {
+                    options.AddPolicy( name: MyAllowSpecificOrigins, policy => {
+                        policy.WithOrigins("http://localhost:5255",
+                                           "http://karen:8000",
+                                           "http://dergeraet:5255",
+                                           "http://lotte:8000")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowAnyOrigin()
+                              .SetIsOriginAllowedToAllowWildcardSubdomains();
+                        }
+                    );
+                }
+            );
+
             services.AddControllers();
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" });
             });
+            
+            services.AddSingleton( PasswordServer.Instance.TheKey );
+            services.AddSingleton( new Consola.StdStreams(
+                                   Consola.CreationFlags.AppendLog
+                                 | Consola.CreationFlags.NoInputLog
+                                 | Consola.CreationFlags.NewConsole )
+                                 );
 
-            services.AddSingleton( PasswordServer.Instance.TheKey );// Crypt.CreateKey( ApplicationKey ) );
             services.AddScoped<IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext>, PasswordUsersService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext>, UserPasswordsService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext>, UserLocationsService<PasswordsDbContext>>();
@@ -80,8 +104,11 @@ namespace Passwords.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PasswordsAPI v1"));
             }
-
+            
             app.UseHttpsRedirection();
+
+            app.UseCors( MyAllowSpecificOrigins );
+
 
             app.UseRouting();
 
