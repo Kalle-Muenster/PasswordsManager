@@ -116,7 +116,12 @@ namespace Passwords.API
         }
 
         private CryptKey theKey;
+        private int      thePort;
+        private string   theHost;
+
         public CryptKey TheKey { get { return theKey; } }
+        public string TheUrl { get { return $"http://{theHost.ToLower()}:{thePort}"; } }
+        public string Local { get { return $"http://localhost:{thePort}"; } }
 
         private PasswordServer()
         {
@@ -131,6 +136,19 @@ namespace Passwords.API
             }
             
             theKey = Crypt.CreateKey( value );
+
+            theHost = Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheHostName", string.Empty ).ToString();
+            if( theHost.Length == 0 ) {
+                theHost = Consola.Utility.NameOfTheMachinery();
+                Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheHostName", theHost );
+            }
+
+            thePort = (int)Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "ThePort", 0 );
+            if( thePort == 0 ) {
+                thePort = 5000;
+                Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "ThePort", thePort );
+            }
+                
         }
     }
 

@@ -51,7 +51,8 @@ namespace Passwords
             Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
                  webBuilder => {
                      webBuilder.UseUrls(new string[] {
-                         "http://dergeraet:5000"
+                         PasswordServer.Instance.TheUrl,
+                         PasswordServer.Instance.Local
                      });
                      webBuilder.UseStartup<Startup>();
             } );
