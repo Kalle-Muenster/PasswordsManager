@@ -204,10 +204,10 @@ namespace Passwords.API
             KnownClients = new Dictionary<ulong,PasswordClient>( clients.Count );
             foreach( string name in clients ) {
                 NetworkIp ip = new NetworkIp(
-                    (string)Registry.GetValue( string.Format(
+                    Registry.GetValue( string.Format(
                     PasswordServer.TheRegistry.TheAgent,
                     PasswordServer.TheRegistry.TheAPI,
-                name), "TheIp", string.Empty ));
+                name) , "TheIp", string.Empty ) as string );
 
                 byte[] data = Registry.GetValue( string.Format(
                     PasswordServer.TheRegistry.TheAgent,

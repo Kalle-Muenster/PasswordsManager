@@ -122,7 +122,7 @@ namespace Passwords.Controllers
             } return StatusCode( 500, _keys.Status.ToString() );
         }
 
-        [Produces("application/json"), HttpDelete("{user}")]
+        [Produces("application/json"), HttpGet("Delete/{user}")]
         public async Task<IActionResult> RemoveUserAccount(string user, string yps_pass_mail)
         {
             if ((await _usrs.GetUserByNameOrId(user)).Entity) {
@@ -178,7 +178,7 @@ namespace Passwords.Controllers
             else return StatusCode(400, location.Is().Status.ToString());
         }
 
-        [Produces("application/json"), HttpDelete("{user}/{area}")]
+        [Produces("application/json"), HttpGet("{user}/Delete/{area}")]
         public async Task<IActionResult> RemoveLocation( string user, string area, string yps_upass_apass )
         {
             Status yps = DecryptQueryParameter(_usrs.GetUserId(user), yps_upass_apass );

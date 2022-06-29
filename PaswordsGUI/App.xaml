@@ -28,7 +28,7 @@
         <System:String x:Key="PatchAreaInfo">Passwords/{0}/{1}/Info?yps_info={2}</System:String>
         <System:String x:Key="PatchAreaName">Passwords/{0}/{1}/Name?yps_name={2}</System:String>
         <System:String x:Key="PatchAreaPass">Passwords/{0}/{1}/Pass?yps_upass_apass={2}</System:String>
-        <System:String x:Key="DeleteArea">Passwords/{0}/{1}?yps_upass_apass={2}</System:String>
-        <System:String x:Key="DeleteUser">Passwords/{0}?yps_pass_mail={1}</System:String>
+        <System:String x:Key="DeleteArea">Passwords/{0}/Delete/{1}?yps_upass_apass={2}</System:String>
+        <System:String x:Key="DeleteUser">Passwords/Delete/{0}?yps_pass_mail={1}</System:String>
     </Application.Resources>
 </Application>

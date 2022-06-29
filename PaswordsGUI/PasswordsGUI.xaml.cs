@@ -616,7 +616,7 @@ namespace Passwords.GUI
                 string call = (string)App.Current.Resources["DeleteUser"];
                 string args = Crypt.CreateKey( pass ).Encrypt( $"***{pass}.~.{state.SelectedMail}" );
                 call = string.Format( call, state.SelectedUser, HttpUtility.UrlEncode( args ) );
-                HttpResponseMessage reply = http.Send( new HttpRequestMessage( HttpMethod.Delete, http.BaseAddress+call ) );
+                HttpResponseMessage reply = http.Send( new HttpRequestMessage( HttpMethod.Get, http.BaseAddress+call ) );
                 if( reply.IsSuccessStatusCode ) {
                     StatusInfoDialog.Show( Status.Success.WithData(
                         reply.Content.ReadAsStringAsync().GetAwaiter().GetResult() ) );
@@ -708,7 +708,7 @@ namespace Passwords.GUI
                     state.UserName, state.LocationName,
                     state.EncryptedArgs( $"***{areaOrPwd}.~.{txt_Pass.Text}" )
                 );
-                HttpResponseMessage resp = http.Send( new HttpRequestMessage( HttpMethod.Delete, call ) );
+                HttpResponseMessage resp = http.Send( new HttpRequestMessage( HttpMethod.Get, call ) );
                 if (resp.IsSuccessStatusCode) {
                     StatusInfoDialog.Show( Status.Success.WithData( resp.ReasonPhrase ) );
                     state.SetLocations( null );
