@@ -24,7 +24,7 @@ set YpsCryptBinRoot=%_root_%\..\YpsCrypt\bin\%DotNetVersionString%
 )
 
 :: Set parameters and solution files
-call %_root_%\Args "%~1" "%~2" "%~3" "%~4" PasswordsAPI.sln PasswordsGUI\Passwords.GUI.csproj
+call %_root_%\Args "%~1" "%~2" "%~3" "%~4" PasswordsAPI.sln PaswordsGUI\Passwords.GUI.csproj
 
 :: Do the Build
 cd %_here_%
