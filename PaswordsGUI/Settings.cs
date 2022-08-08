@@ -9,9 +9,11 @@ namespace Passwords.GUI
     {
         private static PasswordClient  instance;
         internal static PasswordClient Instance {
-            get { if (instance == null) 
-                    instance = new PasswordClient();
-                return instance; }
+            get { if (instance == null) {
+                    instance = new PasswordClient(
+                        (App.Current as App).Connection
+                    );
+                } return instance; }
         }
 
         internal class TheRegistry
@@ -48,7 +50,7 @@ namespace Passwords.GUI
         internal CryptKey Key { get { return theKey; } }
         internal string  TheAPI;
 
-        private PasswordClient()
+        private PasswordClient(string connect)
         {
             // The Passwords -> The API -> The GUI  only can act as a Passwords Client (fetching Passwords via Passwords API
             // from a Passwords Server) if application is registered with

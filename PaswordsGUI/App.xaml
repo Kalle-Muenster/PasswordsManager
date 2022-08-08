@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:System="clr-namespace:System;assembly=System.Runtime"
              xmlns:local="clr-namespace:Passwords.GUI"
-             StartupUri="PasswordsGUI.xaml" >
+             StartupUri="PasswordsGUI.xaml" Startup="ApplicationStart">
     <Application.Resources>
         <ImageSource x:Key="karen">pack://application:,,,/Resources/karen.ico</ImageSource>
         <ImageSource x:Key="object">pack://application:,,,/Resources/objecticon.ico</ImageSource>

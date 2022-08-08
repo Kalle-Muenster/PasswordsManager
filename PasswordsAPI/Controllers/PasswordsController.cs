@@ -70,30 +70,24 @@ namespace Passwords.Controllers
         public async Task<IActionResult> PatchUserInfo(string user, string yps_info)
         {
             if( (await _usrs.GetUserByNameOrId(user)).Entity.IsValid() ) {
-                PasswordUsers usr = _usrs.Entity;
-                Status yps = DecryptQueryParameter(usr.Id, yps_info);
+                Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_info);
                 if (yps.Bad) return BadRequest( yps.ToString() );
-                usr.Info = yps.Data.ToString();
-                _db.Update(usr);
-                _db.SaveChanges();
-                return Ok( XamlView.Serialize( usr ) );
+                _usrs.Entity.Info = yps.Data.ToString();
+                _usrs.Save();
+                return Ok( XamlView.Serialize(_usrs.Entity ) );
             } else return StatusCode( 400, _usrs.Status.ToString() );
         }
 
         [Produces("application/json"), HttpPatch("{user}/Mail")]
         public async Task<IActionResult> PatchUserMail(string user, string yps_mail)
         {
-            if ((await _usrs.GetUserByNameOrId(user)).Entity.IsValid())
-            {
-                PasswordUsers usr = _usrs.Entity;
-                Status yps = DecryptQueryParameter(usr.Id, yps_mail);
+            if ( (await _usrs.GetUserByNameOrId(user)).Entity.IsValid() ) {
+                Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_mail);
                 if (yps.Bad) return BadRequest( yps.ToString() );
-                usr.Mail = yps.Data.ToString();
-                _db.Update(usr);
-                _db.SaveChanges();
-                return Ok( XamlView.Serialize(usr) );
-            }
-            else return StatusCode(400, _usrs.Status.ToString());
+                _usrs.Entity.Mail = yps.Data.ToString();
+                _usrs.Save();
+                return Ok( XamlView.Serialize(_usrs.Entity) );
+            } else return StatusCode(400, _usrs.Status.ToString());
         }
 
         [Produces("application/json"), HttpGet("{user}/Info")]
@@ -203,23 +197,21 @@ namespace Passwords.Controllers
                 Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_name);
                 if (yps.Bad) return BadRequest( yps.ToString() );
                 yps_name = ((string[])yps.Data)[0];
-                _locs.Entity.Name = yps_name;
-                if ( _locs.Update() ) return Ok( XamlView.Serialize(_locs.Entity) ); 
+                if ( _locs.SetLoginInfo(_locs.Entity.Id, yps_name, null).GetAwaiter().GetResult().Ok )
+                    return Ok( XamlView.Serialize(_locs.Entity) ); 
             } return StatusCode(_locs.Status.Http, _locs.Status.ToString() );
         }
 
         [Produces( "application/json" ), HttpPatch( "{user}/{area}/Info" )]
         public async Task<IActionResult> PatchUserLocationInfo( string user, string area, string yps_info )
         {
-            UserLocations location = (await _locs.GetLocationById(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity;
-            if ( !location.Is().Status.Bad ) {
+            if( (await _locs.GetLocationById(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity.Is().Status.Ok ) { 
                 Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_info );
                 if( yps.Bad ) return BadRequest( yps.ToString() );
-                location.Info = ( (string[])yps.Data )[0];
-                _db.UserLocations.Update( location );
-                _db.SaveChanges();
-                return Ok( XamlView.Serialize( location ) );
-            } else return StatusCode( location.Is().Status.Http, location.Is().Status.Text );
+                yps_info = ( (string[])yps.Data )[0];
+                if( _locs.SetLoginInfo(_locs.Entity.Id, null, yps_info).GetAwaiter().GetResult().Ok )
+                    return Ok( XamlView.Serialize(_locs.Entity) );
+            } return StatusCode( _locs.Status.Http, _locs.Status.Text );
         }
 
         [Produces("application/json"), HttpPatch("{user}/{area}/Pass")]
@@ -232,7 +224,7 @@ namespace Passwords.Controllers
                 if( args.Length < 2 )
                     return BadRequest("expected parameter: usersMasterPass and newLocationPass");
                 if ( !(await _locs.SetPassword( args[0], args[1] )).Status.Bad ) {
-                    return Ok(_locs.Status.ToString());
+                    return Ok( _locs.Status.Text );
                 }
             } return StatusCode( _locs.Status.Http, _locs.Status.Text );
         }
@@ -299,9 +291,9 @@ namespace Passwords.Controllers
         [Produces("application/json"), HttpGet("Export")]
         public async Task<IActionResult> ExportData()
         {
-            System.IO.FileStream export = _keys.GetCrypticDbExport(Consola.Utility.PathOfTheCommander());
-            if( _keys.Status.Bad ) return StatusCode( _keys.Status.Http, _keys.Status.ToString() );
-            return File( export, "application/binary" );
+            Status export = _keys.GetCrypticDbExport( DateTime.Now.ToString() );
+            if( export.Bad ) return StatusCode( export.Http, export.Text );
+            return File( export.Data as System.IO.FileStream, "application/binary" );
         }
     }
 }

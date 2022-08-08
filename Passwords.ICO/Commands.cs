@@ -1,5 +1,4 @@
-﻿using Consola;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -73,7 +72,7 @@ namespace Passwords.ICO
 
         private void PasswordsAPI()
         {
-            PwdApiSc = new ServiceController("PasswordsAPI","DERGERAET");
+            PwdApiSc = new ServiceController("PasswordsAPI","EVE");
         }
 
         private bool CanStartGui()

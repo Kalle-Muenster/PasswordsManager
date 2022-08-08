@@ -66,12 +66,12 @@ namespace Passwords.ICO
         {
             if( e.Button == MouseButtons.Left ) {
                 if( panel == null )
-                    panel = new DasBedienFeld(commands);
+                    panel = new DasBedienFeld( commands );
                 if( panel.Visible )
                     panel.Hide();
                 else {
                     panel.Show();
-                    panel.Location = new Point(1600, 550);
+                    panel.Location = new Point( 1600, 550 );
                 }
             }
         }

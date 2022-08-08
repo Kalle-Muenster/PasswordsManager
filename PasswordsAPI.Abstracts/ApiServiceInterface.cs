@@ -144,9 +144,10 @@ namespace Passwords.API.Abstracts
 
         public Status Save()
         {
-            if ( Entity.IsValid() ) {
-                _db.Update(_enty);
-                _db.SaveChanges();
+            if ( Entity ) {
+                _dset.Update(_enty);
+                _db.SaveChangesAsync();
+                Status = Status.Success + GetServiceFlags();
             } return Status;
         }
     }

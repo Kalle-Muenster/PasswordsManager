@@ -35,11 +35,11 @@ namespace Passwords.API.Services
             int id = 0;
             if( !int.TryParse( nameOrId, out id ) ) {
                 if (Entity) if (Entity.Name == nameOrId) return Entity.Id;
-                Entity = _dset.AsNoTracking().SingleOrDefault( u => u.Name == nameOrId )
+                Entity = _dset.SingleOrDefault( u => u.Name == nameOrId )
                          ?? UsersName.WithData( nameOrId );
                 return _enty?.Id ?? -1;
             } if (Entity) if (Entity.Id == id) return id;
-            Entity = _dset.AsNoTracking().SingleOrDefault( u => u.Id == id )
+            Entity = _dset.SingleOrDefault( u => u.Id == id )
                      ?? InvalidId.WithData( nameOrId );
             if (Entity) if (Entity.Id == id) return id;
             return -1;
@@ -51,18 +51,18 @@ namespace Passwords.API.Services
             if ( int.TryParse( nameOrId, out id ) ) {
                 if ( Entity.IsValid() ) if ( Entity.Id == id) return this;
                 _enty = new Status( ResultCode.Unknown | ResultCode.Id, "Unknown user id: '{0}'", nameOrId );
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Id == id );
+                _lazy = _dset.SingleOrDefaultAsync( u => u.Id == id );
             } else {
                 if ( _enty.IsValid() ) if (_enty.Name == nameOrId) return this;
                 _enty = new Status( ResultCode.Unknown | ResultCode.Name, "Unknown user name: '{0}'", nameOrId );
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync( u => u.Name == nameOrId );
+                _lazy = _dset.SingleOrDefaultAsync( u => u.Name == nameOrId );
             } Status = Status.NoState.WithData( nameOrId );
             return this;
         }
 
         public async Task<PasswordUsersService<CTX>> CreateNewAccount( string name, string email, string? info )
         {
-            IEnumerator<PasswordUsers> it = _dset.AsNoTracking().GetEnumerator();
+            IEnumerator<PasswordUsers> it = _dset.AsTracking().GetEnumerator();
             Status = Status.NoState;
             while ( it.MoveNext() ) {
                 if( it.Current.Name == name ) {
@@ -96,7 +96,7 @@ namespace Passwords.API.Services
             if( _enty.IsValid() ) if( _enty.Id == byId ) return this;
             Status = Status.NoState.WithData( byId );
             _enty = new Status( ResultCode.Unknown|ResultCode.Id, "Unknown user id: '{0}'", byId );
-            _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(u => u.Id == byId);
+            _lazy = _dset.SingleOrDefaultAsync(u => u.Id == byId);
             return this;
         }
 
@@ -105,7 +105,7 @@ namespace Passwords.API.Services
             if ( _enty.IsValid() ) if ( _enty.Mail == email ) return this;
             Status = Status.NoState.WithData( email );
             _enty = new Status( ResultCode.Unknown|ResultCode.Mail, "Wrong email address: '{0}'", email );
-            _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(u => u.Mail == email);
+            _lazy = _dset.SingleOrDefaultAsync(u => u.Mail == email);
             return this;
         }
 
@@ -115,7 +115,7 @@ namespace Passwords.API.Services
             Status = (Status.Success + ResultCode.User).WithText(
                 $"Deleted user {account.Id}: {account.Name} and related data"  
             ).WithData( account );
-            _db.SaveChangesAsync();
+            _db.SaveChanges();
             _enty = account;
             return this;
         }

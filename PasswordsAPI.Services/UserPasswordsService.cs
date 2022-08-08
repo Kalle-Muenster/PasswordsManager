@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Passwords.API.Abstracts;
 using Passwords.API.Models;
@@ -54,7 +55,7 @@ namespace Passwords.API.Services
             } else if( _enty.User != user.Id ) {
                 Status = Status.NoState;
                 _enty = Status.Unknown;
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == user.Id);
+                _lazy = _dset.SingleOrDefaultAsync(p => p.User == user.Id);
             } return this;
         }
 
@@ -68,17 +69,25 @@ namespace Passwords.API.Services
             } else if( _enty.User != user.Id ) {
                 Status = Status.NoState;
                 _enty= Status.Unknown;
-                _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == user.Id);
+                _lazy  = _dset.SingleOrDefaultAsync(p => p.User == user.Id);
             } return this;
         }
 
         public Status DecryptParameter( string data )
         {
-            bool usingAppKey = !Entity.IsValid();
-            if ( usingAppKey ) {
-                data = _apky.Decrypt( data );
-            } else {
+            bool nounce = false;
+            if ( nounce = Entity.IsValid() ) {
+                // try decrypting queryparameter by hashvalue of current users masterkey 
                 data = GetMasterKey( Entity.Id ).Decrypt( data );
+            } else {
+                // if there's no user in context actually, then decrypt queryparameters
+                // by this Password.API servers own apikey (*all clients (Password.GUI
+                // agent applications) know hashvalue of this servers apikey and
+                // will use it for encrypting any calls where no user information
+                // exists in context yet actually... (later clients shall be changed
+                // to use their individual appkeys instead (clientkeys) by which they
+                // have registered as valid client app)
+                data = _apky.Decrypt( data );
             }
 
             if( Crypt.Error ) {
@@ -89,8 +98,8 @@ namespace Passwords.API.Services
                 );
             } else {
                 return Status.Success.WithData(
-                    usingAppKey ? data.Split(".~.")
-                   : data.Substring(3).Split(".~.")
+                    nounce ? data.Substring(3).Split(".~.")
+                           : data.Split(".~.")
                 );
             }
         }
@@ -137,8 +146,7 @@ namespace Passwords.API.Services
                 }
             } else {
                 _enty.Hash = Crypt.CalculateHash( pass );
-                _dset.Update( _enty );
-                _db.SaveChanges();
+                Save();
                 return this;
             }
         }
@@ -182,39 +190,42 @@ namespace Passwords.API.Services
             if ( Entity ) if ( Entity.User == ofUser ) return this;
             Status = Status.NoState;
             Entity = Status.Unknown;
-            _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync( p => p.User == ofUser );
+            _lazy  = _dset.SingleOrDefaultAsync( p => p.User == ofUser );
             return this;
         }
 
-        public System.IO.FileStream GetCrypticDbExport(string export)
+        private static void CleanupDbExport( object FileInfos )
         {
-            System.IO.FileInfo dbfile = new System.IO.FileInfo($"{export}\\DataBase\\SqLite\\db.db");
-            export += "\\Exporte";
-            System.IO.FileInfo dbexport = new System.IO.FileInfo( System.IO.Directory.CreateDirectory( export ).FullName+"\\DbCore.yps" );
+            (FileInfo created,FileInfo export,int counter) files = ((FileInfo,FileInfo,int))(FileInfos as System.Runtime.CompilerServices.ITuple);
+            System.Threading.Thread.Sleep( 30000 );
+            try { files.export.Delete();
+                 files.created.Delete();
+            } catch( System.Exception _ ) {
+                if(--files.counter > 0)
+                    CleanupDbExport( files );
+            }
+        }
 
-            while( _db.Database.CurrentTransaction != null ) System.Threading.Thread.Sleep(1000);
+        public Status GetCrypticDbExport( string exportstamp )
+        {
+            string path = new FileInfo(System.Reflection.Assembly.GetEntryAssembly().Location).Directory.FullName;
+            FileInfo dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db");
+            Directory.CreateDirectory( path+"\\Exporte" );
+            int tries = 3; 
+            while( _db.Database.CurrentTransaction != null && --tries >= 0 )
+                System.Threading.Thread.Sleep( 1000 );
             if( dbfile.Exists ) {
-                System.IO.FileStream dbstream = dbfile.OpenRead();
-                System.IO.FileStream dboutput = dbexport.OpenWrite();
-                CryptBuffer header = Crypt.CreateHeader(_apky,CrypsFlags.Encrypt);
-                dboutput.Write( header.GetCopy<byte>() );
-                CryptFrame frame = new CryptFrame();
-                int read = 0;
-                while( read != -1 ) {
-                    for( int i = 0; i < 3; ++i ) {
-                        if( ( read = dbstream.ReadByte() ) >= 0 ) {
-                            frame[i] = (byte)read;
-                        } else break;
-                    } frame.bin = Crypt.EncryptFrame24(_apky, frame.bin);
-                    for( int i = 0; i < 4; ++i ) {
-                        dboutput.WriteByte(frame[i]);
-                    }
-                } dbstream.Close();
-                dboutput.Flush();
-                dboutput.Close();
-                Status = Status.Success.WithText("Encrüpted!");
-                return dbexport.OpenRead();
-            } else return null;
+                if( Crypt.EncryptFile(_apky, dbfile) > 0 ) {
+                    dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db.yps");
+                    FileInfo export = dbfile.Replace($"{path}\\Exporte\\DbCore_{exportstamp}.db.yps", null);
+                    Status = Status.Success.WithText("Db core exportet");
+                    new Task(CleanupDbExport, (dbfile, export, 5)).Start();
+                    return Status.Success.WithData( export.OpenRead() );
+                }
+            } else {
+                Status = ( Status.Cryptic + Status.Invalid ).WithText(
+                    "Error when encrypting database" ).WithData( Crypt.Error );
+            } return Status;
         }
     } 
 }

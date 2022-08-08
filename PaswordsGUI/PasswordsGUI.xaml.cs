@@ -263,6 +263,7 @@ namespace Passwords.GUI
             StatusInfoDialog = new InfoMessage(this, ConfirmInfoDialogMessage);
 
             txt_Info.AcceptsReturn = true;
+            
             Loaded += ThePasswordsTheAPI_TheGUI_Loaded;
         }
 
@@ -814,6 +815,16 @@ namespace Passwords.GUI
         private void window_Closed( object sender, EventArgs e )
         {
             App.Current.Shutdown(0);
+        }
+
+        private void ListBoxItem_MouseRightButtonUp( object sender, System.Windows.Input.MouseButtonEventArgs e )
+        {
+
+        }
+
+        private void mnu_Area_Reset_Click( object sender, RoutedEventArgs e )
+        {
+
         }
     }
 }

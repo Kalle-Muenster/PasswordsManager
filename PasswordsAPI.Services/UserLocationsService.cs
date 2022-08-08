@@ -35,19 +35,10 @@ namespace Passwords.API.Services
         private UserPasswordsService<CTX>  _keys;
 
 
-        public bool Update()
-        {
-            if( Entity.Is().Status.Ok ) {
-                _db.Update( Entity );
-                _db.SaveChanges();
-                return true;
-            } return false;
-        }
-
         public List<UserLocations> GetUserLocations(int user)
         {
             Func<UserLocations, UserLocations> selector = (UserLocations u) => { return u.User == user ? u : null; };
-            IEnumerator<UserLocations> locations = _dset.AsNoTracking().Select(selector).GetEnumerator();
+            IEnumerator<UserLocations> locations = _dset.Select(selector).GetEnumerator();
             List<UserLocations> returnList = new List<UserLocations>();
             while ( locations.MoveNext() ) {
                 if ( locations.Current != null ) {
@@ -89,7 +80,7 @@ namespace Passwords.API.Services
 
         public string GetPassword()
         {
-            string cryptic = Encoding.Default.GetString( Entity?.Pass ?? new byte[]{} );
+            string cryptic = Encoding.Default.GetString( Entity?.Pass ?? Array.Empty<byte>() );
             return _key?.Decrypt( cryptic ) ?? cryptic;
         }
 
@@ -109,8 +100,7 @@ namespace Passwords.API.Services
                 if ( (await _keys.LookupUserPasswodById( Entity.User )).VerifyPassword( Entity.User, userMasterPass ) ) {
                     CryptKey key = _keys.GetMasterKey( Entity.User );
                     Entity.Pass = Encoding.ASCII.GetBytes( key.Encrypt( newLocationPass ) );
-                    _db.Update( Entity );
-                    _db.SaveChanges();
+                    Save();
                 } else Status = _keys.Status;
                 return this;
             } else {
@@ -127,13 +117,13 @@ namespace Passwords.API.Services
                     if ( Entity.User == usrId && Entity.Id == locId )
                         return locId;
                 _enty = Status.Unknown;
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Id == locId);
+                _lazy = _dset.SingleOrDefaultAsync(l => l.User == usrId && l.Id == locId);
             } else {
                 if ( Entity.IsValid() )
                     if ( Entity.User == usrId && Entity.Area == nameOrId )
                         return Entity.Id;
                 _enty = Status.Unknown;
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(l => l.User == usrId && l.Area == nameOrId);
+                _lazy = _dset.SingleOrDefaultAsync(l => l.User == usrId && l.Area == nameOrId);
             }
             if ( Entity ) return Entity.Id;
             else return -1;
@@ -153,7 +143,7 @@ namespace Passwords.API.Services
             if ( locationId > 0 ) {
                 if (Entity) if (Entity.Id == locationId) return this;
                 Status = Status.NoState;
-                _lazy = _dset.AsNoTracking().SingleOrDefaultAsync(l => l.Id == locationId);
+                _lazy = _dset.SingleOrDefaultAsync(l => l.Id == locationId);
                 _enty = Status.Unknown;
             } else _enty= Status = LocationServiceError.WithText( $"invalid location id '{locationId}'" );
             return this;
@@ -173,8 +163,8 @@ namespace Passwords.API.Services
                 return this;
             }
 
-            _dset.AddAsync( _enty );
-            _db.SaveChangesAsync();
+            _dset.Add( _enty );
+            _db.SaveChanges();
             Status = Status.Success.WithText( "new password stored for" ).WithData( init.Area );
             return this;
         }
@@ -198,9 +188,8 @@ namespace Passwords.API.Services
             if ( GetLocationOfUser( init.User = usr.Id, init.Area ) ) {
                 // if the location already exists, update with new password set
                 _enty.Pass = Encoding.ASCII.GetBytes( masterKey.Encrypt( pass ) );
-                _dset.Update( _enty );
+                Save();
                 Status = Status.NoState;
-                _db.SaveChanges();
                 return this;
             } else {
                 // if location not exists yet, add a new location entry therefore
@@ -214,9 +203,7 @@ namespace Passwords.API.Services
             if( (await GetLocationById( locId )).Entity.IsValid() ) {
                 if (info != null) if (info != String.Empty) _enty.Info = info;
                 if (login != null) if (login != String.Empty) _enty.Name = login;
-                _dset.Update( _enty );
-                _db.SaveChanges();
-                Status = Status.Success + GetServiceFlags();
+                if (Save()) Status = Status.Success + GetServiceFlags();
             } return this;
         }
 

@@ -9,9 +9,9 @@
     <Grid Margin="0,0,0,2">
         <Button x:Name="btn_Cancel" Content="Cancel" Height="30" Margin="0,0,30,22" Width="100" Click="Button_Click" d:LayoutOverrides="Width, Height" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="#FF1C1C1C" Foreground="Wheat"/>
         <Button x:Name="btn_Save" Content="Save" Height="30" Margin="90,0,0,22" Width="100" Click="btn_Save_Click" d:LayoutOverrides="Width, Height" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="#FF1A1A1A" Foreground="Wheat" BorderThickness="2,2,2,2"/>
-        <Label x:Name="lbl_Host" Content="Host:" Margin="30,40,0,0" HorizontalAlignment="Left" Width="45" Height="27" VerticalAlignment="Top" Foreground="{Binding Foreground, ElementName=window}"/>
-        <Label x:Name="lbl_Port" Content="Port:" Margin="30,82,0,0" HorizontalAlignment="Left" Width="45" Height="27" VerticalAlignment="Top" d:LayoutOverrides="VerticalAlignment" Foreground="{Binding Foreground, ElementName=window}"/>
-        <Label x:Name="lbl_Key" Content="Key:" Margin="30,126,0,0" HorizontalAlignment="Left" Width="45" Height="33" VerticalAlignment="Top" Foreground="{Binding Foreground, ElementName=window}"/>
+        <Label x:Name="lbl_Host" Content="Host:" Margin="30,40,0,0" HorizontalAlignment="Left" Width="45" Height="27" VerticalAlignment="Top" Foreground="Wheat"/>
+        <Label x:Name="lbl_Port" Content="Port:" Margin="30,82,0,0" HorizontalAlignment="Left" Width="45" Height="27" VerticalAlignment="Top" d:LayoutOverrides="VerticalAlignment" Foreground="Wheat"/>
+        <Label x:Name="lbl_Key" Content="Key:" Margin="30,126,0,0" HorizontalAlignment="Left" Width="45" Height="33" VerticalAlignment="Top" Foreground="Wheat"/>
         <TextBox x:Name="txt_Host" Margin="90,42,30,0" Height="23" VerticalAlignment="Top" KeyUp="InputTextChanged" Background="#FF101010" Foreground="Wheat" BorderThickness="2,2,2,2">
             <TextBox.BorderBrush>
                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">

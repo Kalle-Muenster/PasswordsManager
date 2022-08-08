@@ -40,9 +40,10 @@
             this.btn_TheGUI.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(34)))), ((int)(((byte)(34)))));
             this.btn_TheGUI.FlatAppearance.BorderColor = System.Drawing.Color.Wheat;
             this.btn_TheGUI.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_TheGUI.Location = new System.Drawing.Point(23, 21);
+            this.btn_TheGUI.ForeColor = System.Drawing.Color.Wheat;
+            this.btn_TheGUI.Location = new System.Drawing.Point(12, 331);
             this.btn_TheGUI.Name = "btn_TheGUI";
-            this.btn_TheGUI.Size = new System.Drawing.Size(253, 37);
+            this.btn_TheGUI.Size = new System.Drawing.Size(258, 37);
             this.btn_TheGUI.TabIndex = 0;
             this.btn_TheGUI.Tag = "Gui";
             this.btn_TheGUI.Text = "ThePasswords - TheGUI";
@@ -53,48 +54,62 @@
             // 
             // btn_Start
             // 
-            this.btn_Start.Location = new System.Drawing.Point(0, 0);
+            this.btn_Start.ForeColor = System.Drawing.Color.Wheat;
+            this.btn_Start.Location = new System.Drawing.Point(12, 96);
             this.btn_Start.Name = "btn_Start";
-            this.btn_Start.Size = new System.Drawing.Size(75, 23);
+            this.btn_Start.Size = new System.Drawing.Size(91, 23);
             this.btn_Start.TabIndex = 0;
+            this.btn_Start.Text = "Start Server";
             this.btn_Start.Click += new System.EventHandler(this.BedienfeldButton_StartClick);
             this.btn_Start.MouseEnter += new System.EventHandler(this.BedienfeldButton_OnHover);
             this.btn_Start.MouseLeave += new System.EventHandler(this.BedienfeldButton_OnHover);
             // 
             // btn_Stop
             // 
-            this.btn_Stop.Location = new System.Drawing.Point(0, 0);
+            this.btn_Stop.ForeColor = System.Drawing.Color.Wheat;
+            this.btn_Stop.Location = new System.Drawing.Point(12, 145);
             this.btn_Stop.Name = "btn_Stop";
-            this.btn_Stop.Size = new System.Drawing.Size(75, 23);
+            this.btn_Stop.Size = new System.Drawing.Size(91, 23);
             this.btn_Stop.TabIndex = 0;
+            this.btn_Stop.Text = "Stop Server";
             this.btn_Stop.Click += new System.EventHandler(this.BedienfeldButton_StopClick);
             this.btn_Stop.MouseEnter += new System.EventHandler(this.BedienfeldButton_OnHover);
             this.btn_Stop.MouseLeave += new System.EventHandler(this.BedienfeldButton_OnHover);
             // 
             // checkBox1
             // 
-            this.checkBox1.Location = new System.Drawing.Point(0, 0);
+            this.checkBox1.Location = new System.Drawing.Point(149, 251);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(104, 24);
             this.checkBox1.TabIndex = 0;
+            this.checkBox1.Text = "OptionX";
             // 
             // checkBox2
             // 
-            this.checkBox2.Location = new System.Drawing.Point(0, 0);
+            this.checkBox2.Location = new System.Drawing.Point(12, 251);
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.Size = new System.Drawing.Size(104, 24);
             this.checkBox2.TabIndex = 0;
+            this.checkBox2.Text = "OptionA";
             // 
             // comboBox1
             // 
-            this.comboBox1.Location = new System.Drawing.Point(0, 0);
+            this.comboBox1.Location = new System.Drawing.Point(149, 281);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(121, 28);
+            this.comboBox1.Size = new System.Drawing.Size(121, 23);
             this.comboBox1.TabIndex = 0;
             // 
             // DasBedienFeld
             // 
-            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.ClientSize = new System.Drawing.Size(363, 453);
+            this.Controls.Add(this.btn_TheGUI);
+            this.Controls.Add(this.btn_Start);
+            this.Controls.Add(this.btn_Stop);
+            this.Controls.Add(this.checkBox1);
+            this.Controls.Add(this.checkBox2);
+            this.Controls.Add(this.comboBox1);
+            this.DoubleBuffered = true;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Name = "DasBedienFeld";
             this.ResumeLayout(false);
 

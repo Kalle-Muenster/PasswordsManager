@@ -7,8 +7,8 @@
         mc:Ignorable="d"
         Title="NewLocation" Height="369" Width="635" Background="#FF1A1A1A" Foreground="Wheat">
     <Grid>
-        <dialogs:DarkButton x:Name="btn_Cancel" Content="Cancel" Height="30" Margin="0,0,46,38" Width="100" IsCancel="True" Click="btn_Cancel_Click" VerticalAlignment="Bottom" d:LayoutOverrides="Width, Height" HorizontalAlignment="Right" Background="#FF404040" Foreground="Wheat" BorderBrush="#FF181818"/>
-        <dialogs:DarkButton x:Name="btn_Ok" Content="Ok" Margin="0,0,178,38" Click="btn_Ok_Click" Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="100" Background="#FF404040" Foreground="Wheat" BorderBrush="#FF181818" IsDefault="True"/>
+        <Button x:Name="btn_Cancel" Content="Cancel" Height="30" Margin="0,0,46,38" Width="100" IsCancel="True" Click="btn_Cancel_Click" VerticalAlignment="Bottom" d:LayoutOverrides="Width, Height" HorizontalAlignment="Right" Background="#FF404040" Foreground="Wheat" BorderBrush="#FF181818"/>
+        <Button x:Name="btn_Ok" Content="Ok" Margin="0,0,178,38" Click="btn_Ok_Click" Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="100" Background="#FF404040" Foreground="Wheat" BorderBrush="#FF181818" IsDefault="True"/>
         <TextBox x:Name="txt_LocationName" Height="30" Margin="46,57,46,0" TextWrapping="Wrap" Text="" d:LayoutOverrides="HorizontalAlignment, Height" VerticalAlignment="Top" KeyUp="txt_TextChanged" Background="#FF101010" Foreground="#FF49C08B" SelectionTextBrush="#FFD47828" BorderThickness="2,2,2,2">
             <TextBox.BorderBrush>
                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
