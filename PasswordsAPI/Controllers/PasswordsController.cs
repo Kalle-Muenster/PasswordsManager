@@ -176,16 +176,17 @@ namespace Passwords.Controllers
         public async Task<IActionResult> RemoveLocation( string user, string area, string yps_upass_apass )
         {
             Status yps = DecryptQueryParameter(_usrs.GetUserId(user), yps_upass_apass );
-            if (yps.Bad) return StatusCode( 304, yps.ToString() );
+            if ( yps.Bad ) return StatusCode( 304, yps.ToString() );
             string[] args = (string[])yps.Data;
-            if (args.Length < 2) return StatusCode( 400, "Expected masterpass and location password");
+            if ( args.Length < 2 ) return StatusCode( 400, "Expected masterpass and location password");
             if( _locs.GetLocationOfUser(_usrs.Entity.Id, area).Is().Status.Bad )
                 return StatusCode( _locs.Status.Http, _locs.Status.Text );
-            if (await _locs.SetKey( _keys.LookupPasswordByUserAccount( _usrs.Entity.Id ) ))
-               if (args[1] != _locs.GetPassword()) return StatusCode( 400, "Wrong location password" );
-            if((await _locs.RemoveLocation( _usrs.Entity.Id, area, args[0] ) ).Status.Ok)
-                return Ok($"Successfully removed password for: {area}");
-            else return StatusCode(500, _locs.Status.ToString());
+            if( await _locs.SetKey(_keys.LookupPasswordByUserAccount(_usrs.Entity.Id)) ) {
+                if( args[1] != _locs.GetPassword() ) return StatusCode( 400, "Wrong location password" );
+            }
+            if( (await _locs.RemoveLocation( _usrs.Entity.Id, area, args[0] ) ).Status.Ok )
+                return Ok( $"Successfully removed password for: {area}" );
+            else return StatusCode( 500, _locs.Status.ToString() );
         }
 
         [Produces(  "application/json" ), HttpPatch( "{user}/{area}/Name" )]
@@ -289,11 +290,22 @@ namespace Passwords.Controllers
         }
 
         [Produces("application/json"), HttpGet("Export")]
-        public async Task<IActionResult> ExportData()
+        public async Task<IActionResult> ExportData( string user, string yps_stamp )
         {
-            Status export = _keys.GetCrypticDbExport( DateTime.Now.ToString() );
-            if( export.Bad ) return StatusCode( export.Http, export.Text );
-            return File( export.Data as System.IO.FileStream, "application/binary" );
+            if( await _keys.LookupPasswordByUserAccount(_usrs.GetUserByNameOrId(user)) ) {
+                Status res = _keys.DecryptParameter( yps_stamp );
+                if( res.Bad ) return StatusCode( res.Http, res.Text );
+                DateTime stamp;
+                if( DateTime.TryParse(( res.Data as string[] )[0], out stamp ) ) {
+                    res = _keys.GetCrypticDbExport( stamp.ToString() );
+                    if( res.Bad ) return StatusCode( res.Http, res.Text );
+                    return File( res.Data as System.IO.FileStream, "application/binary" );
+                } else return StatusCode( 500, "timestamp expected" );
+            } 
+            if( _usrs.Status.Bad )
+                return StatusCode(_usrs.Status.Http, _usrs.Status.Text); 
+            else
+                return StatusCode(_keys.Status.Http, _keys.Status.Text);
         }
     }
 }

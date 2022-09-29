@@ -149,7 +149,9 @@ namespace Passwords.API.Services.Tests
             PasswordUsersService<Test.Context> service = new PasswordUsersService<Test.Context>(Test.CurrentContext);
 
             // Act
-            Status result = service.RemoveUserAccount(service.GetUserById(1).GetAwaiter().GetResult().Entity).GetAwaiter().GetResult().Status;
+            Status result = service.RemoveUserAccount(
+                service.GetUserById(1).GetAwaiter().GetResult().Entity
+            ).GetAwaiter().GetResult().Status;
 
             Assert.True( result, result );
         }

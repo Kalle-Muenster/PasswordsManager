@@ -196,12 +196,11 @@ namespace Passwords.API.Services
 
         private static void CleanupDbExport( object FileInfos )
         {
-            (FileInfo created,FileInfo export,int counter) files = ((FileInfo,FileInfo,int))(FileInfos as System.Runtime.CompilerServices.ITuple);
+            (FileInfo export,int counter) files = ((FileInfo,int))(FileInfos as System.Runtime.CompilerServices.ITuple);
             System.Threading.Thread.Sleep( 30000 );
             try { files.export.Delete();
-                 files.created.Delete();
             } catch( System.Exception _ ) {
-                if(--files.counter > 0)
+                if( --files.counter > 0 )
                     CleanupDbExport( files );
             }
         }
@@ -215,12 +214,15 @@ namespace Passwords.API.Services
             while( _db.Database.CurrentTransaction != null && --tries >= 0 )
                 System.Threading.Thread.Sleep( 1000 );
             if( dbfile.Exists ) {
-                if( Crypt.EncryptFile(_apky, dbfile) > 0 ) {
+                if( Crypt.EncryptFile( _apky, dbfile ) > 0 ) {
                     dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db.yps");
-                    FileInfo export = dbfile.Replace($"{path}\\Exporte\\DbCore_{exportstamp}.db.yps", null);
-                    Status = Status.Success.WithText("Db core exportet");
-                    new Task(CleanupDbExport, (dbfile, export, 5)).Start();
-                    return Status.Success.WithData( export.OpenRead() );
+                    string export = $"{path}\\Exporte\\DbCore_{exportstamp}.db.yps";
+                    if( Consola.Utility.CommandLine( $"rename \"{dbfile.FullName}\" \"{export}\"" ) == 0 ) {
+                        dbfile = new FileInfo( export );
+                        Status = Status.Success.WithText("Db core exportet");
+                        new Task( CleanupDbExport, (dbfile,5) ).Start();
+                        return Status.Success.WithData( dbfile.OpenRead() );
+                    }
                 }
             } else {
                 Status = ( Status.Cryptic + Status.Invalid ).WithText(

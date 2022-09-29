@@ -34,10 +34,9 @@ namespace Passwords.API.Services.Tests
 
             // Act
             Status result = service.SetMasterKey(1, "ElBongo").GetAwaiter().GetResult().Status;
-            bool valid = service.VerifyPassword(1, "ElBongo");
 
             // Assert
-            Assert.True( valid, result );
+            Assert.True( result, result );
         }
 
         [Fact]

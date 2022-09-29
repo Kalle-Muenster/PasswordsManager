@@ -24,9 +24,9 @@ namespace Passwords.GUI
             internal const string TheHost = "{0}\\TheNetwork\\{1}";
         }
 
-        internal ulong UnPackData( byte[] data )
+        internal ulong UnPackData( byte[] Data )
         {
-            data = Crypt.BinaryDecrypt( theKey, data );
+            Span<byte> data = Crypt.BinaryDecrypt( theKey, Data );
             ulong value = 0;
             unsafe {
                 byte* ptr = (byte*)&value;
@@ -43,7 +43,7 @@ namespace Passwords.GUI
                 for( int i = 0; i < 8; ++i ) {
                     data[i] = ptr[i];
                 } data[8] = 0;
-            } return Crypt.BinaryEncrypt( theKey, data );
+            } return Crypt.BinaryEncrypt( theKey, data ).ToArray();
         }
 
         private CryptKey theKey;

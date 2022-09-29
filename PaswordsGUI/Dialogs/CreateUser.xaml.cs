@@ -75,7 +75,7 @@ namespace Passwords.GUI {
             data.Info = txt_UserInfo.Text;
             if ( img_UserIcon.Source != null )
                 data.Icon = Encoding.Default.GetBytes( img_UserIcon.DataContext.ToString() );
-            data.Is().Status = API.Abstracts.Status.Success.WithText("Pass").WithData(txt_UserPass.Text);
+            data.Is().Status = API.Abstracts.Status.Success.WithText("Pass").WithData( txt_UserPass.Text );
             theDialog().TheData = data;
             theDialog().Returns();
         }

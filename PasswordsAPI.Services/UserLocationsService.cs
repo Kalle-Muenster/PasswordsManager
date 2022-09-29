@@ -157,7 +157,7 @@ namespace Passwords.API.Services
                 return this;
             } _enty = init;
 
-            _enty.Pass = Encoding.ASCII.GetBytes( masterKey.Encrypt( passToStore ) );
+            _enty.Pass = Encoding.Default.GetBytes( Crypt.EncryptString( masterKey, passToStore ) );
             if( Crypt.Error ) {
                 _enty = Status = new Status( LocationServiceError.Code|Status.Cryptic.Code, Crypt.Error.ToString(), passToStore );
                 return this;
@@ -176,7 +176,7 @@ namespace Passwords.API.Services
                 Status = new Status( (
                         ResultCode.Area | ResultCode.Service |
                         ResultCode.User | ResultCode.Invalid )
-                    ,"Unknown User"
+                    ,"Invalid User"
                 );
                 return this;
             }
@@ -187,7 +187,7 @@ namespace Passwords.API.Services
             CryptKey masterKey = _keys.GetMasterKey( usr.Id );
             if ( GetLocationOfUser( init.User = usr.Id, init.Area ) ) {
                 // if the location already exists, update with new password set
-                _enty.Pass = Encoding.ASCII.GetBytes( masterKey.Encrypt( pass ) );
+                _enty.Pass = Encoding.Default.GetBytes( masterKey.Encrypt( pass ) );
                 Save();
                 Status = Status.NoState;
                 return this;

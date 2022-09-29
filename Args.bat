@@ -1,4 +1,4 @@
-@if "%ECHO_STATE%"=="" ( @echo off ) else ( @echo %ECHO_STATE% )
+:: @if "%ECHO_STATE%"=="" ( @echo off ) else ( @echo %ECHO_STATE% )
 if not "%~1"=="ParameterCleanUp" goto CHECK_ARGS
 
 :CLEAN_UP_ARGS

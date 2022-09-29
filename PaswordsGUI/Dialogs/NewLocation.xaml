@@ -41,7 +41,7 @@
                 </LinearGradientBrush>
             </TextBox.BorderBrush>
         </TextBox>
-        <TextBox x:Name="txt_LocationPass" Height="30" Margin="46,208,46,0" TextWrapping="Wrap" Text="" d:LayoutOverrides="HorizontalAlignment, Height" VerticalAlignment="Top" KeyUp="txt_TextChanged" Background="#FF101010" Foreground="#FF49C08B" SelectionTextBrush="#FFD47828" BorderThickness="2,2,2,2">
+        <TextBox x:Name="txt_LocationPass" Height="30" Margin="46,208,96,0" TextWrapping="Wrap" Text="" d:LayoutOverrides="HorizontalAlignment, Height" VerticalAlignment="Top" KeyUp="txt_TextChanged" Background="#FF101010" Foreground="#FF49C08B" SelectionTextBrush="#FFD47828" BorderThickness="2,2,2,2" TextChanged="txt_TextChanged">
             <TextBox.BorderBrush>
                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                     <LinearGradientBrush.RelativeTransform>
@@ -60,5 +60,6 @@
         <Label x:Name="lbl_LocationName" Content="Location Name:" Margin="20,27,0,0" Width="150" Height="44" VerticalAlignment="Top" HorizontalAlignment="Left" d:LayoutOverrides="Width" Foreground="{Binding Foreground, ElementName=window}"/>
         <Label x:Name="lbl_LocationLogin" Content="Login Name" Margin="20,102,0,0" Width="150" Height="38" VerticalAlignment="Top" HorizontalAlignment="Left" d:LayoutOverrides="Width" Foreground="{Binding Foreground, ElementName=window}"/>
         <Label x:Name="lbl_LocationPass" Content="Password:" Margin="20,178,0,0" Width="150" Height="44" VerticalAlignment="Top" HorizontalAlignment="Left" d:LayoutOverrides="Width" Foreground="{Binding Foreground, ElementName=window}"/>
+        <Button x:Name="btn_autoPasswort" Content="make" Height="30" Margin="544,208,0,0" Background="#FF404040" Foreground="Wheat" Click="btn_autoPasswort_Click" VerticalAlignment="Top" d:LayoutOverrides="Height" HorizontalAlignment="Left" Width="45" />
     </Grid>
 </Window>

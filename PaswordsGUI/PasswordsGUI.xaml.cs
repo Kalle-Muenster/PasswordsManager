@@ -23,7 +23,7 @@ namespace Passwords.GUI
 
     public enum MainPanel : int
     {
-        EmptyView = 0, EnterPassword = 1, UserLocations = 2
+        EmptyView = 0, EnterPassword = 1, UserLocations = 2, ServerFeatures = 4
     }
 
 
@@ -44,6 +44,7 @@ namespace Passwords.GUI
         NoState = 0,
         EnterPassword = 0x01, 
         UserLocations = 0x02,
+        ServerFeatures = 0x04,
         ListedServers = 0x01<<8,
         SideLocations = UserLocations<<8,
         ServerTools   = 0x01<<16,
@@ -103,20 +104,19 @@ namespace Passwords.GUI
 
         public string EncryptedArgs( string cleartext )
         {
-            return HttpUtility.UrlEncode( key?.Encrypt(cleartext) 
-                ?? PasswordClient.Instance.Key.Encrypt(cleartext) );
+            return HttpUtility.UrlEncode(
+                Crypt.EncryptW( key ?? PasswordClient.Instance.Key, Encoding.Default.GetBytes( cleartext ) )
+            );
         }
 
         public string DecryptedValue( string cryptex )
         {
-            return key?.Decrypt( cryptex ) 
-                ?? PasswordClient.Instance.Key.Decrypt( cryptex );
+            return key?.Decrypt( cryptex ) ?? PasswordClient.Instance.Key.Decrypt( cryptex );
         }
 
         public string DecryptedValue( byte[] crypdat )
         {
-            return Crypt.DecryptString( key ?? PasswordClient.Instance.Key,
-                                        Encoding.Default.GetString(crypdat) );
+            return Encoding.Default.GetString( Crypt.DecryptA<byte>(key ?? PasswordClient.Instance.Key, crypdat) );
         }
 
         public GuiState( ThePasswords_TheAPI_TheGUI application )
@@ -208,15 +208,15 @@ namespace Passwords.GUI
         private PasswordClient self;
         private HttpClient     http;
         private GuiState       TheState;
-
+        private Tokken         auto;
         private InfoMessage    StatusInfoDialog;
         private CreateUser     CreateUserDialog;
         private ServerConfig   ConfigureServers;
         private NewLocation    CreateAreaDialog;
         private ResetPassword  ResetUserPassword;
 
-        private GuiState       state;
-
+        private GuiState         state;
+        private System.IO.Stream file;
 
         private Random         rand;
         private uint lastNounce = 0;
@@ -231,6 +231,7 @@ namespace Passwords.GUI
         public ThePasswords_TheAPI_TheGUI()
         {
             self = PasswordClient.Instance;
+            file = null;
 
             jsobtions = new JsonDocumentOptions();
             jsobtions.MaxDepth = 5;
@@ -255,6 +256,7 @@ namespace Passwords.GUI
 
             view = MainPanel.UserLocations;
             side = SidePanel.EmptyView;
+            auto = new Tokken( Tokken.CharSet.Base64, "8.7.7.7" );
 
             CreateUserDialog = new CreateUser(this, CreateNewUserAccount);
             ConfigureServers = new ServerConfig(this, SetupServerConnection);
@@ -266,6 +268,11 @@ namespace Passwords.GUI
             
             Loaded += ThePasswordsTheAPI_TheGUI_Loaded;
         }
+
+        internal string AutoGeneratePassword()
+        {
+            return auto.Get();
+        } 
 
         private void ThePasswordsTheAPI_TheGUI_Loaded( object sender, RoutedEventArgs e )
         {
@@ -283,11 +290,13 @@ namespace Passwords.GUI
                         case MainPanel.EmptyView: break;
                         case MainPanel.EnterPassword: pnl_Main_EnterPassword.Visibility = Visibility.Collapsed; break;
                         case MainPanel.UserLocations: pnl_Main_LocationsView.Visibility = Visibility.Collapsed; break;
+                        case MainPanel.ServerFeatures: pnl_Main_StageFrame.Visibility = Visibility.Collapsed; break;
                     }
                     switch( value ) {
                         case MainPanel.EmptyView: break;
                         case MainPanel.EnterPassword: pnl_Main_EnterPassword.Visibility = Visibility.Visible; break;
                         case MainPanel.UserLocations: pnl_Main_LocationsView.Visibility = Visibility.Visible; break;
+                        case MainPanel.ServerFeatures: pnl_Main_StageFrame.Visibility = Visibility.Visible; break;
                     }
                     view = value;
                 }
@@ -339,10 +348,11 @@ namespace Passwords.GUI
         private void ExecuteAppCommand( string commandGroup, string commandName )
         {
             switch( commandGroup ) {
-                case "Conf": {
+                case "Server": {
                         switch( commandName ) {
                             case "Setup": { ConfigureServers.Show(); } break;
-                            case "Configure": { InfoDialogXamlTest(); } break;
+                            case "Page": { InfoDialogXamlTest(); } break;
+                            case "Export": { GetDataBaseDump(); } break;
                             case "Exit": { App.Current.Shutdown(); } break;
                         }
                     }
@@ -381,14 +391,16 @@ namespace Passwords.GUI
         {
             Button button = sender as Button;
             string commandGroup = button.Tag.ToString() ?? string.Empty;
+
+            if( commandGroup == "Conf" ) commandGroup = "Server";
             string commandName = button.Content?.ToString() ?? string.Empty;
             if( commandName.Contains('.') || commandName == "Enter" || commandName == "Cancel" ) commandName = string.Empty;
 
-            switch( commandGroup ) {
+            switch( commandGroup ) 
+            {
                 case "User": commandName = "Select"; break;
-                case "Area": {
-                    commandName = "SideMenu";
-                } break;
+                case "Area": commandName = "SideMenu"; break;
+
                 case "Ok": {
                     if( commandName.Length == 0 ) {
                         commandGroup = "State";
@@ -461,8 +473,8 @@ namespace Passwords.GUI
                 HttpResponseMessage response = http.Send( request );
                 if( response.IsSuccessStatusCode ) {
                     call = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                    StatusInfoDialog.Show( Status.Success.WithText( response.ReasonPhrase ).WithData( call ) ); 
-                    //new Status( ResultCode.Success|ResultCode.Xaml, response.ReasonPhrase, call ) );
+                    StatusInfoDialog.Show( Status.Success.WithText( response.ReasonPhrase ).WithData( call ) );
+                    ReloadUserAccounts();
                 } else {
                     StatusInfoDialog.Show( Status.Invalid.WithData( response.ReasonPhrase ) );
                 }
@@ -608,10 +620,9 @@ namespace Passwords.GUI
             if( pass is null ) {
                 if( state.SelectedUser > 0 ) {
                     StatusInfoDialog.Show(
-                        Status.Unknown.WithText( "Delete User? \n (All passwords of that user will be deleted as well)\n ...please enter password for:")
+                        Status.Unknown.WithText( "Delete User {0}? \n (All passwords of that user will be deleted as well)\n ...please enter master password:")
                                       .WithData( state.UserName )
                                             );
-                    state.SetAccounts( null );
                 }
             } else {
                 string call = (string)App.Current.Resources["DeleteUser"];
@@ -621,6 +632,7 @@ namespace Passwords.GUI
                 if( reply.IsSuccessStatusCode ) {
                     StatusInfoDialog.Show( Status.Success.WithData(
                         reply.Content.ReadAsStringAsync().GetAwaiter().GetResult() ) );
+                    state.SetAccounts( null );
                 } else {
                     call = reply.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                     StatusInfoDialog.Show( Status.Invalid.WithText( reply.ReasonPhrase ).WithData(call) );
@@ -641,7 +653,7 @@ namespace Passwords.GUI
             HttpResponseMessage resp = http.Send( new HttpRequestMessage( HttpMethod.Patch, call ) );
             call = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if( resp.IsSuccessStatusCode ) {
-                StatusInfoDialog.Show(Status.Success.WithText("Success").WithData(call)); //new Status( ResultCode.Success|ResultCode.Xaml, "Success" , call ) );
+                StatusInfoDialog.Show(Status.Success.WithText("Success").WithData(call));
             } else {
                 StatusInfoDialog.Show(Status.Invalid.WithText(call));
             }
@@ -691,7 +703,7 @@ namespace Passwords.GUI
             if ( !deleteAreaConfirmed ) {
                 if( areaOrPwd != null ) {
                     if( state.SelectedArea.ToString() != areaOrPwd && state.LocationName != areaOrPwd ) {
-                        if( state.SetArea(areaOrPwd).Is().Status.Bad ) {
+                        if( state.SetArea( areaOrPwd ).Is().Status.Bad ) {
                             StatusInfoDialog.Show( Status.Invalid.WithText("Invalid location: ").WithData(areaOrPwd) );
                             return;
                         }
@@ -699,7 +711,9 @@ namespace Passwords.GUI
                 }
                 if( state.LocationName.Length > 0 ) {
                     StatusInfoDialog.Show(
-                        Status.Unknown.WithText( "Delete Location '{0}'?\n (enter master password to confirm...)" ).WithData( state.LocationName )
+                        Status.Unknown.WithText(
+                            "Delete Location '{0}'?\n (enter master password to confirm...)"
+                        ).WithData( state.LocationName )
                     );
                 } else StatusInfoDialog.Show( Status.Invalid.WithText( "No Location is selected" ) );
             } else {
@@ -729,7 +743,7 @@ namespace Passwords.GUI
             if( txt_Area.Text != state.LocationName ) changes = 8;
             if( txt_Name.Text != area.Name ) { changes |= 1; area.Name = txt_Name.Text; }
             if( txt_Info.Text != area.Info ) { changes |= 2; area.Info = txt_Info.Text; }
-            string pass = state.DecryptedValue( Encoding.Default.GetString(area.Pass) );
+            string pass = state.DecryptedValue( Encoding.Default.GetString( area.Pass ) );
             if( txt_Pass.Text != pass ) { changes |= 4; pass = txt_Pass.Text; }
             switch( changes ) {
                 case 1: call += "Name"; args = $"***{area.Name}"; break;
@@ -812,6 +826,41 @@ namespace Passwords.GUI
             }
         }
 
+        private void GetDataBaseDump()
+        {
+            DateTime now = DateTime.Now;
+            string call = (string)App.Current.Resources["DownloadDb"];
+            call = string.Format( call, state.SelectedUser,
+                state.EncryptedArgs( "***" + now.ToString() ) );
+            HttpResponseMessage resp = http.Send( new HttpRequestMessage( HttpMethod.Get, call ) );
+            if( resp.IsSuccessStatusCode ) {
+                file = resp.Content.ReadAsStream();
+                SaveFileDialog save = new SaveFileDialog();
+                save.DefaultExt = ".yps";
+                save.CheckPathExists = true;
+                save.FileOk += Save_FileOk;
+                save.ShowDialog();
+            } else {
+                StatusInfoDialog.Show( Status.Invalid.WithText( resp.ReasonPhrase ) );
+            } 
+        }
+
+        private void Save_FileOk( object sender, CancelEventArgs e )
+        {
+            if( e.Cancel ) { file.Close(); file = null; return; }
+
+            int read = 0;
+            byte[] buffer = new byte[512];
+            System.IO.Stream store = (sender as SaveFileDialog).OpenFile();
+            while( ( read = file.Read( buffer, 0, 512 ) ) > 0 )
+                store.Write( buffer, 0, read );
+
+            file.Close();
+            store.Flush();
+            store.Close();
+            file = null;
+        }
+
         private void window_Closed( object sender, EventArgs e )
         {
             App.Current.Shutdown(0);
@@ -825,6 +874,22 @@ namespace Passwords.GUI
         private void mnu_Area_Reset_Click( object sender, RoutedEventArgs e )
         {
 
+        }
+
+        private void btn_autogenerate_Click( object sender, RoutedEventArgs e )
+        {
+            txt_Pass.Text = auto.Get();
+        }
+
+        private void txt_Pass_GotFocus( object sender, RoutedEventArgs e )
+        {
+            btn_Pass_Generate.Visibility = Visibility.Visible;
+        }
+
+        private void txt_Pass_LostFocus( object sender, RoutedEventArgs e )
+        {
+            if((!btn_Pass_Generate.IsMouseOver)|(sender == btn_Pass_Generate) )
+                btn_Pass_Generate.Visibility = Visibility.Collapsed;
         }
     }
 }

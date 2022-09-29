@@ -16,10 +16,10 @@ namespace Passwords.API.Tests.Helpers
         public readonly string Architecture;
         public readonly string Configuration;
         public readonly string ProjectFolder;
-
+   
         public BuildConfig()
         {
-            ProjectFolder = "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI";
+            ProjectFolder = "C:\\WORKSPACE\\PROJECTS\\PasswordsAPI\\PasswordsAPI";
             Architecture = Consola.Utility.ArchitectureOfChip().Contains("64bit") ? "x64" : "x86";
 #if DEBUG
             Configuration = "Debug";
@@ -52,12 +52,12 @@ namespace Passwords.API.Tests.Helpers
     public class ExternalTestrun
     {
         private Tuple<int,string> _result;
-        public int FailedTests
+        public int Failures
         {
             get { return _result.Item1; }
         }
 
-        public string TestResults
+        public string Results
         {
             get { return _result.Item2; }
         }
@@ -73,7 +73,7 @@ namespace Passwords.API.Tests.Helpers
                 string dotnet = Test.CurrentConfig.Architecture == "x86"
                               ? "C:\\Program Files (x86)\\dotnet\\dotnet.exe"
                               : "C:\\Program Files\\dotnet\\dotnet.exe";
-                startinfo = new ProcessStartInfo( dotnet, $"{path}\\{file} --verbose --xml" );
+                startinfo = new ProcessStartInfo( dotnet, $"{path}\\{file} -v -x" );
             } else
                 _result = new Tuple<int,string>( int.MaxValue, file+" is not executable" );
 
@@ -84,41 +84,50 @@ namespace Passwords.API.Tests.Helpers
                 Process testrun = new Process();
                 testrun.StartInfo = startinfo;
                 testrun.EnableRaisingEvents = true;
-                bool ok = false;
+                
                 System.Text.StringBuilder testoutput = new System.Text.StringBuilder();
-
-                if (ConsolaTest) {
-                    if (testrun.Start()) {
-                        ok = testrun.WaitForExit(300000);
+                bool ok = false;
+                if( ConsolaTest ) {
+                    if( testrun.Start() ) {
+                        ok = testrun.WaitForExit( 30000 );
                     } else {
                         testoutput.Append( "Unknown Status running test" );
                     }
-                    if (ok) {
+                    if( ok ) {
                         FileInfo outfile = new FileInfo( $"{path}\\dotnet_Err.log" );
                         if (outfile.Exists) {
                             StreamReader f = outfile.OpenText();
                             testoutput.Append( f.ReadToEnd() ).Append( "\n" );
                             f.Close();
-                            outfile.Delete();
+                            string testname = file.Substring(0, file.Length - 4);
+                            Consola.Utility.CommandLine(
+                                $"rename \"{outfile.FullName}\" \"{path}\\{testname}_Err.log\""
+                            );
                             outfile = new FileInfo( $"{path}\\dotnet_Out.log" );
                             f = outfile.OpenText();
                             testoutput.Append( f.ReadToEnd() );
                             f.Close();
-                            outfile.Delete();
+                            Consola.Utility.CommandLine(
+                                $"rename \"{outfile.FullName}\" \"{path}\\{testname}_Out.log\""
+                            );
+                            outfile = new FileInfo($"{path}\\dotnet_Aux.log");
+                            if (outfile.Exists) Consola.Utility.CommandLine(
+                                $"rename \"{outfile.FullName}\" \"{path}\\{testname}_log.xml\""
+                            ); 
                         } else {
                             testoutput.Append( "Unknown Status reading output" );
                         }
                     }
                 } else {
-                    if (testrun.Start()) {
-                        if (ok = testrun.WaitForExit(30000)) {
-                            testoutput.Append(testrun.StandardError.ReadToEnd());
-                            testoutput.Append(testrun.StandardOutput.ReadToEnd());
-                        } else testoutput.Append("test hanging crashed... ");
+                    if( testrun.Start() ) {
+                        if ( ok = testrun.WaitForExit( 30000 ) ) {
+                            testoutput.Append( testrun.StandardError.ReadToEnd() );
+                            testoutput.Append( testrun.StandardOutput.ReadToEnd() );
+                        } else testoutput.Append("test hanging or crashed... ");
                     } else {
                         testoutput.Append("Unknown status reading output");
                     }
-                } _result = new Tuple<int,string>( testrun.ExitCode,testoutput.ToString() );
+                } _result = new Tuple<int,string>( testrun.ExitCode, testoutput.ToString() );
                 testrun.Close();
             }
         }
@@ -181,7 +190,7 @@ namespace Passwords.API.Tests.Helpers
                 {
                     Thread.Sleep(2000);
                     Consola.StdStream.Cwd = CurrentConfig.ProjectFolder + "\\DataBase\\Tests";
-                    Consola.Utility.CommandLine( "C:\\Windows\\System32\\cmd.exe /c \"del /f /q db.db\"" );
+                    Consola.Utility.CommandLine("C:\\Windows\\System32\\cmd.exe /c \"del /f /q db.db\"");
                     Consola.Utility.CommandLine(
                         $"C:\\Windows\\System32\\cmd.exe /c \"copy {CurrentConfig.ProjectFolder}\\DataBase\\Tests\\{database}\\db.db {Consola.StdStream.Cwd}\""
                     );

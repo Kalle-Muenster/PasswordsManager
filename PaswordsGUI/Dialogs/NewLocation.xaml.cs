@@ -72,7 +72,7 @@ namespace Passwords.GUI
             base.Show();
         }
 
-        private void txt_TextChanged(object sender, System.Windows.Input.KeyEventArgs e)
+        private void txt_TextChanged( object sender, RoutedEventArgs e )
         {
             if (!btn_Ok.IsEnabled)
             {
@@ -84,5 +84,11 @@ namespace Passwords.GUI
                     btn_Ok.IsEnabled = false;
             }
         }
+
+        private void btn_autoPasswort_Click( object sender, RoutedEventArgs e )
+        {
+            txt_LocationPass.Text = theDialog().TheGUI.AutoGeneratePassword();
+        }
+
     }
 }

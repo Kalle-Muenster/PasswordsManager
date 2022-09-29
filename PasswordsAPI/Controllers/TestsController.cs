@@ -71,8 +71,8 @@ namespace Passwords.Controllers
 
             ExternalTestrun test = new ExternalTestrun(path, "YpsTest.dll");
 
-            if (test.FailedTests == 0) return Ok(test.TestResults);
-            else return StatusCode(500 + test.FailedTests, test.TestResults);
+            if (test.Failures == 0) return Ok(test.Results);
+            else return StatusCode(500 + test.Failures, test.Results);
         }
 
         [HttpGet("Tests/Int24DotnetTypes")]
@@ -83,8 +83,8 @@ namespace Passwords.Controllers
 
             ExternalTestrun test = new ExternalTestrun(path, "Int24Tests.dll");
 
-            if (test.FailedTests == 0) return Ok(test.TestResults);
-            else return StatusCode(500 + test.FailedTests, test.TestResults);
+            if (test.Failures == 0) return Ok(test.Results);
+            else return StatusCode(500 + test.Failures, test.Results);
         }
     }
 }

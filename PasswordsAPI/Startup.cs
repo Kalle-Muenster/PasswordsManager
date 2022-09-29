@@ -51,10 +51,7 @@ namespace Passwords.API
             services.AddCors(
                 options => {
                     options.AddPolicy( name: MyAllowSpecificOrigins, policy => {
-                        policy.WithOrigins("http://localhost:5255",
-                                           "http://karen:8000",
-                                           "http://dergeraet:5255",
-                                           "http://lotte:8000")
+                        policy.WithOrigins("http://localhost:5255")
                               .AllowAnyHeader()
                               .AllowAnyMethod()
                               .AllowAnyOrigin()

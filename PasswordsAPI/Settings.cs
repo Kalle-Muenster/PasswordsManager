@@ -92,12 +92,11 @@ namespace Passwords.API
             internal const string TheAgent = "{0}\\TheClients\\{1}";
         }
 
-        internal ulong UnPackData( byte[] data )
+        internal ulong UnPackData( byte[] Data )
         {
-            data = Crypt.BinaryDecrypt( theKey, data );
-            if( data == null ) return 0;
+            ArraySegment<byte> data = Crypt.BinaryDecrypt( theKey, Data );
             ulong value = 0;
-            unsafe {
+            if( data.Count > 0 ) unsafe {
                 byte* ptr = (byte*)&value;
                 for( int i = 0; i < 8; ++i ) {
                     ptr[i] = data[i];
@@ -111,8 +110,8 @@ namespace Passwords.API
             unsafe { byte* ptr = (byte*)&value;
                 for( int i = 0; i < 8; ++i ) {
                     data[i] = ptr[i];
-                }
-            } return Crypt.BinaryEncrypt( theKey, data );
+                } data[8] = 0;
+            } return Crypt.BinaryEncrypt( theKey, data ).ToArray();
         }
 
         private CryptKey theKey;

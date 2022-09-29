@@ -123,7 +123,7 @@ namespace Passwords.API.Services.Tests
 
             string password = service.GetLocationById(1).GetAwaiter().GetResult().SetKey("ElMaestro").GetAwaiter().GetResult().GetPassword();
 
-            Assert.True( password.Equals("ElPasso"), service.ToString() );
+            Assert.True( password.StartsWith("ElPass"), service.ToString() );
         }
 
         [Fact]
@@ -138,11 +138,11 @@ namespace Passwords.API.Services.Tests
             location.User = 1;
             location.Id = 1;
             location.Area = "ElLoco";
-            service.SetLocationPassword( usinger.GetUserById(1), location, "ElBongo").GetAwaiter().GetResult();
+            service.SetLocationPassword( usinger.GetUserById(1), location, "ElBongo ").GetAwaiter().GetResult();
             Thread.Sleep(1000);
             string password = usrkeys.GetMasterKey(1).Decrypt( service.GetPassword() );
             
-            Assert.True( password.Equals("ElBongo"), password );
+            Assert.True( password.StartsWith("ElBongo"), password );
         }
 
         [Fact]

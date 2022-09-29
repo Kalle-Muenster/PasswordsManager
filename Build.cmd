@@ -1,4 +1,4 @@
-@if "%ECHO_STATE%"=="" (@echo off ) else (@echo %ECHO_STATE% )
+:: @if "%ECHO_STATE%"=="" (@echo off ) else (@echo %ECHO_STATE% )
 
 :: Prepare locations
 set _name_=PasswordsAPI

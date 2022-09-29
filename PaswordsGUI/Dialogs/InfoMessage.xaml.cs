@@ -83,11 +83,11 @@ namespace Passwords.GUI
                 txt_Input.Clear();
                 txt_Input.Visibility = Visibility.Collapsed;
             } else {
-                message.Is().Status = Passwords.API.Abstracts.Status.Success;
+                message.Is().Status = API.Abstracts.Status.Success;
             } theDialog().Returns();
         }
 
-        private void Btn_Decline_Click(object sender, RoutedEventArgs e)
+        private void Btn_Decline_Click( object sender, RoutedEventArgs e )
         {
             txt_Input.Clear();
             txt_Input.Visibility = Visibility.Collapsed;
@@ -101,6 +101,7 @@ namespace Passwords.GUI
             img_Content.Source = (ImageSource)App.Current.Resources[image];
             Icon = (ImageSource)App.Current.Resources[icon];
         }
+
         public void Show( Status info )
         {
             message = new Message( info );
