@@ -78,7 +78,7 @@ namespace Passwords.API.Services
             bool nounce = false;
             if ( nounce = Entity.IsValid() ) {
                 // try decrypting queryparameter by hashvalue of current users masterkey 
-                data = GetMasterKey( Entity.Id ).Decrypt( data );
+                data = GetMasterKey( Entity.User ).Decrypt( data );
             } else {
                 // if there's no user in context actually, then decrypt queryparameters
                 // by this Password.API servers own apikey (*all clients (Password.GUI
