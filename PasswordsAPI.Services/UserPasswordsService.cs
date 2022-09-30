@@ -214,20 +214,16 @@ namespace Passwords.API.Services
             while( _db.Database.CurrentTransaction != null && --tries >= 0 )
                 System.Threading.Thread.Sleep( 1000 );
             if( dbfile.Exists ) {
-                if( Crypt.EncryptFile( _apky, dbfile ) > 0 ) {
+                CryptKey useKey = Entity.IsValid() ? Crypt.CreateKey( Entity.Hash ) : _apky; 
+                if( Crypt.EncryptFile( useKey, dbfile ) > 0 ) {
                     dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db.yps");
-                    string export = $"{path}\\Exporte\\DbCore_{exportstamp}.db.yps";
-                    if( Consola.Utility.CommandLine( $"rename \"{dbfile.FullName}\" \"{export}\"" ) == 0 ) {
-                        dbfile = new FileInfo( export );
-                        Status = Status.Success.WithText("Db core exportet");
-                        new Task( CleanupDbExport, (dbfile,5) ).Start();
-                        return Status.Success.WithData( dbfile.OpenRead() );
-                    }
+                    Status = Status.Success.WithText("Db core exportet");
+                    new Task( CleanupDbExport, (dbfile,5) ).Start();
+                    return Status.Success.WithData( dbfile.OpenRead() );
                 }
-            } else {
-                Status = ( Status.Cryptic + Status.Invalid ).WithText(
-                    "Error when encrypting database" ).WithData( Crypt.Error );
-            } return Status;
+            } Status = ( Status.Cryptic + Status.Invalid ).WithText(
+                        "Error when encrypting database" ).WithData( Crypt.Error );
+            return Status;
         }
     } 
 }
