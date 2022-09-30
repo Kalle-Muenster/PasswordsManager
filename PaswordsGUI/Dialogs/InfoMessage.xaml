@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Passwords.GUI"
         mc:Ignorable="d"
-        Title="InfoMessage" Height="210" Width="556" Background="#FF201E1C" Foreground="Wheat">
-    <Grid Height="191" VerticalAlignment="Center">
-        <Image x:Name="img_Content" Margin="22,0,0,0" Width="128" Height="128" d:LayoutOverrides="Width, Height" VerticalAlignment="Center" Source="{StaticResource object}" HorizontalAlignment="Left"/>
-        <ContentControl x:Name="pnl_Content" Visibility="Collapsed" Margin="165,0,26,0" Height="128" d:LayoutOverrides="Height" VerticalAlignment="Center" Cursor="IBeam" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,2,2,2" ClipToBounds="True" SnapsToDevicePixels="True" Background="White" >
-            <Label Content="MessageText" Margin="165,0,26,0" Height="128" d:LayoutOverrides="Height" VerticalAlignment="Center" Cursor="IBeam" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,2,2,2" ClipToBounds="True" SnapsToDevicePixels="True" Background="White"/>
+        Title="InfoMessage" Height="auto" Width="512" Background="#FF201E1C" Foreground="Wheat">
+    <Grid x:Name="pnl_InfoDialog" Height="auto" VerticalAlignment="Stretch">
+        <Image x:Name="img_Content" Margin="22,32,0,0" Width="128" Height="128" d:LayoutOverrides="Width, Height" VerticalAlignment="Top" Source="{StaticResource object}" HorizontalAlignment="Left"/>
+        <ContentControl x:Name="pnl_Content" Visibility="Collapsed" Margin="165,32,26,31" Height="auto" Cursor="IBeam" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,2,2,2" ClipToBounds="True" SnapsToDevicePixels="True" Background="White" >
+            <Label Height="128"></Label>
         </ContentControl>
-        <Label x:Name="txt_Content" Content="MessageText" Margin="165,0,26,0" Height="128" d:LayoutOverrides="Height" VerticalAlignment="Center" Cursor="IBeam" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,2,2,2" ClipToBounds="True" SnapsToDevicePixels="True" Background="#FF181818" Foreground="{Binding Foreground, ElementName=window}">
+        <Label x:Name="txt_Content" Content="MessageText" Margin="165,32,26,32" Height="128" Cursor="IBeam" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,2,2,2" ClipToBounds="True" SnapsToDevicePixels="True" Background="#FF181818" Foreground="{Binding Foreground, ElementName=window}">
             <Label.BorderBrush>
                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                     <LinearGradientBrush.RelativeTransform>
