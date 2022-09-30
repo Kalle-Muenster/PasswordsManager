@@ -11,12 +11,11 @@ namespace Passwords.GUI
         public class Message : EntityBase<Message>
         {
             internal static InfoMessage dialog;
-
             public string Text {
                 get { return (string)dialog.txt_Content.Content; }
                 set { dialog.txt_Content.Content = value; }
             }
-            public Message() : this(API.Abstracts.Status.Unknown) { }
+            public Message() : this( API.Abstracts.Status.Unknown ) { }
             public Message( Status code ) : base( code ) {
                 if ( code.Code.HasFlag( ResultCode.Xaml ) ) {
                     dialog.Title = code.GetText();
@@ -43,7 +42,7 @@ namespace Passwords.GUI
         void ThePasswords_TheGUI_ItsDialogs_TheInterface.Returns() {
             (this as IThePasswords_TheGUI_ADialog<Message>).TheAction( TheReturnData<Message>.fromTheDialog( this ) );
         }
-        void ThePasswords_TheGUI_ItsDialogs_TheInterface.TheReturnAction<T>(IThePasswords_TheGUI_ADialog<T>.ItsReturnAction onProcced) {
+        void ThePasswords_TheGUI_ItsDialogs_TheInterface.TheReturnAction<T>( IThePasswords_TheGUI_ADialog<T>.ItsReturnAction onProcced ) {
             if (typeof(T) == typeof(Message)) {
                 (this as IThePasswords_TheGUI_ADialog<Message>).TheAction = onProcced
                       as IThePasswords_TheGUI_ADialog<Message>.ItsReturnAction;
@@ -61,7 +60,6 @@ namespace Passwords.GUI
 
         public InfoMessage( ThePasswords_TheAPI_TheGUI main, IThePasswords_TheGUI_ADialog<Message>.ItsReturnAction action ) 
         {
-            
             theDialog().TheGUI = main;
             theDialog().TheReturnAction( action );
 
@@ -71,14 +69,13 @@ namespace Passwords.GUI
             btn_Confirm.Click += Btn_Confirm_Click;
 
             Message.dialog = this;
-            message = new Message(API.Abstracts.Status.NoState);
+            message = new Message( API.Abstracts.Status.NoState );
             theDialog().TheData = message;
-
         }
 
         private void Btn_Confirm_Click( object sender, RoutedEventArgs e )
         {
-            if (txt_Input.Visibility == Visibility.Visible) {
+            if( txt_Input.Visibility == Visibility.Visible ) {
                 message.Is().Status = new Status( ResultCode.Success, txt_Content.Content.ToString(), txt_Input.Text );
                 txt_Input.Clear();
                 txt_Input.Visibility = Visibility.Collapsed;

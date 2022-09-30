@@ -19,11 +19,12 @@ using System.Threading;
 
 namespace Passwords.API
 {
-    public partial class Service : ServiceBase
+    public partial class Service
+        : ServiceBase
     {
-        private System.ComponentModel.IContainer components = null;
-        internal System.Threading.Tasks.Task task;
-        internal IHost app;
+        private  System.ComponentModel.IContainer components = null;
+        private  System.Threading.Tasks.Task task;
+        internal IHost                       host;
 
         protected override void Dispose(bool disposing)
         {
@@ -50,19 +51,17 @@ namespace Passwords.API
 
         protected override void OnStart( string[] args )
         {
-            app = CreateHostBuilder(args).Build();
-            task = app.RunAsync();
+            host = CreateHostBuilder(args).Build();
+            task = host.RunAsync();
             EventLog.Log = "Started!";
         }
 
         protected override void OnStop()
         {
-            EventLog.Log = "Stopped!";
             ExitCode = 1;
-            app.StopAsync();
-            task.Wait( 1000 );
-            app.WaitForShutdown();
-            task.Dispose();
+            EventLog.Log = "Stopped!";
+            host.StopAsync();
+            task.Wait();
         }
 
         public static IHostBuilder CreateHostBuilder( string[] args ) =>
@@ -72,7 +71,7 @@ namespace Passwords.API
                          PasswordServer.Instance.TheUrl,
                          PasswordServer.Instance.Local
                      });
-                     webBuilder.UseStartup<Startup>();
+                 webBuilder.UseStartup<Startup>();
         } );
     }
 }

@@ -62,11 +62,23 @@ namespace Passwords.API.Tests.Helpers
             get { return _result.Item2; }
         }
 
+        private static string getConsolaLog( string log )
+        {
+            FileInfo file = new FileInfo( log );
+            if( file.Exists ) {
+                StreamReader stream = file.OpenText();
+                log = stream.ReadToEnd();
+                stream.Close();
+                file.Delete();
+                return log;
+            } else return $"file: {log} doesn't exist";
+        }
+
         public ExternalTestrun( string path, string file )
         {
             ProcessStartInfo startinfo = null;
             bool ConsolaTest = false;
-            if (file.EndsWith(".exe")) {
+            if( file.EndsWith(".exe") ) {
                 startinfo = new ProcessStartInfo( $"{path}\\{file}" );
             } else if ( file.EndsWith(".dll") ) {
                 ConsolaTest = true;
@@ -77,57 +89,38 @@ namespace Passwords.API.Tests.Helpers
             } else
                 _result = new Tuple<int,string>( int.MaxValue, file+" is not executable" );
 
-            if (startinfo != null) {
+            if( startinfo != null ) {
                 startinfo.RedirectStandardOutput = true;
                 startinfo.RedirectStandardError = true;
                 startinfo.WorkingDirectory = path;
                 Process testrun = new Process();
                 testrun.StartInfo = startinfo;
                 testrun.EnableRaisingEvents = true;
-                
-                System.Text.StringBuilder testoutput = new System.Text.StringBuilder();
+                System.Text.StringBuilder testout = new System.Text.StringBuilder();
+
                 bool ok = false;
                 if( ConsolaTest ) {
                     if( testrun.Start() ) {
                         ok = testrun.WaitForExit( 30000 );
                     } else {
-                        testoutput.Append( "Unknown Status running test" );
+                        testout.Append( "Unknown Status running test" );
                     }
                     if( ok ) {
-                        FileInfo outfile = new FileInfo( $"{path}\\dotnet_Err.log" );
-                        if (outfile.Exists) {
-                            StreamReader f = outfile.OpenText();
-                            testoutput.Append( f.ReadToEnd() ).Append( "\n" );
-                            f.Close();
-                            string testname = file.Substring(0, file.Length - 4);
-                            Consola.Utility.CommandLine(
-                                $"rename \"{outfile.FullName}\" \"{path}\\{testname}_Err.log\""
-                            );
-                            outfile = new FileInfo( $"{path}\\dotnet_Out.log" );
-                            f = outfile.OpenText();
-                            testoutput.Append( f.ReadToEnd() );
-                            f.Close();
-                            Consola.Utility.CommandLine(
-                                $"rename \"{outfile.FullName}\" \"{path}\\{testname}_Out.log\""
-                            );
-                            outfile = new FileInfo($"{path}\\dotnet_Aux.log");
-                            if (outfile.Exists) Consola.Utility.CommandLine(
-                                $"rename \"{outfile.FullName}\" \"{path}\\{testname}_log.xml\""
-                            ); 
-                        } else {
-                            testoutput.Append( "Unknown Status reading output" );
-                        }
+                        if( testrun.ExitCode != 0 )
+                        testout.Append(getConsolaLog( $"{path}\\dotnet_Err.log") ).Append("\n");
+                        testout.Append(getConsolaLog( $"{path}\\dotnet_Out.log") ).Append("\n");
+                        testout.Append(getConsolaLog( $"{path}\\dotnet_Aux.log") ).Append("\n");
                     }
                 } else {
                     if( testrun.Start() ) {
                         if ( ok = testrun.WaitForExit( 30000 ) ) {
-                            testoutput.Append( testrun.StandardError.ReadToEnd() );
-                            testoutput.Append( testrun.StandardOutput.ReadToEnd() );
-                        } else testoutput.Append("test hanging or crashed... ");
+                            testout.Append( testrun.StandardError.ReadToEnd() );
+                            testout.Append( testrun.StandardOutput.ReadToEnd() );
+                        } else testout.Append("test hanging or crashed... ");
                     } else {
-                        testoutput.Append("Unknown status reading output");
+                        testout.Append("Unknown status reading output");
                     }
-                } _result = new Tuple<int,string>( testrun.ExitCode, testoutput.ToString() );
+                } _result = new Tuple<int,string>( testrun.ExitCode, testout.ToString() );
                 testrun.Close();
             }
         }

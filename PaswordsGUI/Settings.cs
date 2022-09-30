@@ -66,8 +66,8 @@ namespace Passwords.GUI
             // it's registration id value then for that keys password value (which only desktop session user, the system 
             // and the application itself should be able knowing that password) so it is NOT the users own master password
             // these never will be stored anywhere else then in a users very own mind - instead this is agent-key is used
-            // for identifying clients/useragents at the PasswordsAPI Servers and authorizes these for being allowed feching
-            // encrypted password data for the actually running desktop session owning user who stores passwords on that server
+            // for identifying clients/useragents at a PasswordsAPI Server and authorizes them for being allowed feching
+            // encrypted password data for the actually running desktop sessions user who stores passwords on the server
             theKey = Crypt.CreateKey( client );
             client = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheName", string.Empty ).ToString();
             if( client.Length == 0 ) 

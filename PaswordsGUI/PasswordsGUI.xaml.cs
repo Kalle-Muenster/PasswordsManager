@@ -184,7 +184,7 @@ namespace Passwords.GUI
 
         public void SetOk()
         {
-            if( tool.HasFlag( ToolPanel.UserSelection ) ) { // bar_UsersSelect.Visibility == Visibility.Visible ) {
+            if( tool.HasFlag( ToolPanel.UserSelection ) ) {
                 ToolPanel = ToolPanel.UserSelection;
                 MainPanel = MainPanel.EnterPassword;
             } else if( MainPanel == MainPanel.EnterPassword ) {
@@ -243,7 +243,7 @@ namespace Passwords.GUI
                                     CreationFlags.NoInputLog);
 #endif
             rand = new Random((int)DateTime.Now.Ticks);
-            // und wieder auf 14 gesätzt
+
             InitializeComponent();
 
             HttpClientHandler handler = new HttpClientHandler();
@@ -345,13 +345,50 @@ namespace Passwords.GUI
             ExecuteAppCommand( item.Tag.ToString(), commandName );
         }
 
+        private void ToolButtonClick( object sender, RoutedEventArgs e )
+        {
+            Button button = sender as Button;
+            string commandGroup = button.Tag.ToString() ?? string.Empty;
+
+            string commandName = button.Content?.ToString() ?? string.Empty;
+            if( commandName.Contains('.') || commandName == "Enter" || commandName == "Cancel" ) commandName = string.Empty;
+
+            switch( commandGroup ) {
+                case "User": commandName = "Select"; break;
+                case "Area": commandName = "SideMenu"; break;
+
+                case "Ok": {
+                        if( commandName.Length == 0 ) {
+                            commandGroup = "State";
+                            commandName = "Ok";
+                        } else if( commandName == "Store" ) {
+                            commandGroup = "Area";
+                        }
+                    }
+                    break;
+
+                case "Ne": {
+                        if( commandName.Length == 0 ) {
+                            commandGroup = "State";
+                            commandName = "Nö";
+                        } else if( commandName == "Reset" ) {
+                            commandGroup = "Area";
+                        }
+                    }
+                    break;
+            }
+
+            if( commandGroup.Length > 0 )
+                ExecuteAppCommand(commandGroup, commandName);
+        }
+
         private void ExecuteAppCommand( string commandGroup, string commandName )
         {
             switch( commandGroup ) {
-                case "Server": {
+                case "Serv": {
                         switch( commandName ) {
                             case "Setup": { ConfigureServers.Show(); } break;
-                            case "Page": { InfoDialogXamlTest(); } break;
+                            case "Configure": break;
                             case "Export": { GetDataBaseDump(); } break;
                             case "Exit": { App.Current.Shutdown(); } break;
                         }
@@ -361,7 +398,7 @@ namespace Passwords.GUI
                         switch( commandName ) {
                             case "Create": { CreateUserDialog.Show(); } break;
                             case "Select": { SelectUserAccount(); } break;
-                            case "Set": { ResetUserPassword.Show(); } break;
+                            case "Reset": { ResetUserPassword.Show(); } break;
                             case "Delete": { DeleteUserAccount( null ); } break;
                         }
                     }
@@ -387,50 +424,9 @@ namespace Passwords.GUI
             }
         }
 
-        private void ToolButtonClick( object sender, RoutedEventArgs e )
-        {
-            Button button = sender as Button;
-            string commandGroup = button.Tag.ToString() ?? string.Empty;
 
-            if( commandGroup == "Conf" ) commandGroup = "Server";
-            string commandName = button.Content?.ToString() ?? string.Empty;
-            if( commandName.Contains('.') || commandName == "Enter" || commandName == "Cancel" ) commandName = string.Empty;
 
-            switch( commandGroup ) 
-            {
-                case "User": commandName = "Select"; break;
-                case "Area": commandName = "SideMenu"; break;
 
-                case "Ok": {
-                    if( commandName.Length == 0 ) {
-                        commandGroup = "State";
-                        commandName = "Ok";
-                    } else if ( commandName == "Store" ) {
-                        commandGroup = "Area";
-                    }
-                } break;
-
-                case "Ne": {
-                    if ( commandName.Length == 0 ) {
-                        commandGroup = "State";
-                        commandName = "Nö";
-                    } else if ( commandName == "Reset" ) {
-                        commandGroup = "Area";
-                    }
-                } break;
-            }
-
-            if( commandGroup.Length > 0 )
-                ExecuteAppCommand( commandGroup, commandName );
-        }
-
-        private void InfoDialogXamlTest()
-        {
-            /*
-            string testdata = StdStream.Inp.ReadTill( "</StackPanel>" );
-            StatusInfoDialog.Show(new Status(ResultCode.Success | ResultCode.Xaml, "TestPanel", testdata));
-            */
-        }
 
         private void LoadPage( string xaml )
         {
@@ -866,17 +862,7 @@ namespace Passwords.GUI
             App.Current.Shutdown(0);
         }
 
-        private void ListBoxItem_MouseRightButtonUp( object sender, System.Windows.Input.MouseButtonEventArgs e )
-        {
-
-        }
-
-        private void mnu_Area_Reset_Click( object sender, RoutedEventArgs e )
-        {
-
-        }
-
-        private void btn_autogenerate_Click( object sender, RoutedEventArgs e )
+        private void btn_Pass_Generate_Click( object sender, RoutedEventArgs e )
         {
             txt_Pass.Text = auto.Get();
         }
@@ -891,5 +877,6 @@ namespace Passwords.GUI
             if((!btn_Pass_Generate.IsMouseOver)|(sender == btn_Pass_Generate) )
                 btn_Pass_Generate.Visibility = Visibility.Collapsed;
         }
+
     }
 }

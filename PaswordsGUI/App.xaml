@@ -30,6 +30,6 @@
         <System:String x:Key="PatchAreaPass">Passwords/{0}/{1}/Pass?yps_upass_apass={2}</System:String>
         <System:String x:Key="DeleteArea">Passwords/{0}/Delete/{1}?yps_upass_apass={2}</System:String>
         <System:String x:Key="DeleteUser">Passwords/Delete/{0}?yps_pass_mail={1}</System:String>
-        <System:String x:Key="DownloadDb">Passwords/Export/{0}?yps_stamp={1}</System:String>
+        <System:String x:Key="Export">Passwords/Export/{0}?yps_stamp={1}</System:String>
     </Application.Resources>
 </Application>

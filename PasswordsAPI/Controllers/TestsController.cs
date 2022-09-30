@@ -9,82 +9,32 @@ namespace Passwords.Controllers
 {
     public class TestsController : Controller
     {
-        private static Tuple<int,string> executableTest(string dllname)
-        {
-            System.Diagnostics.ProcessStartInfo startinfo = new System.Diagnostics.ProcessStartInfo(
-                "C:\\Program Files\\dotnet\\dotnet.exe",
-                $"C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\bin\\x64\\Debug\\net5.0\\{dllname}.dll --verbose");
-            startinfo.RedirectStandardOutput = true;
-            startinfo.RedirectStandardError = true;
-            System.Diagnostics.Process test = new System.Diagnostics.Process();
-            test.StartInfo = startinfo;
-            test.EnableRaisingEvents = true;
-            bool ok = false;
-            System.Text.StringBuilder testoutput = new System.Text.StringBuilder();
-            if (test.Start())
-            {
-                test.WaitForExit(3000);
-                ok = true;
-            }
-            else
-            {
-                testoutput.Append("Unknown Status running test");
-            }
-
-            if (ok)
-            {
-                FileInfo outfile =
-                    new FileInfo("C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\dotnet_Err.log");
-                if (outfile.Exists)
-                {
-                    StreamReader f = outfile.OpenText();
-                    testoutput.Append(f.ReadToEnd()).Append("\n");
-                    f.Close();
-                    outfile.Delete();
-                    outfile = new FileInfo(
-                        "C:\\WORKSPACE\\PROJECTS\\PasswordsManager\\PasswordsAPI\\dotnet_Out.log");
-                    f = outfile.OpenText();
-                    testoutput.Append(f.ReadToEnd());
-                    f.Close();
-                    outfile.Delete();
-                }
-                else
-                {
-                    testoutput.Append("Unknown Status reading output");
-                }
-            }
-            Tuple<int,string> result = new Tuple<int,string>( test.ExitCode, testoutput.ToString() );
-            test.Close();
-            return result;
-        } 
+        private static string path = new FileInfo( 
+            System.Reflection.Assembly.GetExecutingAssembly().Location
+                                                  ).Directory.FullName;  
 
         public IActionResult Index()
         {
-            return Ok("Test");
+            return Ok( "Test" );
         }
 
-        [HttpGet("Tests/YpsCryptLib")]
+        [HttpGet("Tests/YpsCrypt")]
         public IActionResult CryptLibTest()
         {
-            string path = $"C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\bin\\tst" +
-                $"\\{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}\\net5.0";
+            ExternalTestrun test = new ExternalTestrun( path, "YpsTests.dll" );
 
-            ExternalTestrun test = new ExternalTestrun(path, "YpsTest.dll");
-
-            if (test.Failures == 0) return Ok(test.Results);
+            if (test.Failures == 0) return Ok( test.Results );
             else return StatusCode(500 + test.Failures, test.Results);
         }
 
-        [HttpGet("Tests/Int24DotnetTypes")]
+        [HttpGet("Tests/Int24Types")]
         public IActionResult GetSchmett()
         {
-            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\core5\\" +
-                $"{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}\\net5.0";
 
-            ExternalTestrun test = new ExternalTestrun(path, "Int24Tests.dll");
+            ExternalTestrun test = new ExternalTestrun( path, "Int24Tests.dll" );
 
-            if (test.Failures == 0) return Ok(test.Results);
-            else return StatusCode(500 + test.Failures, test.Results);
+            if (test.Failures == 0) return Ok( test.Results );
+            else return StatusCode( 500 + test.Failures, test.Results );
         }
     }
 }
