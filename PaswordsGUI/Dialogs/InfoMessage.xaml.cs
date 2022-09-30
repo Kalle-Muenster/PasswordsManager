@@ -3,11 +3,15 @@ using System.Windows;
 using System.Windows.Media;
 using Passwords.API.Abstracts;
 using Passwords.API.Xaml;
+using System.Windows.Controls;
 
 namespace Passwords.GUI
 {
     public partial class InfoMessage : Window, IThePasswords_TheGUI_ADialog<InfoMessage.Message>
     {
+        private StackPanel panel = null;
+        private Label      label;
+
         public class Message : EntityBase<Message>
         {
             internal static InfoMessage dialog;
@@ -18,17 +22,22 @@ namespace Passwords.GUI
             public Message() : this( API.Abstracts.Status.Unknown ) { }
             public Message( Status code ) : base( code ) {
                 if ( code.Code.HasFlag( ResultCode.Xaml ) ) {
-                    dialog.Title = code.GetText();
+                    dialog.Title = String.Format( code.GetText(), "" );
+                    double width = dialog.txt_Content.Width;
                     dialog.txt_Content.Visibility = Visibility.Collapsed;
                     dialog.pnl_Content.Visibility = Visibility.Visible;
                     string xaml = (string)code.Data;
-                    xaml = XamlView.Frame( xaml );
-                    object graph = System.Xaml.XamlServices.Parse( xaml );
-                    dialog.pnl_Content.Content = graph as UIElement;
+                    xaml = XamlView.StackPanel( xaml.Substring(1,xaml.Length-2) ).Replace("\\n","\n").Replace('\'','"');
+                    ( ( dialog.pnl_Content.Content = System.Xaml.XamlServices.Parse(xaml) as StackPanel ) as StackPanel ).Width = width;
+                    dialog.UpdateLayout();
                 } else {
-                    dialog.txt_Content.Visibility = Visibility.Visible;
+                    if( dialog.pnl_Content.Content != dialog.label )
+                        dialog.pnl_Content.Content = dialog.label;
+                    dialog.label.Height = 128;
                     dialog.pnl_Content.Visibility = Visibility.Collapsed;
+                    dialog.txt_Content.Visibility = Visibility.Visible;
                     Text = string.Format( code.GetText(), code.Data );
+                    dialog.UpdateLayout();
                 }
             }
         }
@@ -68,6 +77,7 @@ namespace Passwords.GUI
             btn_Decline.Click += Btn_Decline_Click;
             btn_Confirm.Click += Btn_Confirm_Click;
 
+            label = pnl_Content.Content as Label;
             Message.dialog = this;
             message = new Message( API.Abstracts.Status.NoState );
             theDialog().TheData = message;
@@ -79,6 +89,12 @@ namespace Passwords.GUI
                 message.Is().Status = new Status( ResultCode.Success, txt_Content.Content.ToString(), txt_Input.Text );
                 txt_Input.Clear();
                 txt_Input.Visibility = Visibility.Collapsed;
+            } else if( pnl_Content.Visibility == Visibility.Visible ) {
+                pnl_Content.Content = label;
+                label.Height = 128;
+                panel = null;
+                pnl_Content.Visibility = Visibility.Collapsed;
+                txt_Content.Visibility = Visibility.Visible;
             } else {
                 message.Is().Status = API.Abstracts.Status.Success;
             } theDialog().Returns();
