@@ -289,14 +289,15 @@ namespace Passwords.Controllers
             return Ok( textFromErrorCode.ToString() );
         }
 
-        [Produces("application/json"), HttpGet("Export")]
+        [Produces("application/json"), HttpGet("Export/{user}")]
         public async Task<IActionResult> ExportData( string user, string yps_stamp )
         {
             if( await _keys.LookupPasswordByUserAccount(_usrs.GetUserByNameOrId(user)) ) {
                 Status res = _keys.DecryptParameter( yps_stamp );
                 if( res.Bad ) return StatusCode( res.Http, res.Text );
                 DateTime stamp;
-                if( DateTime.TryParse(( res.Data as string[] )[0], out stamp ) ) {
+                string[] ypsargs = (string[])res.Data;
+                if( DateTime.TryParse( ypsargs[0], out stamp ) ) {
                     res = _keys.GetCrypticDbExport( stamp.ToString() );
                     if( res.Bad ) return StatusCode( res.Http, res.Text );
                     return File( res.Data as System.IO.FileStream, "application/binary" );
