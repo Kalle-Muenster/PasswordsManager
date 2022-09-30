@@ -214,6 +214,8 @@ namespace Passwords.GUI
         private ServerConfig   ConfigureServers;
         private NewLocation    CreateAreaDialog;
         private ResetPassword  ResetUserPassword;
+        private static Status  SuccsessXaml = new Status(ResultCode.Success|ResultCode.Xaml);
+
 
         private GuiState         state;
         private System.IO.Stream file;
@@ -430,7 +432,7 @@ namespace Passwords.GUI
 
         private void LoadPage( string xaml )
         {
-            pnl_MainPanel.Content = System.Xaml.XamlServices.Parse(XamlView.Frame(xaml));
+            pnl_MainPanel.Content = System.Xaml.XamlServices.Parse(XamlView.StackPanel(xaml));
         }
 
         private void SetupServerConnection( TheReturnData<ServerConfig.Model> e )
@@ -469,7 +471,7 @@ namespace Passwords.GUI
                 HttpResponseMessage response = http.Send( request );
                 if( response.IsSuccessStatusCode ) {
                     call = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                    StatusInfoDialog.Show( Status.Success.WithText( response.ReasonPhrase ).WithData( call ) );
+                    StatusInfoDialog.Show( (Status.Success + ResultCode.Xaml).WithText( response.ReasonPhrase ).WithData( call ) );
                     ReloadUserAccounts();
                 } else {
                     StatusInfoDialog.Show( Status.Invalid.WithData( response.ReasonPhrase ) );
@@ -649,7 +651,7 @@ namespace Passwords.GUI
             HttpResponseMessage resp = http.Send( new HttpRequestMessage( HttpMethod.Patch, call ) );
             call = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if( resp.IsSuccessStatusCode ) {
-                StatusInfoDialog.Show(Status.Success.WithText("Success").WithData(call));
+                StatusInfoDialog.Show(( Status.Success + ResultCode.Xaml ).WithText("Success").WithData(call));
             } else {
                 StatusInfoDialog.Show(Status.Invalid.WithText(call));
             }

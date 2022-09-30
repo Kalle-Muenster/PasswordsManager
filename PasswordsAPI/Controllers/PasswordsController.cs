@@ -74,7 +74,7 @@ namespace Passwords.Controllers
                 if (yps.Bad) return BadRequest( yps.ToString() );
                 _usrs.Entity.Info = yps.Data.ToString();
                 _usrs.Save();
-                return Ok( XamlView.Serialize(_usrs.Entity ) );
+                return Ok( XamlView.SerializeGrid(_usrs.Entity ) );
             } else return StatusCode( 400, _usrs.Status.ToString() );
         }
 
@@ -86,7 +86,7 @@ namespace Passwords.Controllers
                 if (yps.Bad) return BadRequest( yps.ToString() );
                 _usrs.Entity.Mail = yps.Data.ToString();
                 _usrs.Save();
-                return Ok( XamlView.Serialize(_usrs.Entity) );
+                return Ok( XamlView.SerializeGrid(_usrs.Entity) );
             } else return StatusCode(400, _usrs.Status.ToString());
         }
 
@@ -149,7 +149,7 @@ namespace Passwords.Controllers
                 newArea.Info = args.Length > 3 ? args[3] : String.Empty;
                 await _locs.SetLocationPassword(_usrs.GetUserByNameOrId(user), newArea, args[1]);
                 if (_locs.GetLocationOfUser( _usrs.Entity.Id, args[0] ).IsValid() ) {
-                    return Ok( XamlView.Serialize( _locs.Entity ) );
+                    return Ok( XamlView.SerializeGrid( _locs.Entity ) );
                 } else {
                     return StatusCode(_locs.Status.Http,_locs.Status.Text);
                 }
@@ -168,7 +168,7 @@ namespace Passwords.Controllers
         public async Task<IActionResult> GetUserLocation( string user, string area )
         {
             UserLocations location = _locs.GetLocationOfUser(_usrs.GetUserId(user), area);
-            if (location.IsValid()) return Ok( XamlView.Serialize( location ) );
+            if (location.IsValid()) return Ok( XamlView.SerializeGrid( location ) );
             else return StatusCode(400, location.Is().Status.ToString());
         }
 
@@ -199,7 +199,7 @@ namespace Passwords.Controllers
                 if (yps.Bad) return BadRequest( yps.ToString() );
                 yps_name = ((string[])yps.Data)[0];
                 if ( _locs.SetLoginInfo(_locs.Entity.Id, yps_name, null).GetAwaiter().GetResult().Ok )
-                    return Ok( XamlView.Serialize(_locs.Entity) ); 
+                    return Ok( XamlView.SerializeGrid(_locs.Entity) ); 
             } return StatusCode(_locs.Status.Http, _locs.Status.ToString() );
         }
 
@@ -211,7 +211,7 @@ namespace Passwords.Controllers
                 if( yps.Bad ) return BadRequest( yps.ToString() );
                 yps_info = ( (string[])yps.Data )[0];
                 if( _locs.SetLoginInfo(_locs.Entity.Id, null, yps_info).GetAwaiter().GetResult().Ok )
-                    return Ok( XamlView.Serialize(_locs.Entity) );
+                    return Ok( XamlView.SerializeGrid(_locs.Entity) );
             } return StatusCode( _locs.Status.Http, _locs.Status.Text );
         }
 
@@ -244,18 +244,9 @@ namespace Passwords.Controllers
             } return _usrs.Status.Ok ? _keys.Status : _usrs.Status;
         }
 
-        private string SerializeAsXaml(object oh)
+        private string SerializeAsXaml(object obj)
         {
-            System.Reflection.PropertyInfo[] props = oh.GetType().GetProperties();
-            System.Text.StringBuilder docum = new System.Text.StringBuilder();
-            docum.Append(String.Format("<GroupBox Header='{0}' Orientation='Vertical'>\n", oh.GetType().Name ) );
-            for (int i = 0; i < props.Length; ++i) {
-                docum.Append("<Rectangle Orientation='Horizontal'>\n");
-                docum.Append(String.Format("<Label Content='{0}' HorizontalAlignment='Left' ToolTip='{1}' />\n", props[i].Name, props[i].PropertyType.Name));
-                docum.Append(String.Format("<TextBox Text='{0}' HorizontalAlignment='Right' />\n", props[i].GetMethod.Invoke(oh, Array.Empty<object>()) ) );
-                docum.Append("</Rectangle>\n");
-            } docum.Append("</GroupBox>\n");
-            return docum.ToString();
+            return XamlView.SerializeGroup( obj );            
         }
 
         [Produces("application/json"), HttpGet("{user}/{area}/Pass")]
