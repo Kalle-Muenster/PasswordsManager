@@ -829,7 +829,7 @@ namespace Passwords.GUI
         private void GetDataBaseDump()
         {
             DateTime now = DateTime.Now;
-            string call = (string)App.Current.Resources["DownloadDb"];
+            string call = (string)App.Current.Resources["Export"];
             call = string.Format( call, state.SelectedUser,
                 state.EncryptedArgs( "***" + now.ToString() ) );
             HttpResponseMessage resp = http.Send( new HttpRequestMessage( HttpMethod.Get, call ) );
