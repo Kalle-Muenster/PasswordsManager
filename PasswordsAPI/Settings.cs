@@ -4,6 +4,7 @@ using Yps;
 using System.Text;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
+using Passwords.API.Extensions;
 
 namespace Passwords.API
 {
@@ -73,15 +74,16 @@ namespace Passwords.API
                 }
             } else throw new Exception("string represents no valid ip!");
         }
-    } 
+    }
+
     internal class PasswordServer
     {
-        private static PasswordServer instance;
-        internal static PasswordServer Instance {
-            get { if( instance == null ) {
-                    instance = new PasswordServer();
+        private  static PasswordServer registry;
+        internal static PasswordServer Registry {
+            get { if( registry == null ) {
+                    registry = new PasswordServer();
                     PasswordClient.LoadKnownClientsList();
-                } return instance; }
+                } return registry; }
         }
 
         internal class TheRegistry
@@ -94,6 +96,8 @@ namespace Passwords.API
 
         internal ulong UnPackData( byte[] Data )
         {
+            return ReInterpret.Cast( Crypt.BinaryDecrypt( theKey, Data ).ToArray() ).UnSigned64;
+            /*
             ArraySegment<byte> data = Crypt.BinaryDecrypt( theKey, Data );
             ulong value = 0;
             if( data.Count > 0 ) unsafe {
@@ -101,53 +105,54 @@ namespace Passwords.API
                 for( int i = 0; i < 8; ++i ) {
                     ptr[i] = data[i];
                 }
-            } return value;
+            } return value; */
         }
 
         internal byte[] PackValue( ulong value )
         {
-            byte[] data = new byte[9];
+            return Crypt.BinaryEncrypt( theKey, NumericValue.GetBytes( value ) ).ToArray();
+            /* byte[] data = new byte[9];
             unsafe { byte* ptr = (byte*)&value;
                 for( int i = 0; i < 8; ++i ) {
                     data[i] = ptr[i];
                 } data[8] = 0;
-            } return Crypt.BinaryEncrypt( theKey, data ).ToArray();
+            } return Crypt.BinaryEncrypt( theKey, data ).ToArray(); */
         }
 
         private CryptKey theKey;
         private int      thePort;
         private string   theHost;
+        private Tokken   tokener;
 
-        public CryptKey TheKey { get { return theKey; } }
-        public string TheUrl { get { return $"http://{theHost.ToLower()}:{thePort}"; } }
-        public string Local { get { return $"http://localhost:{thePort}"; } }
+        public CryptKey  TheKey { get { return theKey; } }
+        public string    TheUrl { get { return $"http://{theHost.ToLower()}:{thePort}"; } }
+        public string    Local { get { return $"http://localhost:{thePort}"; } }
+        public string    Token { get { return tokener.Next(); } }
 
+        
         private PasswordServer()
         {
-            string value = Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheKeyString", string.Empty ).ToString();    
+            Crypt.Init( true );
+            tokener = new Tokken( Tokken.CharSet.Base32, "8.8.8.8.8.8.8.8" );
+
+            string value = Microsoft.Win32.Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheKeyString", string.Empty ).ToString();    
             if( value.Length == 0 ) {
-                StringBuilder builder = new StringBuilder();
-                Random rand = new Random((int)DateTime.Now.Ticks);
-                for( int i=0; i<64; ++i ) {
-                    builder.Append(rand.Next('A', 'Z' + 1));
-                } value = builder.ToString(); 
-                Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheKeyString", value );
+                Microsoft.Win32.Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheKeyString", value = Token );
             }
             
             theKey = Crypt.CreateKey( value );
 
-            theHost = Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheHostName", string.Empty ).ToString();
+            theHost = Microsoft.Win32.Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheHostName", string.Empty ).ToString();
             if( theHost.Length == 0 ) {
                 theHost = Consola.Utility.NameOfTheMachinery();
-                Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheHostName", theHost );
+                Microsoft.Win32.Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "TheHostName", theHost );
             }
 
-            thePort = (int)Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "ThePort", 0 );
+            thePort = (int)Microsoft.Win32.Registry.GetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "ThePort", 0 );
             if( thePort == 0 ) {
                 thePort = 5000;
-                Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "ThePort", thePort );
+                Microsoft.Win32.Registry.SetValue( TheRegistry.TheAPI + TheRegistry.TheApp, "ThePort", thePort );
             }
-                
         }
     }
 
@@ -175,7 +180,7 @@ namespace Passwords.API
                 KnownClients[newClient.Key.Hash] = newClient;
             else KnownClients.Add( newClient.Key.Hash, newClient );
 
-            byte[] keyhash = PasswordServer.Instance.PackValue( newClient.Key.Hash );
+            byte[] keyhash = PasswordServer.Registry.PackValue( newClient.Key.Hash );
             string regentry = string.Format(
                     PasswordServer.TheRegistry.TheAgent,
                     PasswordServer.TheRegistry.TheAPI,
@@ -211,14 +216,14 @@ namespace Passwords.API
                 byte[] data = Registry.GetValue( string.Format(
                     PasswordServer.TheRegistry.TheAgent,
                     PasswordServer.TheRegistry.TheAPI,
-                name), "TheKey", Array.Empty<byte>()) as byte[];
+                name), "TheKey", Array.Empty<byte>() ) as byte[];
 
-                ulong hash = PasswordServer.Instance.UnPackData( data );
+                ulong hash = PasswordServer.Registry.UnPackData( data );
                 KnownClients.Add( hash, new PasswordClient( name, ip, hash ) );
             }
             return KnownClients.Count > 0
-                 ? API.Abstracts.Status.Success
-                 : API.Abstracts.Status.Unknown;
+                 ? Abstracts.Status.Success
+                 : Abstracts.Status.Unknown;
         }
     }
 }

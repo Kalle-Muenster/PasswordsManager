@@ -63,10 +63,10 @@ namespace Passwords.API
 
             services.AddControllers();
             services.AddSwaggerGen(c => {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" });
+                c.SwaggerDoc( "v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" } );
             });
             
-            services.AddSingleton( PasswordServer.Instance.TheKey );
+            services.AddSingleton( PasswordServer.Registry.TheKey );
             services.AddSingleton( new Consola.StdStreams(
                                    Consola.CreationFlags.AppendLog
                                  | Consola.CreationFlags.NoInputLog

@@ -51,8 +51,8 @@ namespace Passwords
             Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
                  webBuilder => {
                      webBuilder.UseUrls(new string[] {
-                         PasswordServer.Instance.TheUrl,
-                         PasswordServer.Instance.Local
+                         PasswordServer.Registry.TheUrl,
+                         PasswordServer.Registry.Local
                      });
                      webBuilder.UseStartup<Startup>();
             } );

@@ -51,26 +51,26 @@ namespace Passwords.API
 
         protected override void OnStart( string[] args )
         {
-            host = CreateHostBuilder(args).Build();
+            host = CreateHostBuilder( args ).Build();
             task = host.RunAsync();
             EventLog.Log = "Started!";
         }
 
         protected override void OnStop()
         {
-            ExitCode = 1;
+            host.StopAsync().GetAwaiter().GetResult();
             EventLog.Log = "Stopped!";
-            host.StopAsync();
-            task.Wait();
+            ExitCode = -1;
+            // task.Wait();
         }
 
         public static IHostBuilder CreateHostBuilder( string[] args ) =>
-            Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(
+            Host.CreateDefaultBuilder( args ).ConfigureWebHostDefaults(
                  webBuilder => {
-                     webBuilder.UseUrls(new string[] {
-                         PasswordServer.Instance.TheUrl,
-                         PasswordServer.Instance.Local
-                     });
+                     webBuilder.UseUrls( new string[] {
+                         PasswordServer.Registry.TheUrl,
+                         PasswordServer.Registry.Local }
+                                          );
                  webBuilder.UseStartup<Startup>();
         } );
     }

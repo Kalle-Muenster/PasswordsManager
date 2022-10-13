@@ -2,18 +2,20 @@
 using System.Collections.Generic;
 using Yps;
 using Microsoft.Win32;
+using Passwords.API.Abstracts;
+using Passwords.API.Extensions;
 
 namespace Passwords.GUI
 {
     internal class PasswordClient
     {
-        private static PasswordClient  instance;
-        internal static PasswordClient Instance {
-            get { if (instance == null) {
-                    instance = new PasswordClient(
+        private static PasswordClient  registry;
+        internal static PasswordClient Registry {
+            get { if ( registry == null ) {
+                    registry = new PasswordClient(
                         (App.Current as App).Connection
                     );
-                } return instance; }
+                } return registry; }
         }
 
         internal class TheRegistry
@@ -26,29 +28,17 @@ namespace Passwords.GUI
 
         internal ulong UnPackData( byte[] Data )
         {
-            Span<byte> data = Crypt.BinaryDecrypt( theKey, Data );
-            ulong value = 0;
-            unsafe {
-                byte* ptr = (byte*)&value;
-                for( int i = 0; i < 8; ++i ) {
-                    ptr[i] = data[i];
-                }
-            } return value;
+            return ReInterpret.Cast( Crypt.BinaryDecrypt( theKey, Data ).ToArray() ).UnSigned64;
         }
 
         internal byte[] PackValue( ulong value )
         {
-            byte[] data = new byte[9];
-            unsafe { byte* ptr = (byte*)&value;
-                for( int i = 0; i < 8; ++i ) {
-                    data[i] = ptr[i];
-                } data[8] = 0;
-            } return Crypt.BinaryEncrypt( theKey, data ).ToArray();
+            return Crypt.BinaryEncrypt( theKey, NumericValue.GetBytes( value ) ).ToArray();
         }
 
-        private CryptKey theKey;
+        private  CryptKey theKey;
         internal CryptKey Key { get { return theKey; } }
-        internal string  TheAPI;
+        internal string   TheAPI;
 
         private PasswordClient(string connect)
         {
@@ -56,7 +46,7 @@ namespace Passwords.GUI
             // from a Passwords Server) if application is registered with
             // it's unique client id which the software installer autogenerates during installation of the client application
             // and which then will be registered with actually running Desktop sessions user account.       
-            string client = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheAgent", string.Empty ).ToString();
+            string client = Microsoft.Win32.Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheAgent", string.Empty ).ToString();
             
             // If actually running desktop session cannot provide a valid PasswordsAPI Client key (which should be registered
             // for this application during installation progress) the application will not run and the process will terminate.
@@ -69,23 +59,24 @@ namespace Passwords.GUI
             // for identifying clients/useragents at a PasswordsAPI Server and authorizes them for being allowed feching
             // encrypted password data for the actually running desktop sessions user who stores passwords on the server
             theKey = Crypt.CreateKey( client );
-            client = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheName", string.Empty ).ToString();
-            if( client.Length == 0 ) 
-                Registry.SetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheName",
-                                   Consola.Utility.NameOfTheMachinery(),
-                                   RegistryValueKind.String );
+            client = Microsoft.Win32.Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheName", string.Empty ).ToString();
+            if( client.Length == 0 )
+                Microsoft.Win32.Registry.SetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "TheName",
+                                                   Consola.Utility.NameOfTheMachinery(),
+                                                   RegistryValueKind.String );
 
+            // find out the path where the client app is actually installed and store that with the clients registration data
             string start = Consola.Utility.PathOfTheCommander();
-            client = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "ThePath", string.Empty).ToString();
+            client = Microsoft.Win32.Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "ThePath", string.Empty ).ToString();
             if( client != start )
-                Registry.SetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "ThePath",
-                                   start, RegistryValueKind.String );
+                Microsoft.Win32.Registry.SetValue( TheRegistry.TheRoot + TheRegistry.TheSelf, "ThePath",
+                                                   start, RegistryValueKind.String );
 
             // when is clear that current running process is a valid PasswordsAPI Client application, the actually configured
             // dataset will be loaded from the clients list of known server connections, which defines connection credentials 
-            string theOne = Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheList, "TheHost", string.Empty ).ToString();
+            string theOne = Microsoft.Win32.Registry.GetValue( TheRegistry.TheRoot + TheRegistry.TheList, "TheHost", string.Empty ).ToString();
             theOne = string.Format( TheRegistry.TheHost, TheRegistry.TheRoot, theOne );
-            byte[] crypic = Registry.GetValue( theOne, "TheKey", Array.Empty<byte>() ) as byte[];
+            byte[] crypic = Microsoft.Win32.Registry.GetValue( theOne, "TheKey", Array.Empty<byte>() ) as byte[];
             if( crypic.Length == 0 ) {
                 TheAPI = "";
             } else {
@@ -93,8 +84,8 @@ namespace Passwords.GUI
 
                 // from that dataset then an authenticator for all further traffic with the server gets initialzed
                 PasswordServer.SelectedServer = new PasswordServer(
-                    Registry.GetValue(theOne, "TheServer", string.Empty).ToString(),
-                    (int)Registry.GetValue(theOne, "ThePort", 0), hash
+                    Microsoft.Win32.Registry.GetValue( theOne, "TheServer", string.Empty ).ToString(),
+                    (int)Microsoft.Win32.Registry.GetValue( theOne, "ThePort", 0 ), hash
                 );
 
                 // at least name of that server connection is set as flag signaling
@@ -116,7 +107,7 @@ namespace Passwords.GUI
         internal Uri      Url;
         internal CryptKey Key;
 
-        internal PasswordServer(string host,int port,ulong hash)
+        internal PasswordServer( string host,int port,ulong hash )
         {
             Name = host;
             Url = new Uri( $"http://{host}:{port}/" );
@@ -137,7 +128,7 @@ namespace Passwords.GUI
             SelectedServer = new PasswordServer(
                 Registry.GetValue( theNewbe, "TheServer", string.Empty ).ToString(),
                 (int)Registry.GetValue( theNewbe, "ThePort", 0 ), 
-                PasswordClient.Instance.UnPackData( data ) 
+                PasswordClient.Registry.UnPackData( data ) 
             );
 
             Registry.SetValue( PasswordClient.TheRegistry.TheRoot
@@ -159,10 +150,10 @@ namespace Passwords.GUI
 
         private ServerConfig.Model config;
 
-        internal static API.Abstracts.Status Store( ServerConfig.Model config )
+        internal static Status Store( ServerConfig.Model config )
         {
-            if (!config.IsValid()) return API.Abstracts.Status.Invalid.WithData( config );
-            byte[] hashdata = PasswordClient.Instance.PackValue( Crypt.CalculateHash( config.Key ) );
+            if (!config.IsValid()) return Status.Invalid.WithData( config );
+            byte[] hashdata = PasswordClient.Registry.PackValue( Crypt.CalculateHash( config.Key ) );
 
             string storage = string.Format(
                 PasswordClient.TheRegistry.TheHost,
@@ -174,7 +165,7 @@ namespace Passwords.GUI
             Registry.SetValue( storage, "ThePort", config.Url.Port );
             Registry.SetValue( storage, "TheKey", hashdata );
 
-            return API.Abstracts.Status.Success.WithText( "Stored configuration for:" ).WithData( config.Name );
+            return Status.Success.WithText( "Stored configuration for:" ).WithData( config.Name );
         }
     }
 }

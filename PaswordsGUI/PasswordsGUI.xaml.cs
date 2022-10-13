@@ -105,18 +105,18 @@ namespace Passwords.GUI
         public string EncryptedArgs( string cleartext )
         {
             return HttpUtility.UrlEncode(
-                Crypt.EncryptW( key ?? PasswordClient.Instance.Key, Encoding.Default.GetBytes( cleartext ) )
+                Crypt.EncryptW( key ?? PasswordClient.Registry.Key, Encoding.Default.GetBytes( cleartext ) )
             );
         }
 
         public string DecryptedValue( string cryptex )
         {
-            return key?.Decrypt( cryptex ) ?? PasswordClient.Instance.Key.Decrypt( cryptex );
+            return key?.Decrypt( cryptex ) ?? PasswordClient.Registry.Key.Decrypt( cryptex );
         }
 
         public string DecryptedValue( byte[] crypdat )
         {
-            return Encoding.Default.GetString( Crypt.DecryptA<byte>(key ?? PasswordClient.Instance.Key, crypdat) );
+            return Encoding.Default.GetString( Crypt.DecryptA<byte>(key ?? PasswordClient.Registry.Key, crypdat) );
         }
 
         public GuiState( ThePasswords_TheAPI_TheGUI application )
@@ -232,7 +232,7 @@ namespace Passwords.GUI
 
         public ThePasswords_TheAPI_TheGUI()
         {
-            self = PasswordClient.Instance;
+            self = PasswordClient.Registry;
             file = null;
 
             jsobtions = new JsonDocumentOptions();
@@ -244,7 +244,7 @@ namespace Passwords.GUI
                                     CreationFlags.NewConsole |
                                     CreationFlags.NoInputLog);
 #endif
-            rand = new Random((int)DateTime.Now.Ticks);
+            rand = new Random( (int)DateTime.Now.Ticks );
 
             InitializeComponent();
 
@@ -273,7 +273,7 @@ namespace Passwords.GUI
 
         internal string AutoGeneratePassword()
         {
-            return auto.Get();
+            return auto.Next();
         } 
 
         private void ThePasswordsTheAPI_TheGUI_Loaded( object sender, RoutedEventArgs e )
@@ -432,14 +432,14 @@ namespace Passwords.GUI
 
         private void LoadPage( string xaml )
         {
-            pnl_MainPanel.Content = System.Xaml.XamlServices.Parse(XamlView.StackPanel(xaml));
+            pnl_MainPanel.Content = System.Xaml.XamlServices.Parse( XamlView.StackPanel(xaml) );
         }
 
         private void SetupServerConnection( TheReturnData<ServerConfig.Model> e )
         {
             if( e.Ok ) {
-                if( PasswordServer.Store(e.Data).Ok ) {
-                    PasswordServer.Select(e.Data.Name);
+                if( PasswordServer.Store( e.Data ).Ok ) {
+                    PasswordServer.Select( e.Data.Name );
                     http.BaseAddress = PasswordServer.SelectedServer.Url;
                     Title = "Connected Passwords Server: " + PasswordServer.SelectedServer.Name;
                     e.Dialog.Hide();
@@ -460,7 +460,7 @@ namespace Passwords.GUI
 
                 string call = String.Format( 
                     App.Current.Resources["PatchUser"] as string,
-                    HttpUtility.UrlEncode(args) );
+                    HttpUtility.UrlEncode( args ) );
 
                 HttpRequestMessage request = new HttpRequestMessage(
                     HttpMethod.Patch, new Uri( http.BaseAddress + call) );
@@ -866,7 +866,7 @@ namespace Passwords.GUI
 
         private void btn_Pass_Generate_Click( object sender, RoutedEventArgs e )
         {
-            txt_Pass.Text = auto.Get();
+            txt_Pass.Text = auto.Next();
         }
 
         private void txt_Pass_GotFocus( object sender, RoutedEventArgs e )
