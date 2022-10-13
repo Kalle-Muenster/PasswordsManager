@@ -15,7 +15,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Threading;
-//using System.Windows.Forms;
 
 namespace Passwords.API
 {

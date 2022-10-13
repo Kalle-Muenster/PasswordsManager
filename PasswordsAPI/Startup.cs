@@ -66,7 +66,6 @@ namespace Passwords.API
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc( "v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" } );
             });
-
             services.AddSingleton( PasswordServer.Registry.TheKey );
             services.AddSingleton( new Consola.StdStreams(
                                    Consola.CreationFlags.AppendLog
