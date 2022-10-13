@@ -14,7 +14,7 @@ namespace Passwords.API.Extensions
         [FieldOffset(0)] public int    AsSigned32;
         [FieldOffset(0)] public Int24  AsSigned24;
         [FieldOffset(0)] public short  AsSigned16;
-        [FieldOffset(0)] internal ulong      data;
+        [FieldOffset(0)] public ulong  UnSigned64;
         [FieldOffset(0)] internal unsafe fixed byte bytes[8];
 
         public bool IsNegative {
@@ -23,7 +23,7 @@ namespace Passwords.API.Extensions
                         sbyte* chrs = (sbyte*)ptr;
                         if( chrs[7] < 0 ) return true;
                         for( int i = 7; i >= 0; --i ) {
-                            if(chrs[i] != 0) {
+                            if( chrs[i] != 0 ) {
                                 isneg = chrs[i] < 0;
                                 break;
                             }
@@ -41,7 +41,7 @@ namespace Passwords.API.Extensions
 
         public ReInterpret( byte[] data ) : this()
         {
-            if( data == null ) this.data = 0; else 
+            if( data == null ) UnSigned64 = 0; else 
             if( data.Length > 8 ) AsSigned64 = -1; else
             for( int i = 0; i < data.Length; ++i ) unsafe {
                 bytes[i] = data[i];
@@ -54,7 +54,8 @@ namespace Passwords.API.Extensions
         public ReInterpret( long value ) : this() { AsSigned64 = value; }
         public ReInterpret( float value ) : this() { AsFloat32 = value; }
         public ReInterpret( double value ) : this() { AsFloat64 = value; }
-        public ReInterpret( string data ) : this( System.Text.Encoding.Default.GetBytes(data) ) {}
+        public ReInterpret( ulong value ) : this() { UnSigned64 = value; }
+        public ReInterpret( string data ) : this( System.Text.Encoding.Default.GetBytes( data ) ) {}
 
         public static ReInterpret Cast( short value ) {
             return new ReInterpret( value );
@@ -66,6 +67,9 @@ namespace Passwords.API.Extensions
             return new ReInterpret( value );
         }
         public static ReInterpret Cast( long value ) {
+            return new ReInterpret( value );
+        }
+        public static ReInterpret Cast( ulong value ) {
             return new ReInterpret( value );
         }
         public static ReInterpret Cast( float value ) {
@@ -93,14 +97,14 @@ namespace Passwords.API.Extensions
             byte[] data = Array.Empty<byte>();
             if (any == null) return data;
             if (any is byte[]) return any as byte[];
-            ReInterpret converse = new ReInterpret(0);
+            ReInterpret converse = new ReInterpret( 0 );
             if ( any is Enum ) unsafe {
                 converse.AsSigned64 = Convert.ToInt64( any as Enum );
             } else {
                 string rep = any is string ? any as string : $"{any}";
                 if (rep.Contains('.') || rep.Contains(',')) {
-                    rep.Replace('.', DecimalSeparator);
-                    rep.Replace(',', DecimalSeparator);
+                    rep.Replace( '.', DecimalSeparator );
+                    rep.Replace( ',', DecimalSeparator );
                     if ( double.TryParse( rep, out converse.AsFloat64 ) )
                         if ( converse.AsFloat64 == 0.0 ) return new byte[8];
                 } else {
@@ -122,10 +126,10 @@ namespace Passwords.API.Extensions
             switch( data.Length ) {
                 case 0: return (long)Convert.DBNull;
                 case 1: return (sbyte)data[0];
-                case 2: return ReInterpret.Cast(data).AsSigned16;
-                case 3: return ReInterpret.Cast(data).AsSigned24;
-                case 4: return ReInterpret.Cast(data).AsSigned32;
-               default: return ReInterpret.Cast(data).AsSigned64;
+                case 2: return ReInterpret.Cast( data ).AsSigned16;
+                case 3: return ReInterpret.Cast( data ).AsSigned24;
+                case 4: return ReInterpret.Cast( data ).AsSigned32;
+               default: return ReInterpret.Cast( data ).AsSigned64;
             }
         }
 
@@ -147,12 +151,12 @@ namespace Passwords.API.Extensions
     {
         public static Int32 ToInt32( this ResultCode value )
         {
-            return Convert.ToInt32(value);
+            return Convert.ToInt32( value );
         }
 
         public static UInt32 ToUInt32( this ResultCode value )
         {
-            return Convert.ToUInt32(value);
+            return Convert.ToUInt32( value );
         }
 
         public static ResultCode ToError( this Int32 value )
@@ -160,9 +164,12 @@ namespace Passwords.API.Extensions
             return (ResultCode)value;
         }
 
-        public static EntityBase<E> SetError<E>( this Status message ) where E : EntityBase<E>, new()
+        public static EntityBase<E> SetError<E>( this Status message ) 
+        where E
+            : EntityBase<E>
+            , new()
         {
-            return new EntityBase<E>(message);
+            return new EntityBase<E>( message );
         }
 
         public static int ToHttpStatusCode( this ResultCode code )
@@ -172,12 +179,12 @@ namespace Passwords.API.Extensions
 
         public static Int32 ToFourCC( this string data )
         {
-            return ReInterpret.Cast(data).AsSigned32;
+            return ReInterpret.Cast( data ).AsSigned32;
         }
 
-        public static Int64 ToLongCC( this string data )
+        public static UInt64 ToLongCC( this string data )
         {
-            return ReInterpret.Cast(data).AsSigned64;
+            return ReInterpret.Cast( data ).UnSigned64;
         }
     }
 }
