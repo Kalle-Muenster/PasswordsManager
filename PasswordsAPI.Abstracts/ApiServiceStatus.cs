@@ -1,54 +1,37 @@
 ﻿using System;
+using Passwords.API.Extensions;
 
-namespace PasswordsAPI.Abstracts
+namespace Passwords.API.Abstracts
 {
-    public static class Extensions
-    {
-        public static Int32 ToInt32( this ResultCode value )
-        {
-            return Convert.ToInt32( value );
-        }
 
-        public static UInt32 ToUInt32( this ResultCode value )
-        {
-            return Convert.ToUInt32( value );
-        }
-
-        public static ResultCode ToError( this Int32 value )
-        {
-            return (ResultCode)value;
-        }
-
-        public static EntityBase<E> SetError<E>( this Status message ) where E : EntityBase<E>, new()
-        {
-            return new EntityBase<E>( message );
-        }
-    }
 
     [Flags]
     public enum ResultCode : uint
     {
         NoState = 0,
-        Success = 1,
-        Unknown = 2,
+        Unknown = 1,
+        Success = 2,
         IsError = 4,
+        Service = 5,
         IsValid = 0xff000007,
-        
+        WebMask = 0x00000007,
         Invalid = 0x01000000,
-        Cryptic = 0x02000000,
-
-        Service = 0x00010000,
+        Missing = 0x02000000,
+        Cryptic = 0x04000000,
 
         User    = 0x00000100,
         Area    = 0x00000200,
         Password = 0x00000400,
-        
+        Json    = 0x00000800,
+        Html    = 0x00001000,
+        Empty   = 0x00002000,
         Id      = 0x00020000,
         Data    = 0x00040000,
         Name    = 0x00080000,
         Mail    = 0x00100000,
         Info    = 0x00200000,
-        Icon    = 0x00400000
+        Icon    = 0x00400000,
+        Xaml    = 0x00800000,
     }
 
     public enum ResultState : uint
@@ -68,29 +51,41 @@ namespace PasswordsAPI.Abstracts
 
 
         public readonly ResultCode Code;
-        public readonly string     Text;
+        private readonly string    text;
         public readonly object     Data;
 
+        public int Http {
+            get { return Code.ToHttpStatusCode(); }
+        }
+
+        public string Text {
+            get { return ToString(); }
+        }
+
+        public string GetText()
+        {
+            return text;
+        }
 
         public Status( ResultCode code )
-            : this( code, code.ToString() )
+            : this(code, code.ToString())
         { }
         public Status( ResultCode code, string text )
         {
             Code = code;
-            Text = text.Contains("{0}") ? text : text + " {0}";
+            this.text = text.Contains("{0}") ? text : text + " {0}";
             Data = String.Empty;
         }
         public Status( ResultCode code, string text, object data )
         {
             Code = code;
-            Text = text.Contains("{0}") ? text : text + " {0}";
+            this.text = text.Contains("{0}") ? text : text + " {0}";
             Data = data;
         }
-        private Status(in Status status, object with)
+        private Status( in Status status, object with )
         {
             Code = status.Code;
-            Text = status.Text;
+            text = status.text;
             Data = with;
         }
 
@@ -102,9 +97,9 @@ namespace PasswordsAPI.Abstracts
 
         public Status WithText( string text )
         {
-            return new Status( Code, text.Contains("{0}") 
+            return new Status( Code, text.Contains("{0}")
                              ? text : text + " {0}"
-                             , Data );
+                             , Data);
         }
 
         public static implicit operator bool( Status cast )
@@ -116,7 +111,7 @@ namespace PasswordsAPI.Abstracts
             get { ResultCode masked = Code & ResultCode.IsValid;
             return masked >= ResultCode.IsError
                  ? ResultState.Error
-                 : ((masked.HasFlag(ResultCode.Unknown) && !masked.HasFlag(ResultCode.Success))||(masked == 0))
+                 : masked < ResultCode.Success
                  ? ResultState.Status  
                  : ResultState.Success;
             }
@@ -124,12 +119,12 @@ namespace PasswordsAPI.Abstracts
 
         public override string ToString()
         {
-            return string.Format($"{Result}-[{Code.ToUInt32()}]: {Text}", Data);
+            return string.Format($"{Result}-[{Code.ToUInt32()}]: {text}", Data);
         }
 
         public static implicit operator string(Status cast)
         {
-            return string.Format($"{cast.Result}-[{cast.Code}]: {cast.Text}", cast.Data);
+            return string.Format($"{cast.Result}-[{cast.Code}]: {cast.text}", cast.Data);
         }
 
         public static string MessageFromStatusFlags( uint flags )
@@ -145,33 +140,33 @@ namespace PasswordsAPI.Abstracts
 
             return new Status(
                 own.Code | add.Code,
-                $"{add.Text} => {own.Text}",
+                $"{add.text} => {own.text}",
                 data
             );
         }
 
         public static Status operator + ( Status status, ResultCode code )
         {
-            return new Status( status.Code|code, status.Text, status.Data.ToString() );
+            return new Status( status.Code|code, status.text, status.Data.ToString() );
         }
 
-        public bool Bad
-        {
-            get { return (int)(Code & ResultCode.IsValid) >
-                         (Code.HasFlag(ResultCode.Success) ? 3 : 1); }
+        public bool Bad {
+            get { return (int)( Code & ResultCode.IsValid ) >
+                         ( Code.HasFlag(ResultCode.Success) ? 3 : 0 );
+            }
         }
 
-        public bool Ok
-        {
-            get { return (Code > 0) && ( (Code & ResultCode.IsValid) < ResultCode.IsError ) 
-                                    && ( Code.HasFlag(ResultCode.Success) 
-                                       | !Code.HasFlag(ResultCode.Unknown) ); }
+        public bool Ok {
+            get { return ( ( Code & ResultCode.IsValid ) > ResultCode.Unknown ) 
+                      && ( ( Code & ResultCode.IsValid ) < ResultCode.IsError );
+            }
         }
 
-        public bool IsWaiting {
-            get {
-                ResultCode check = Code & ResultCode.IsValid;
-                return (check < ResultCode.IsError) && check.HasFlag( ResultCode.Unknown ) && (!check.HasFlag(ResultCode.Success));
+        public bool Intermediate {
+            get { ResultCode check = Code & ResultCode.IsValid;
+                return ( check < ResultCode.IsError )
+                      && check.HasFlag(ResultCode.Unknown)
+                   && ( !check.HasFlag(ResultCode.Success) );
             }
         }
     }

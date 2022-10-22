@@ -1,7 +1,7 @@
 ﻿using Xunit;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Models.Tests
+namespace Passwords.API.Models.Tests
 {
     public class EntitieConstructors
     {
@@ -18,7 +18,7 @@ namespace PasswordsAPI.Models.Tests
         }
 
         [Fact]
-        public void PasswordConstructor_ShouldBehaveLikeExpected()
+        public void UsersConstructor_ShouldBehaveLikeExpected()
         {
             // Arrange
             var user = new PasswordUsers();

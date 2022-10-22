@@ -1,11 +1,11 @@
 ﻿using System;
 using Xunit;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Tests.Helpers;
+using Passwords.API.Abstracts;
+using Passwords.API.Tests.Helpers;
 using Yps;
 
 
-namespace PasswordsAPI.Services.Tests
+namespace Passwords.API.Services.Tests
 {
     public class UserPasswordsServiceTests : IDisposable
     {
@@ -15,13 +15,13 @@ namespace PasswordsAPI.Services.Tests
             // Arrange
             Test.Context.PrepareDataBase("UserPasswordsService","OneUserNoPassword");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
 
             // Act
-            Status result = service.SetMasterKey(1,"ElMaestro").GetAwaiter().GetResult().Status;
+            Status result = service.SetMasterKey(1, Test.CurrentApikey.Encrypt("ElMaestro")).GetAwaiter().GetResult().Status;
 
             // Assert
-            Assert.True(result.Text.Length>0, result);
+            Assert.True(!result.Bad, result);
         }
 
         [Fact]
@@ -30,14 +30,13 @@ namespace PasswordsAPI.Services.Tests
             // Arrange
             Test.Context.PrepareDataBase("UserPasswordsService", "OneValidUserAccount");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
 
             // Act
             Status result = service.SetMasterKey(1, "ElBongo").GetAwaiter().GetResult().Status;
-            bool valid = service.VerifyPassword(1, "ElBongo");
 
             // Assert
-            Assert.True( valid, result );
+            Assert.True( result, result );
         }
 
         [Fact]
@@ -46,7 +45,7 @@ namespace PasswordsAPI.Services.Tests
             // Arrange
             Test.Context.PrepareDataBase("UserPasswordsService","OneValidUserAccount");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
 
             // Act
             bool valid = service.VerifyPassword(1, "ElMaestro");
@@ -61,7 +60,7 @@ namespace PasswordsAPI.Services.Tests
             // Arrange
             Test.Context.PrepareDataBase("UserPasswordsService","OneValidUserAccount");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
 
             // Act
             CryptKey key = service.GetMasterKey(1);
@@ -78,7 +77,7 @@ namespace PasswordsAPI.Services.Tests
             // Arrange
             Test.Context.PrepareDataBase("UserPasswordsService", "OneValidUserAccount");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
 
             // Act
             bool valid = service.VerifyPassword( 1, "ElPisso" );
@@ -94,7 +93,7 @@ namespace PasswordsAPI.Services.Tests
             // Arrange
             Test.Context.PrepareDataBase("UserPasswordsService", "OneValidUserAccount");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> service = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
 
             // Act
             CryptKey key = service.GetMasterKey(1000);

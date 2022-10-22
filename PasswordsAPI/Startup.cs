@@ -14,25 +14,30 @@ using Microsoft.OpenApi.Models;
 using System.IO;
 using Constringer = Microsoft.Data.Sqlite.SqliteConnectionStringBuilder;
 using Connectione = Microsoft.Data.Sqlite.SqliteConnection;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Services;
-using PasswordsAPI.Database;
-using PasswordsAPI.Models;
+using Passwords.API.Abstracts;
+using Passwords.API.Services;
+using Passwords.API.Database;
+using Passwords.API.Models;
+using Yps;
 
-namespace PasswordsAPI
+namespace Passwords.API
 {
     public class Startup
     {
+        string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public enum ServerFrameworks {
-            USE_MSSQL = 0, USE_SQLITE = 1
+            USE_MSSQL = 0,
+            USE_SQLITE = 1
         }
-
         public ServerFrameworks DatabaseType { get; } 
 
-        public Startup(IConfiguration configuration) {
+        // kann weg
+        private string ApplicationKey { get; }
+        public Startup( IConfiguration configuration ) {
             Configuration = configuration;
             string usedServerType = Configuration[ "ServerFramework:"+Configuration["UsedServerFramework"] ];
             DatabaseType = (ServerFrameworks) System.Enum.Parse( typeof(ServerFrameworks), usedServerType );
+            ApplicationKey = Configuration["ApplicationKey"];
         }
 
         public IConfiguration Configuration { get; }
@@ -43,11 +48,30 @@ namespace PasswordsAPI
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
 
+            services.AddCors(
+                options => {
+                    options.AddPolicy( name: MyAllowSpecificOrigins, policy => {
+                        policy.WithOrigins("http://localhost:5255")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowAnyOrigin()
+                              .SetIsOriginAllowedToAllowWildcardSubdomains();
+                        }
+                    );
+                }
+            );
+
             services.AddControllers();
             services.AddSwaggerGen(c => {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" });
+                c.SwaggerDoc( "v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" } );
             });
-
+            
+            services.AddSingleton( PasswordServer.Registry.TheKey );
+            services.AddSingleton( new Consola.StdStreams(
+                                   Consola.CreationFlags.AppendLog
+                                 | Consola.CreationFlags.NoInputLog
+                                 | Consola.CreationFlags.NewConsole )
+                                 );
 
             services.AddScoped<IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext>, PasswordUsersService<PasswordsDbContext>>();
             services.AddScoped<IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext>, UserPasswordsService<PasswordsDbContext>>();
@@ -77,8 +101,11 @@ namespace PasswordsAPI
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PasswordsAPI v1"));
             }
-
+            
             app.UseHttpsRedirection();
+
+            app.UseCors( MyAllowSpecificOrigins );
+
 
             app.UseRouting();
 

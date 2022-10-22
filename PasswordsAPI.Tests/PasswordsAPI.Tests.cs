@@ -1,43 +1,33 @@
 ﻿using System;
 using Xunit;
-using PasswordsAPI.Tests.Helpers;
+using Passwords.API.Tests.Helpers;
 
 namespace Passwords.API.Tests
 {
         
-    public class ExternalLibraries { 
+    public class ExternalLibraries
+    {
+        public static readonly string BuildFolder;
 
-        [Fact]
-        public void RunInt24NativeTypesTest()
+        static ExternalLibraries()
         {
-            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\native\\" +
-                        $"{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}";
-
-            ExternalTestrun testrun = new ExternalTestrun( path, "test_int24_native_cpp.exe" );
-
-            Assert.True( testrun.FailedTests == 0, testrun.TestResults );
+            BuildFolder = Test.CurrentConfig.ProjectFolder + "\\bin\\"
+                        + Test.CurrentConfig.Architecture + "\\" 
+                        + Test.CurrentConfig.Configuration + "\\net5.0";
         }
-
+        
         [Fact]
-        public void RunInt24DotnetTypesTest()
+        public void RunInt24TypesTest()
         {
-            string path = "C:\\WORKSPACE\\PROJECTS\\Int24Types\\bin\\core5\\test\\" +
-                $"{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}\\net5.0";
-
-            ExternalTestrun test = new ExternalTestrun( path, "test_int24_dotnet_dll.dll" );
-
-            Assert.True( test.FailedTests == 0, test.TestResults );
+            ExternalTestrun test = new ExternalTestrun( BuildFolder, "Int24Tests.dll" );
+            Assert.True( test.Failures == 0, test.Results + "\n" + $"Failed Tests: {test.Failures}");
         }
 
         [Fact]
         public void RunYpsCryptTests()
         {
-            string path = $"C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\bin\\tst" +
-                $"\\{Test.CurrentConfig.Architecture}\\{Test.CurrentConfig.Configuration}\\net5.0";
-
-            ExternalTestrun test = new ExternalTestrun( path, "YpsTest.dll" );
-
-            Assert.True( test.FailedTests == 0, test.TestResults );
+            ExternalTestrun test = new ExternalTestrun( BuildFolder, "YpsTests.dll" );
+            Assert.True( test.Failures == 0, test.Results + "\n" + $"Failed Tests: {test.Failures}");
         }
     }
 }

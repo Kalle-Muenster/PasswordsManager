@@ -6,7 +6,7 @@
 	},
 	"item": [
 		{
-			"name": "GET /Passwords expect 200",
+			"name": "GET /Passwords/User expect 200",
 			"event": [
 				{
 					"listen": "test",
@@ -14,6 +14,9 @@
 						"exec": [
 							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
 							"  pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns the expected data as body\", ()=>{\r",
+							"    pm.response.to.have.jsonBody([{Id:1,Name:\"ElNamo\",Mail:\"El@Mailo.de\",Info:\"ElInfo\"}]);\r",
 							"});"
 						],
 						"type": "text/javascript"
@@ -27,16 +30,19 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{BASE_URL}}Passwords",
+					"raw": "https://localhost:5001/Passwords/User",
 					"host": [
-						"{{BASE_URL}}Passwords"
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"User"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "GET /Passwords/CryptLibTest expect 200",
+			"name": "GET /Passwords/{user}/Info expect 200",
 			"event": [
 				{
 					"listen": "test",
@@ -44,7 +50,11 @@
 						"exec": [
 							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
 							"  pm.response.to.have.status(200);\r",
-							"});"
+							"});\r",
+							"pm.test(\"the endpoint returns the expected data as body\", ()=>{\r",
+							"    pm.response.to.have.body('\"ElInfo\"');\r",
+							"});\r",
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -57,12 +67,450 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{BASE_URL}}Passwords/CryptLibTest",
+					"raw": "https://localhost:5001/Passwords/ElNamo/Info",
 					"host": [
-						"{{BASE_URL}}Passwords"
+						"https://localhost:5001/Passwords"
 					],
 					"path": [
-						"CryptLibTest"
+						"ElNamo",
+						"Info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT /Passwords/{user}/Info expect 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"  pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns changed data set as body\",()=>{\r",
+							"  pm.response.to.have.jsonBody({info:\"ElBongo\"});\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/ElNamo/Info?info=ElBongo",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"ElNamo",
+						"Info"
+					],
+					"query": [
+						{
+							"key": "info",
+							"value": "ElBongo"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST /Passwords/User expect 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"    return pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns the expected data as body\", ()=> {\r",
+							"    pm.response.to.have.jsonBody([{Id:2,Name:\"ElNuevo\",Mail:\"El@Nuevo.es\"}]);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/User?name=ElNuevo&email=El@Nuevo.es&pass=EsteNuevo",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"User"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "ElNuevo"
+						},
+						{
+							"key": "email",
+							"value": "El@Nuevo.es"
+						},
+						{
+							"key": "pass",
+							"value": "EsteNuevo"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE /Passwords/User expect 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"    return pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns the expected data as body\", ()=> {\r",
+							"    pm.response.to.have.jsonBody([{Id:2,Name:\"ElNuevo\",Mail:\"El@Nuevo.es\"}]);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/ElNuevo/?mail=El@Nuevo.es&pass=EsteNuevo",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"ElNuevo",
+						""
+					],
+					"query": [
+						{
+							"key": "mail",
+							"value": "El@Nuevo.es"
+						},
+						{
+							"key": "pass",
+							"value": "EsteNuevo"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET /Passwords/errormessage/{code}",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"  return pm.response.to.have.status(404);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns the expected errormessage\", () => {\r",
+							"  return pm.response.toString().includes(\"message from error code:\") \r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/errormessage/17039616",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"errormessage",
+						"17039616"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET /Passwords/{user}/Locations 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"  pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns expected data as body\",()=>{\r",
+							"  pm.response.to.have.jsonBody([{Id:1,Area:\"ElLoco\",Info:\"\",User: 1,Name:\"ElNamo\",Pass:\"UXFmVEV4Zk1rdG9vZWI2NHA1ZlNPY1JFWStvPQA=\"}]);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/ElNamo/Locations",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"ElNamo",
+						"Locations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET /Passwords/{user}/{location} 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"  pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns expected data as body\",()=>{\r",
+							"  pm.response.to.have.jsonBody({Id:1,Area:\"ElLoco\",Info:\"\",User: 1,Name:\"ElNamo\",Pass:\"UXFmVEV4Zk1rdG9vZWI2NHA1ZlNPY1JFWStvPQA=\"});\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/1/1",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"1",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT /Passwords/{user}/{location}/Info 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", ()=> {pm.response.to.have.status(200);});\r",
+							"pm.test(\"the endpoint returns expected data as body\",()=>{\r",
+							"  pm.response.to.have.jsonBody({Info:\"BlahUndBlup\"});\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/ElNamo/ElLoco/Info?info=BlahUndBlup",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"ElNamo",
+						"ElLoco",
+						"Info"
+					],
+					"query": [
+						{
+							"key": "info",
+							"value": "BlahUndBlup"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET /Passwords/{user}/{location}/Password 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", ()=> {pm.response.to.have.status(200);});\r",
+							"pm.test(\"the endpoint returns expected password as cleartext\",()=>{pm.request.to.have.body('\"ElPasso\"');}\r",
+							");\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/1/1/Password?crypt=QqfTExfMktooeb64LbaQp5fRO5zErZW8",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"1",
+						"1",
+						"Password"
+					],
+					"query": [
+						{
+							"key": "crypt",
+							"value": "QqfTExfMktooeb64LbaQp5fRO5zErZW8"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST /Passwords/{user}/Location expect 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"    return pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns the expected data as body\", ()=> {\r",
+							"    pm.response.to.have.jsonBody([{Id:2,Area:\"Woanders\",Name:\"ElNamo\",User:1}]);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/1/Location?name=Woanders&pass=DasZweitePasswort&login=ElNamo",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"1",
+						"Location"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "Woanders"
+						},
+						{
+							"key": "pass",
+							"value": "DasZweitePasswort"
+						},
+						{
+							"key": "login",
+							"value": "ElNamo"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE /Passwords/{user}/{location} expect 200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"the endpoint returns the expected status code\", () => {\r",
+							"    return pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"the endpoint returns the expected data as body\", ()=> {\r",
+							"    pm.response.to.have.jsonBody([{Id:2,Area:\"Woanders\",Name:\"ElNamo\",User:1}]);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/Passwords/1/Woanders?masterPass=DasZweitePasswort",
+					"host": [
+						"https://localhost:5001/Passwords"
+					],
+					"path": [
+						"1",
+						"Woanders"
+					],
+					"query": [
+						{
+							"key": "masterPass",
+							"value": "DasZweitePasswort"
+						}
 					]
 				}
 			},

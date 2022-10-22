@@ -1,30 +1,31 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
+using Passwords.API.Abstracts;
+using Passwords.API.Models;
 
 
-namespace PasswordsAPI.Database
+namespace Passwords.API.Database
 {
-    public class PasswordsDbContext : PasswordsApiDbContext<PasswordsDbContext>
+    public class PasswordsDbContext 
+        : PasswordsApiDbContext<PasswordsDbContext>
     {
-        public PasswordsDbContext(DbContextOptions<PasswordsDbContext> options)
+        public PasswordsDbContext( DbContextOptions<PasswordsDbContext> options )
             : base(options)
         { }
 
         public virtual DbSet<PasswordUsers> PasswordUsers
         {
-            get { return EntitiesSet<PasswordUsers>();}
-            set { SetEntities(value); }
+            get { return EntitiesSet<PasswordUsers>(); }
+            set { SetEntities( value ); }
         }
         public virtual DbSet<UserPasswords> UserPasswords
         {
-            get { return EntitiesSet<UserPasswords> (); }
-            set { SetEntities(value); }
+            get { return EntitiesSet<UserPasswords>(); }
+            set { SetEntities( value ); }
         }
         public virtual DbSet<UserLocations> UserLocations
         {
             get { return EntitiesSet<UserLocations>(); }
-            set { SetEntities(value); }
+            set { SetEntities( value ); }
         }
     }
 }

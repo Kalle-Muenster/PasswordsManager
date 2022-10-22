@@ -1,0 +1,36 @@
+﻿<Window x:Name="window" x:Class="Passwords.GUI.InfoMessage"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Passwords.GUI"
+        mc:Ignorable="d"
+        Title="InfoMessage" Height="auto" Width="512" Background="#FF201E1C" Foreground="Wheat">
+    <Grid x:Name="pnl_InfoDialog" Height="auto" VerticalAlignment="Stretch">
+        <Image x:Name="img_Content" Margin="22,32,0,0" Width="128" Height="128" d:LayoutOverrides="Width, Height" VerticalAlignment="Top" Source="{StaticResource object}" HorizontalAlignment="Left"/>
+        <ContentControl x:Name="pnl_Content" Visibility="Collapsed" Margin="165,32,26,31" Height="auto" Cursor="IBeam" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,2,2,2" ClipToBounds="True" SnapsToDevicePixels="True" Background="White" >
+            <Label Height="128"></Label>
+        </ContentControl>
+        <Label x:Name="txt_Content" Content="MessageText" Margin="165,32,26,32" Height="128" Cursor="IBeam" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="2,2,2,2" ClipToBounds="True" SnapsToDevicePixels="True" Background="#FF181818" Foreground="{Binding Foreground, ElementName=window}">
+            <Label.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <LinearGradientBrush.RelativeTransform>
+                        <TransformGroup>
+                            <ScaleTransform CenterY="0.5" CenterX="0.5"/>
+                            <SkewTransform CenterX="0.5" CenterY="0.5"/>
+                            <RotateTransform Angle="-12.804" CenterX="0.5" CenterY="0.5"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </LinearGradientBrush.RelativeTransform>
+                    <GradientStop Color="#FF5F5F5F"/>
+                    <GradientStop Color="#FF313131" Offset="1"/>
+                </LinearGradientBrush>
+            </Label.BorderBrush>
+        </Label>
+        <StackPanel Margin="0,0,0,16" HorizontalAlignment="Right" Width="235" Height="48" VerticalAlignment="Bottom" Orientation="Horizontal" FlowDirection="RightToLeft">
+            <Button x:Name="btn_Decline" Content="Nö.." Height="30" Width="100" Margin="10,10,0,0" d:LayoutOverrides="Width, Height" HorizontalAlignment="Right" VerticalAlignment="Top" Visibility="Collapsed" FlowDirection="LeftToRight" Background="#FF404040" BorderBrush="#FF101010" Foreground="Wheat" />
+            <Button x:Name="btn_Confirm" Content="!Yes" Height="30" Margin="10,10,0,0" Width="100" VerticalAlignment="Top" d:LayoutOverrides="Width, Height" HorizontalAlignment="Right" Background="#FF404040" BorderBrush="#FF101010" Foreground="Wheat"/>
+        </StackPanel>
+        <TextBox x:Name="txt_Input" Height="20" Margin="188,96,49,75" TextWrapping="Wrap" Text="" Visibility="Collapsed"/>
+    </Grid>
+</Window>

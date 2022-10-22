@@ -3,11 +3,13 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Consola;
 
-namespace PasswordsAPI.Abstracts
+namespace Passwords.API.Abstracts
 {
 
     public interface IPasswordsApiService<D> 
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where D
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {
         Status Status { get; }
         bool  Ok    { get; }
@@ -17,16 +19,25 @@ namespace PasswordsAPI.Abstracts
 
     public interface IPasswordsApiService<E,D>
         : IPasswordsApiService<D>
-        where E : IEntityBase, new()
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where E
+        : IEntityBase
+        , new()
+    where D
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {}
     
 
     public interface IPasswordsApiService<E,S,D>
         : IPasswordsApiService<E,D>
-        where E : EntityBase<E>, new()
-        where S : IPasswordsApiService<E,D>
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where E 
+        : EntityBase<E>
+        , new()
+    where S 
+        : IPasswordsApiService<E,D>
+    where D 
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {
         S serve();
         S OnError( IPasswordsApiService<D> malfunctioned );
@@ -36,9 +47,14 @@ namespace PasswordsAPI.Abstracts
 
     public abstract class AbstractApiService<E,S,D>
         : IPasswordsApiService<E,S,D>
-        where E : EntityBase<E>, new()
-        where S : AbstractApiService<E,S,D>
-        where D : DbContext, IPasswordaApiDbContext<D>
+    where E
+        : EntityBase<E>
+        , new()
+    where S
+        : AbstractApiService<E,S,D>
+    where D
+        : DbContext
+        , IPasswordaApiDbContext<D>
     {
         protected D?         _db;
         protected E          _enty;
@@ -49,22 +65,21 @@ namespace PasswordsAPI.Abstracts
         private Status       state;
 
         protected abstract Status     GetDefaultError();
-        protected abstract E          GetStatusEntity(Status cast);
+        protected abstract E          GetStatusEntity( Status cast );
         protected abstract ResultCode GetServiceFlags();
 
         D IPasswordsApiService<D>.db => _db;
-        public S serve() { return (S)this; }
+        public S serve() { return this as S; }
 
         public E Entity {
             get {
-                if (_enty.Is().Status.IsWaiting)
+                if (_enty.Is().Status.Intermediate)
                     _enty = _lazy.GetAwaiter().GetResult()
                           ?? GetStatusEntity( GetDefaultError() );
-                //return Ok ? _enty : GetStatusEntity( Status );
                 if (_enty.Is().Status.Bad) Status = _enty.Is().Status;
                 return _enty;
             } set {
-                if (value) { _enty = value;
+                if( value.IsValid() ) { _enty = value;
                     Status = _enty.Is().Status;
                 } else Status = value.Is().Status;
             }
@@ -84,7 +99,6 @@ namespace PasswordsAPI.Abstracts
 
         public Status Status
         {
-        //    get { return state.Result == ResultState.Waiting ? state = Entity.Is().Status : state; }
             get { if (state.Code == ResultCode.NoState)
                     if (state.Data.ToString() != string.Empty)
                         state += Entity.Is().Status;
@@ -93,13 +107,14 @@ namespace PasswordsAPI.Abstracts
         }
 
         public virtual bool Ok {
-            get { return ( state.Code & ResultCode.IsValid ) < ResultCode.Unknown && state.Code != 0; }
+            get { ResultCode check = state.Code & ResultCode.IsValid;
+                return ( check > ResultCode.Unknown && check < ResultCode.IsError ); }
             protected set { if ( value ) state = Status.Success + GetServiceFlags();
                 else state = GetDefaultError();
             }
         }
 
-        public static implicit operator bool( AbstractApiService<E, S, D> cast ) {
+        public static implicit operator bool( AbstractApiService<E,S,D> cast ) {
             return cast.Ok;
         }
 
@@ -124,8 +139,16 @@ namespace PasswordsAPI.Abstracts
                     otherService.Status.Text,
                     GetType().Name
                 );
-            } return this.serve();
+            } return this as S;
         }
 
+        public Status Save()
+        {
+            if ( Entity ) {
+                _dset.Update(_enty);
+                _db.SaveChangesAsync();
+                Status = Status.Success + GetServiceFlags();
+            } return Status;
+        }
     }
 }

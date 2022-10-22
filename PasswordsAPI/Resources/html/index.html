@@ -1,0 +1,20 @@
+﻿<!DOCTYPE html>
+<HTML>
+<HEAD>
+    <meta charset="utf-8" />
+    <title> Passwords </title>
+    <SCRIPT src='js/textedit.js'></SCRIPT>
+    <SCRIPT id='data' data=''>
+        function textdatasource(set) {
+            if (set) {
+                document.getElementById('data').setAttribute('data', set);
+            } else {
+                return document.getElementById('data').getAttribute('data');
+            }
+        };
+    </SCRIPT>
+</HEAD>
+<BODY>
+<DIV><textedit source='textdatasource' label='Passwords' /></DIV>
+</BODY>
+</HTML>

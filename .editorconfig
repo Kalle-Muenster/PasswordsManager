@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# CS8601: Mögliche Nullverweiszuweisung.
+dotnet_diagnostic.CS8601.severity = silent
+
+# CS8602: Dereference of a possibly null reference.
+dotnet_diagnostic.CS8602.severity = silent

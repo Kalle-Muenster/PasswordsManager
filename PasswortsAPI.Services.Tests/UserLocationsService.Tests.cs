@@ -2,11 +2,11 @@
 using System.Runtime.CompilerServices;
 using Xunit;
 using System.Threading;
-using PasswordsAPI.Models;
-using PasswordsAPI.Tests.Helpers;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Models;
+using Passwords.API.Tests.Helpers;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Services.Tests
+namespace Passwords.API.Services.Tests
 {
     public class UserLocationsServiceTests : IDisposable
     {
@@ -27,14 +27,15 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneValidUserAccount");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey );
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             UserLocations location = new UserLocations();
             location.User = 1;
             location.Area = "ElLoco";
             location.Name = "ElNamo";
-            location = service.SetLocationPassword(usinger.GetUserById(location.User), location, "ElPasso").GetAwaiter().GetResult().Entity;
+            location.Info = "ElInfo";
+            location = service.SetLocationPassword( usinger.GetUserById(location.User), location, "ElPasso").GetAwaiter().GetResult().Entity;
 
             Assert.True(service, service.Status);
         }
@@ -44,7 +45,7 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             int locationId = service.GetAreaId( "ElLoco", 1 );
@@ -57,7 +58,7 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             UserLocations location = service.GetLocationById(1).GetAwaiter().GetResult().Entity;
@@ -72,7 +73,7 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             UserLocations location = service.GetLocationOfUser(1, "ElLoco");
@@ -87,7 +88,7 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             UserLocations location = service.GetUserLocations(1)[0];
@@ -102,14 +103,14 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             UserLocations location = service.SetLoginInfo( service.GetLocationOfUser(1,"ElLoco").Id, "ElNamo", "ElInfo" ).GetAwaiter().GetResult().Entity;
 
             Assert.True( service.Ok, service.ToString() );
-            Model.AssertSuccessCase(location);
-            AssertUserLocation(location, (1, 1, "ElLoco","ElNamo","ElInfo"));
+            Model.AssertSuccessCase( location );
+            AssertUserLocation( location, (1, 1, "ElLoco","ElNamo","ElInfo") );
         }
 
         [Fact]
@@ -117,12 +118,12 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             string password = service.GetLocationById(1).GetAwaiter().GetResult().SetKey("ElMaestro").GetAwaiter().GetResult().GetPassword();
 
-            Assert.True( password.Equals("ElPasso"), service.ToString() );
+            Assert.True( password.StartsWith("ElPass"), service.ToString() );
         }
 
         [Fact]
@@ -130,18 +131,18 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
             UserLocations location = new UserLocations();
             location.User = 1;
             location.Id = 1;
             location.Area = "ElLoco";
-            service.SetLocationPassword( usinger.GetUserById(1), location, "ElBongo").GetAwaiter().GetResult();
+            service.SetLocationPassword( usinger.GetUserById(1), location, "ElBongo ").GetAwaiter().GetResult();
             Thread.Sleep(1000);
             string password = usrkeys.GetMasterKey(1).Decrypt( service.GetPassword() );
             
-            Assert.True( password.Equals("ElBongo"), password );
+            Assert.True( password.StartsWith("ElBongo"), password );
         }
 
         [Fact]
@@ -149,12 +150,12 @@ namespace PasswordsAPI.Services.Tests
         {
             Test.Context.PrepareDataBase("UserLocationsService", "OneUserOneLocation");
             PasswordUsersService<Test.Context> usinger = new PasswordUsersService<Test.Context>(Test.CurrentContext);
-            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger);
+            UserPasswordsService<Test.Context> usrkeys = new UserPasswordsService<Test.Context>(Test.CurrentContext, usinger, Test.CurrentApikey);
             UserLocationsService<Test.Context> service = new UserLocationsService<Test.Context>(Test.CurrentContext, usrkeys);
 
-            Status result = service.RemoveLocation( usinger.GetUserById(1), "ElLoco", "ElMaestro" ).GetAwaiter().GetResult().Status;
+            Status result = service.RemoveLocation( 1, "ElLoco", "ElMaestro" ).GetAwaiter().GetResult().Status;
             
-            Assert.True( result, result );
+            Assert.False( result.Bad, result );
         }
 
 

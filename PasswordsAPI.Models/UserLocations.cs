@@ -2,19 +2,21 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Models
+namespace Passwords.API.Models
 {
     
-    public class UserLocations : EntityBase<UserLocations>
+    public class UserLocations : EntityBase<UserLocations>, IEntityBase
     {
         public new static readonly UserLocations Invalid =
             new ( new Status( 
                 ResultCode.User | ResultCode.Area |
                 ResultCode.Invalid, "Location not valid" )
             );
-        
+
+        Status IEntityBase.DefaultStatus { get { return new Status(ResultCode.Area); } }
+
         /*-----------------------------*/
 
         [Key]
@@ -51,7 +53,13 @@ namespace PasswordsAPI.Models
             Id = -1;
         }
 
-        public static implicit operator UserLocations( Status cast ) {
+        public static implicit operator bool( UserLocations cast )
+        {
+            return cast.Is().Status;
+        }
+
+        public static implicit operator UserLocations( Status cast )
+        {
             return new UserLocations( cast );
         }
     }

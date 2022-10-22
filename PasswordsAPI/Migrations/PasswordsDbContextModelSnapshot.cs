@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PasswordsAPI.Models;
-using PasswordsAPI.Database;
+using Passwords.API.Models;
+using Passwords.API.Database;
 
-namespace PasswordsAPI.Migrations
+namespace Passwords.API.Migrations
 {
     [DbContext(typeof(PasswordsDbContext))]
     partial class PasswordsDbContextModelSnapshot : ModelSnapshot

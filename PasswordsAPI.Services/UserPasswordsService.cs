@@ -1,33 +1,38 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
+using Passwords.API.Abstracts;
+using Passwords.API.Models;
 using Yps;
 
 
-namespace PasswordsAPI.Services
+namespace Passwords.API.Services
 {
     public class UserPasswordsService<CTX>
         : AbstractApiService<UserPasswords,UserPasswordsService<CTX>,CTX>
-        where CTX : PasswordsApiDbContext<CTX>
+    where CTX
+        : PasswordsApiDbContext<CTX>
     {
         private readonly Status PasswordServiceError = new Status(ResultCode.Service|ResultCode.Password|ResultCode.IsError);
         private readonly Status InvalidId = new Status(ResultCode.Service|ResultCode.Password|ResultCode.User|ResultCode.Invalid, "Invalid User.Id: {0}");
         private readonly Status HashValue = new Status(ResultCode.Service|ResultCode.Password|ResultCode.Id|ResultCode.Invalid, "password incorrct '{0}'" );
         protected override Status GetDefaultError() { return PasswordServiceError; }
-        protected override ResultCode GetServiceFlags() { return ResultCode.Password|ResultCode.Service; }
+        protected override ResultCode GetServiceFlags() { return ResultCode.Password; }
         protected override UserPasswords GetStatusEntity(Status cast) { return cast; }
 
 
         private PasswordUsersService<CTX>        _usrs;
+        private CryptKey                         _apky;
+        private CryptBuffer                      _data;
 
-
-        public UserPasswordsService( CTX ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> usr )
+        public UserPasswordsService( CTX ctx, IPasswordsApiService<PasswordUsers,PasswordUsersService<CTX>,CTX> usr, CryptKey api )
             : base(ctx)
         {
             _usrs = usr.serve();
             _enty = UserPasswords.Invalid;
             _lazy = new Task<UserPasswords>(() => { return _enty; });
+            _apky = api;
+            _data = new CryptBuffer(512);
         }
 
 
@@ -40,44 +45,108 @@ namespace PasswordsAPI.Services
             }
         }
 
+        public async Task<UserPasswordsService<CTX>> LookupPasswordByUserAccount( int byUserId )
+        {
+            PasswordUsers user = (await _usrs.GetUserById(byUserId)).Entity;
+            if( !user.IsValid() ) {
+                _enty = user.Is().Status + ResultCode.Password;
+                Status = _enty.Is().Status;
+                return this;
+            } else if( _enty.User != user.Id ) {
+                Status = Status.NoState;
+                _enty = Status.Unknown;
+                _lazy = _dset.SingleOrDefaultAsync(p => p.User == user.Id);
+            } return this;
+        }
+
         public async Task<UserPasswordsService<CTX>> LookupPasswordByUserAccount( Task<PasswordUsersService<CTX>> byUser )
         {
             PasswordUsers user = byUser.IsCompleted ? byUser.Result.Entity : (await byUser).Entity;
-            if( !user.IsValid() ) { _enty = user.Is().Status;
+            if( !user.IsValid() ) {
+                _enty = user.Is().Status + ResultCode.Password;
                 Status = _enty.Is().Status;
                 return this;
-            }
-            if( _usrs.Status ) {
-                Status = _usrs.Status + ResultCode.Password;
-                _enty = Status;
             } else if( _enty.User != user.Id ) {
                 Status = Status.NoState;
                 _enty= Status.Unknown;
-                _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync(p => p.User == user.Id);
+                _lazy  = _dset.SingleOrDefaultAsync(p => p.User == user.Id);
             } return this;
+        }
+
+        public Status DecryptParameter( string data )
+        {
+            bool nounce = false;
+            if ( nounce = Entity.IsValid() ) {
+                // try decrypting queryparameter by hashvalue of current users masterkey 
+                data = GetMasterKey( Entity.User ).Decrypt( data );
+            } else {
+                // if there's no user in context actually, then decrypt queryparameters
+                // by this Password.API servers own apikey (*all clients (Password.GUI
+                // agent applications) know hashvalue of this servers apikey and
+                // will use it for encrypting any calls where no user information
+                // exists in context yet actually... (later clients shall be changed
+                // to use their individual appkeys instead (clientkeys) by which they
+                // have registered as valid client app)
+                data = _apky.Decrypt( data );
+            }
+
+            if( Crypt.Error ) {
+                return Status = new Status(
+                    ResultCode.Cryptic | ResultCode.Invalid |
+                    ResultCode.Service, $"{Crypt.Error} - ApiKey Invalid",
+                    System.Array.Empty<string>()
+                );
+            } else {
+                return Status.Success.WithData(
+                    nounce ? data.Substring(3).Split(".~.")
+                           : data.Split(".~.")
+                );
+            }
+        }
+
+        public Status GetYpsEnumerator( string yps_parameters )
+        { 
+            CryptBuffer cryptic = new CryptBuffer( System.Text.Encoding.Default.GetBytes( yps_parameters ) );
+            CryptBuffer.OuterCrypticStringEnumerator ypser;
+            bool usingAppKey = !Entity.IsValid();
+            if ( usingAppKey ) {
+                 ypser = cryptic.GetOuterCrypticStringEnumerator( _apky, 0 );
+            } else {
+                 ypser = cryptic.GetOuterCrypticStringEnumerator( GetMasterKey(Entity.Id), 3 );
+            }
+
+            if( Crypt.Error ) {
+                return Status = new Status(
+                    ResultCode.Cryptic | ResultCode.Invalid |
+                    ResultCode.Service, $"{Crypt.Error} - ApiKey Invalid",
+                    System.Array.Empty<string>()
+                );
+            } else {
+                return Status.Success.WithData( ypser );
+            }
         }
 
         public async Task<UserPasswordsService<CTX>> SetMasterKey( int userId, string pass )
         {
-            if( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
+
+            if ( !( await LookupPasswordByUserAccount(_usrs.GetUserById(userId)) ) ) {
                 if ( Status.Code.HasFlag( ResultCode.Password|ResultCode.Service ) ) {
                     Status = Status.NoState;
                     _enty = new UserPasswords();
-                    _enty.Hash = Crypt.CalculateHash(pass);
+                    _enty.Hash = Crypt.CalculateHash( pass );
                     _enty.User = userId;
                     _enty.Pass = "";
                     _enty.Id = 0;
-                    _dset.AddAsync(_enty);
-                    _db.SaveChangesAsync();
+                    _dset.Add(_enty);
+                    _db.SaveChanges();
                     return this;
                 } else {
                     _enty = PasswordServiceError;
                     return this;
                 }
             } else {
-                _enty.Hash = Crypt.CalculateHash(pass);
-                _dset.Update( _enty );
-                _db.SaveChangesAsync();
+                _enty.Hash = Crypt.CalculateHash( pass );
+                Save();
                 return this;
             }
         }
@@ -121,8 +190,40 @@ namespace PasswordsAPI.Services
             if ( Entity ) if ( Entity.User == ofUser ) return this;
             Status = Status.NoState;
             Entity = Status.Unknown;
-            _lazy  = _dset.AsNoTracking().SingleOrDefaultAsync( p => p.User == ofUser );
+            _lazy  = _dset.SingleOrDefaultAsync( p => p.User == ofUser );
             return this;
+        }
+
+        private static void CleanupDbExport( object FileInfos )
+        {
+            (FileInfo export,int counter) files = ((FileInfo,int))(FileInfos as System.Runtime.CompilerServices.ITuple);
+            System.Threading.Thread.Sleep( 30000 );
+            try { files.export.Delete();
+            } catch( System.Exception _ ) {
+                if( --files.counter > 0 )
+                    CleanupDbExport( files );
+            }
+        }
+
+        public Status GetCrypticDbExport( string exportstamp )
+        {
+            string path = new FileInfo(System.Reflection.Assembly.GetEntryAssembly().Location).Directory.FullName;
+            FileInfo dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db");
+            Directory.CreateDirectory( path+"\\Exporte" );
+            int tries = 3; 
+            while( _db.Database.CurrentTransaction != null && --tries >= 0 )
+                System.Threading.Thread.Sleep( 1000 );
+            if( dbfile.Exists ) {
+                CryptKey useKey = Entity.IsValid() ? Crypt.CreateKey( Entity.Hash ) : _apky; 
+                if( Crypt.EncryptFile( useKey, dbfile ) > 0 ) {
+                    dbfile = new FileInfo($"{path}\\DataBase\\SqLite\\db.db.yps");
+                    Status = Status.Success.WithText("Db core exportet");
+                    new Task( CleanupDbExport, (dbfile,5) ).Start();
+                    return Status.Success.WithData( dbfile.OpenRead() );
+                }
+            } Status = ( Status.Cryptic + Status.Invalid ).WithText(
+                        "Error when encrypting database" ).WithData( Crypt.Error );
+            return Status;
         }
     } 
 }

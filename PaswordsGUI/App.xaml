@@ -1,0 +1,35 @@
+﻿<Application x:Class="Passwords.GUI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:System="clr-namespace:System;assembly=System.Runtime"
+             xmlns:local="clr-namespace:Passwords.GUI"
+             StartupUri="PasswordsGUI.xaml" Startup="ApplicationStart">
+    <Application.Resources>
+        <ImageSource x:Key="karen">pack://application:,,,/Resources/karen.ico</ImageSource>
+        <ImageSource x:Key="object">pack://application:,,,/Resources/objecticon.ico</ImageSource>
+        <ImageSource x:Key="user">pack://application:,,,/Resources/sheldon.ico</ImageSource>
+        <ImageSource x:Key="FAIL">pack://application:,,,/Resources/FAIL_thin.ico</ImageSource>
+        <ImageSource x:Key="PASS">pack://application:,,,/Resources/PASS_thin.ico</ImageSource>
+        <ImageSource x:Key="WARN">pack://application:,,,/Resources/WARN_thin.ico</ImageSource>
+        <ImageSource x:Key="SKIP">pack://application:,,,/Resources/SKIP.ico</ImageSource>
+        <ImageSource x:Key="Blue">pack://application:,,,/Resources/Blue.ico</ImageSource>
+        <ImageSource x:Key="Gelb">pack://application:,,,/Resources/Gelb.ico</ImageSource>
+        <ImageSource x:Key="Green">pack://application:,,,/Resources/Green.ico</ImageSource>
+        <ImageSource x:Key="Red">pack://application:,,,/Resources/Red.ico</ImageSource>
+        <ImageSource x:Key="Island">pack://application:,,,/Resources/location.ico</ImageSource>
+        <System:String x:Key="GetUser">Passwords/User</System:String>
+        <System:String x:Key="PatchUser">Passwords/User?app_user_email_pass={0}</System:String>
+        <System:String x:Key="PatchUserInfo">Passwords/{0}/Info?yps_info={1}</System:String>
+        <System:String x:Key="PatchUserPass">Passwords/{0}/Pass?yps_oldpass_newpass={1}</System:String>
+        <System:String x:Key="PatchUserMail">Passwords/{0}/Mail?yps_mail={1}</System:String>
+        <System:String x:Key="GetArea">Passwords/{0}/Area</System:String>
+        <System:String x:Key="PatchArea">Passwords/{0}/Area?yps_area_pass_opt_login_info={1}</System:String>
+        <System:String x:Key="GetAreaPass">Passwords/{0}/{1}/Pass?yps_upass={2}</System:String>
+        <System:String x:Key="PatchAreaInfo">Passwords/{0}/{1}/Info?yps_info={2}</System:String>
+        <System:String x:Key="PatchAreaName">Passwords/{0}/{1}/Name?yps_name={2}</System:String>
+        <System:String x:Key="PatchAreaPass">Passwords/{0}/{1}/Pass?yps_upass_apass={2}</System:String>
+        <System:String x:Key="DeleteArea">Passwords/{0}/Delete/{1}?yps_upass_apass={2}</System:String>
+        <System:String x:Key="DeleteUser">Passwords/Delete/{0}?yps_pass_mail={1}</System:String>
+        <System:String x:Key="Export">Passwords/Export/{0}?yps_stamp={1}</System:String>
+    </Application.Resources>
+</Application>

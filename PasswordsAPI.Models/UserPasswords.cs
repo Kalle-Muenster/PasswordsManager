@@ -2,14 +2,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Models
+namespace Passwords.API.Models
 {
-    public class UserPasswords : EntityBase<UserPasswords>
+    public class UserPasswords : EntityBase<UserPasswords>, IEntityBase
     {
         public new static readonly UserPasswords Invalid = 
             new (new Status(ResultCode.Invalid|ResultCode.Password));
+
+        Status IEntityBase.DefaultStatus { get { return new Status(ResultCode.Password); } }
 
         //------------------------------//
 
@@ -39,7 +41,13 @@ namespace PasswordsAPI.Models
             User = 0;
         }
 
-        public static implicit operator UserPasswords( Status cast ) {
+        public static implicit operator bool( UserPasswords cast )
+        {
+            return cast.Is().Status;
+        }
+
+        public static implicit operator UserPasswords( Status cast )
+        {
             return new UserPasswords( cast );
         }
 

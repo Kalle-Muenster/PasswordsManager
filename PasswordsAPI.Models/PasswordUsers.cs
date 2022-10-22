@@ -1,14 +1,16 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using PasswordsAPI.Abstracts;
+using Passwords.API.Abstracts;
 
-namespace PasswordsAPI.Models
+namespace Passwords.API.Models
 {
-    public class PasswordUsers : EntityBase<PasswordUsers>
+    public class PasswordUsers : EntityBase<PasswordUsers>, IEntityBase
     {
         public new static readonly PasswordUsers Invalid = new PasswordUsers(
             new Status( ResultCode.Invalid|ResultCode.User|ResultCode.Data ) );
+
+        Status IEntityBase.DefaultStatus { get { return new Status(ResultCode.User); } }
 
         [Key]
         public int      Id { get; set; }
@@ -39,8 +41,24 @@ namespace PasswordsAPI.Models
             Id = 0;
         }
 
-        public static implicit operator PasswordUsers( Status cast ) {
+        public PasswordUsers( string name, string mail, string info )
+            : base()
+        {
+            Info = info;
+            Name = name;
+            Mail = mail;
+            Icon = Array.Empty<byte>();
+            Id = 0;
+        }
+
+        public static implicit operator PasswordUsers( Status cast )
+        {
             return new PasswordUsers( cast );
+        }
+        
+        public static implicit operator bool( PasswordUsers cast )
+        {
+            return cast.Is().Status;
         }
 
         public override string ToString() {

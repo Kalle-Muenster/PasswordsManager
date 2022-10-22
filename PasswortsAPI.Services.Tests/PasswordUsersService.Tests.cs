@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Xunit;
-using PasswordsAPI.Abstracts;
-using PasswordsAPI.Models;
-using PasswordsAPI.Tests.Helpers;
+using Passwords.API.Abstracts;
+using Passwords.API.Models;
+using Passwords.API.Tests.Helpers;
 
-namespace PasswordsAPI.Services.Tests
+namespace Passwords.API.Services.Tests
 {
     public class PasswordUsersServiceTests : IDisposable
     {
@@ -28,11 +28,11 @@ namespace PasswordsAPI.Services.Tests
             PasswordUsersService<Test.Context> service = new PasswordUsersService<Test.Context>(Test.CurrentContext);
 
             // Act
-            Status result = service.CreateNewAccount("ElNamo", "El@Mailo.de", "ElInfo").GetAwaiter().GetResult().Status;
-            PasswordUsers account = service.Entity;
+            PasswordUsers account = service.CreateNewAccount("ElNamo", "El@Mailo.de", "ElInfo").GetAwaiter().GetResult().Entity;
+            Status result = service.Status;
 
             // Assert
-            Assert.False(result, result);
+            Assert.True(result, result);
             Assert.True(account.IsValid(), service.Entity.ToString());
             AssertUserAccount(account, (1, "ElNamo", "El@Mailo.de", "ElInfo"));
         }
@@ -64,7 +64,7 @@ namespace PasswordsAPI.Services.Tests
             PasswordUsers account = service.GetUserById(1).GetAwaiter().GetResult().Entity;
 
             // Assert
-            Assert.True(account, account.ToString());
+            Assert.True(account.IsValid(), account.ToString());
             AssertUserAccount(account, (1, "ElNamo", "El@Mailo.de", "ElInfo"));
         }
 
@@ -108,7 +108,7 @@ namespace PasswordsAPI.Services.Tests
             PasswordUsers account = service.GetUserById(23).GetAwaiter().GetResult().Entity;
 
             // Assert
-            Model.AssertInvalidCase(account);
+            Model.AssertInvalidCase( account );
         }
 
         [Fact]
@@ -149,7 +149,9 @@ namespace PasswordsAPI.Services.Tests
             PasswordUsersService<Test.Context> service = new PasswordUsersService<Test.Context>(Test.CurrentContext);
 
             // Act
-            Status result = service.RemoveUserAccount(service.GetUserById(1).GetAwaiter().GetResult().Entity).GetAwaiter().GetResult().Status;
+            Status result = service.RemoveUserAccount(
+                service.GetUserById(1).GetAwaiter().GetResult().Entity
+            ).GetAwaiter().GetResult().Status;
 
             Assert.True( result, result );
         }
