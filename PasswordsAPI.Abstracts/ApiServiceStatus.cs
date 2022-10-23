@@ -68,7 +68,7 @@ namespace Passwords.API.Abstracts
         }
 
         public Status( ResultCode code )
-            : this(code, code.ToString())
+            : this( code, code.ToString() )
         { }
         public Status( ResultCode code, string text )
         {
@@ -105,6 +105,17 @@ namespace Passwords.API.Abstracts
         public static implicit operator bool( Status cast )
         {
             return (cast.Code & ResultCode.IsValid) <= (ResultCode.Unknown|ResultCode.Success) && cast.Code != 0;
+        }
+
+        public System.Diagnostics.EventLogEntryType Event {
+            get { switch( Result ) {
+                    case ResultState.Status: return System.Diagnostics.EventLogEntryType.Information;
+                    case ResultState.Success: return System.Diagnostics.EventLogEntryType.SuccessAudit;
+                    case ResultState.Waiting: return System.Diagnostics.EventLogEntryType.Warning;
+                    case ResultState.Error: return System.Diagnostics.EventLogEntryType.Error;
+                    default: return System.Diagnostics.EventLogEntryType.FailureAudit;
+                }
+            }
         }
 
         public ResultState Result {

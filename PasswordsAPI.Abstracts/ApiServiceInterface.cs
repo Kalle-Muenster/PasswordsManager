@@ -90,7 +90,6 @@ namespace Passwords.API.Abstracts
         {
             _db = ctx;
             _enty = new E();
-            _cons = new StdStreams();
             state = GetDefaultError();
             _enty.Is().Status = state;
             _dset = ctx.EntitiesSet<E>();

@@ -97,26 +97,11 @@ namespace Passwords.API
         internal ulong UnPackData( byte[] Data )
         {
             return ReInterpret.Cast( Crypt.BinaryDecrypt( theKey, Data ).ToArray() ).UnSigned64;
-            /*
-            ArraySegment<byte> data = Crypt.BinaryDecrypt( theKey, Data );
-            ulong value = 0;
-            if( data.Count > 0 ) unsafe {
-                byte* ptr = (byte*)&value;
-                for( int i = 0; i < 8; ++i ) {
-                    ptr[i] = data[i];
-                }
-            } return value; */
         }
 
         internal byte[] PackValue( ulong value )
         {
             return Crypt.BinaryEncrypt( theKey, NumericValue.GetBytes( value ) ).ToArray();
-            /* byte[] data = new byte[9];
-            unsafe { byte* ptr = (byte*)&value;
-                for( int i = 0; i < 8; ++i ) {
-                    data[i] = ptr[i];
-                } data[8] = 0;
-            } return Crypt.BinaryEncrypt( theKey, data ).ToArray(); */
         }
 
         private CryptKey theKey;

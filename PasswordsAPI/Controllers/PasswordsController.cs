@@ -18,17 +18,19 @@ namespace Passwords.Controllers
     {
 
         private readonly ILogger<PasswordsController>  _logger;
+        private readonly System.Diagnostics.EventLog      _log;
         private PasswordsDbContext                         _db;
         private PasswordUsersService<PasswordsDbContext> _usrs;
         private UserPasswordsService<PasswordsDbContext> _keys;
         private UserLocationsService<PasswordsDbContext> _locs;
         private Status                                  _error;
 
-        public PasswordsController( ILogger<PasswordsController> logger, PasswordsDbContext db,
+        public PasswordsController( ILogger<PasswordsController> logger, System.Diagnostics.EventLog log, PasswordsDbContext db,
                                     IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext> usrs,
                                     IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext> keys,
                                     IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext> locs ) {
             _logger = logger;
+            _log = log;
             _db = db;
             _usrs = usrs.serve();
             _locs = locs.serve();
@@ -45,7 +47,7 @@ namespace Passwords.Controllers
 
             string[] plain = (string[])yps.Data;
             PasswordUsers user = (await _usrs.CreateNewAccount( plain[0], plain[1],
-                                              plain.Length > 3 ? plain[3] : string.Empty )
+                                             plain.Length > 3 ? plain[3] : string.Empty )
                                    ).Entity;
             if ( user.IsValid() ) {
                 // as soon user has been add, set the users master password
@@ -83,7 +85,10 @@ namespace Passwords.Controllers
         {
             if ( (await _usrs.GetUserByNameOrId(user)).Entity.IsValid() ) {
                 Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_mail);
-                if (yps.Bad) return BadRequest( yps.ToString() );
+                if( yps.Bad ) {
+                    _log.WriteEntry( yps.Text, yps.Event, (int)yps.Code );
+                    return BadRequest( yps.ToString() );
+                }
                 _usrs.Entity.Mail = yps.Data.ToString();
                 _usrs.Save();
                 return Ok( XamlView.SerializeGrid(_usrs.Entity) );
@@ -149,6 +154,7 @@ namespace Passwords.Controllers
                 newArea.Info = args.Length > 3 ? args[3] : String.Empty;
                 await _locs.SetLocationPassword(_usrs.GetUserByNameOrId(user), newArea, args[1]);
                 if (_locs.GetLocationOfUser( _usrs.Entity.Id, args[0] ).IsValid() ) {
+                    _log.WriteEntry( _locs.Status.Text, _locs.Status.Event );
                     return Ok( XamlView.SerializeGrid( _locs.Entity ) );
                 } else {
                     return StatusCode(_locs.Status.Http,_locs.Status.Text);
@@ -184,9 +190,11 @@ namespace Passwords.Controllers
             if( await _locs.SetKey(_keys.LookupPasswordByUserAccount(_usrs.Entity.Id)) ) {
                 if( args[1] != _locs.GetPassword() ) return StatusCode( 400, "Wrong location password" );
             }
-            if( (await _locs.RemoveLocation( _usrs.Entity.Id, area, args[0] ) ).Status.Ok )
-                return Ok( $"Successfully removed password for: {area}" );
-            else return StatusCode( 500, _locs.Status.ToString() );
+            if( ( await _locs.RemoveLocation(_usrs.Entity.Id, area, args[0]) ).Status.Ok ) {
+                string success = $"Successfully removed password for: {area}";
+                _log.WriteEntry( success, System.Diagnostics.EventLogEntryType.SuccessAudit );
+                return Ok($"Successfully removed password for: {area}");
+            } else return StatusCode(500, _locs.Status.ToString());
         }
 
         [Produces(  "application/json" ), HttpPatch( "{user}/{area}/Name" )]

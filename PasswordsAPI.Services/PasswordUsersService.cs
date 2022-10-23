@@ -17,17 +17,19 @@ namespace Passwords.API.Services
         private static readonly Status UserServiceError = new Status(ResultCode.User|ResultCode.Service|ResultCode.Invalid, "Invalid User: '{0}'"); 
         private static readonly Status InvalidId = new Status(UserServiceError.Code|ResultCode.Id,"Invalid User.Id: {0}");
         private static readonly Status UsersName = new Status(UserServiceError.Code|ResultCode.Name,"Invalid User.Name {0}");
-
+        
+        private   readonly System.Diagnostics.EventLog _logs;
         protected override Status GetDefaultError() { return UserServiceError; }
         protected override ResultCode GetServiceFlags() { return ResultCode.User; }
         protected override PasswordUsers GetStatusEntity( Status cast ) { return cast; }
 
-        public PasswordUsersService( CTX ctx )
+        public PasswordUsersService( CTX ctx, System.Diagnostics.EventLog log )
             : base(ctx)
         {
             Status = UserServiceError;
             _enty = PasswordUsers.Invalid;
             _lazy = new Task<PasswordUsers>(()=>_enty);
+            _logs = log;
         }
 
         public int GetUserId( string nameOrId )
@@ -66,14 +68,17 @@ namespace Passwords.API.Services
             Status = Status.NoState;
             while ( it.MoveNext() ) {
                 if( it.Current.Name == name ) {
-                    Status = new Status( UsersName.Code,"Already Exists", name ); 
+                    Status = new Status( UsersName.Code, "Already Exists", name );
                 break; } 
                 if( it.Current.Mail == email ) {
                     Status = UserServiceError.WithText( "Already Exists" ).WithData( email ) + ResultCode.Mail; 
                 break; }
             } it.Dispose();
-            if ( Status.Bad ) return this;
-            _enty = _dset.Add(
+            if( Status.Bad ) {
+                _logs.WriteEntry( Status.Text, Status.Event, (int)Status.Code, (short)Status.Result,
+                                  System.Text.Encoding.Default.GetBytes( Status.Data.ToString() ) );
+                return this;
+            } _enty = _dset.Add(
                 new PasswordUsers( name, email, info ?? string.Empty )
             ).Entity;
             _db.SaveChanges();

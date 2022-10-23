@@ -42,7 +42,7 @@ namespace Passwords.API.Xaml
             StringBuilder docum = new StringBuilder();
             docum.Append("<GroupBox Header='").Append(obj.GetType().Name).Append("' Orientation='Vertical'>\n");
             for( int i = 0; i < props.Length; ++i ) {
-                docum.Append("<Rectangle Orientation='Horizontal'>\n</Rectangle>\n<Label Content='");
+                docum.Append("<Rectangle Orientation='Horizontal'>\n<Label Content='");
                 docum.Append(props[i].Name).Append("' HorizontalAlignment='Left' ToolTip='");
                 docum.Append(props[i].PropertyType.Name).Append("' />\n<TextBox Text='").Append(
                     StringValue( props[i].GetMethod.Invoke(obj, Array.Empty<object>()) )

@@ -29,21 +29,26 @@ namespace Passwords.API
             USE_MSSQL = 0,
             USE_SQLITE = 1
         }
-        public ServerFrameworks DatabaseType { get; } 
+        
 
-        // kann weg
-        private string ApplicationKey { get; }
+        private readonly string        ApplicationKey;
+        public readonly IConfiguration  Configuration;
+        public readonly ServerFrameworks DatabaseType;
+        public static PasswordsAPIService Service;
+
         public Startup( IConfiguration configuration ) {
             Configuration = configuration;
-            string usedServerType = Configuration[ "ServerFramework:"+Configuration["UsedServerFramework"] ];
-            DatabaseType = (ServerFrameworks) System.Enum.Parse( typeof(ServerFrameworks), usedServerType );
-            ApplicationKey = Configuration["ApplicationKey"];
+            ApplicationKey = new string( Configuration["ApplicationKey"] );
+            Configuration["ApplicationKey"] = string.Empty;
+            DatabaseType = (ServerFrameworks) System.Enum.Parse(
+                typeof(ServerFrameworks), Configuration["ServerFramework:" + Configuration["UsedServerFramework"]]
+            );
         }
 
-        public IConfiguration Configuration { get; }
+        
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices( IServiceCollection services )
         {
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
@@ -66,6 +71,8 @@ namespace Passwords.API
                 c.SwaggerDoc( "v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" } );
             });
 
+            if( Service != null )
+            services.AddSingleton( Service.EventLog );
             services.AddSingleton( PasswordServer.Registry.TheKey );
             services.AddSingleton( new Consola.StdStreams(
                                    Consola.CreationFlags.AppendLog
@@ -101,17 +108,11 @@ namespace Passwords.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PasswordsAPI v1"));
             }
-
             app.UseHttpsRedirection();
-
             app.UseCors( MyAllowSpecificOrigins );
-
-
             app.UseRouting();
-
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllers();
             });

@@ -39,7 +39,7 @@ namespace Passwords
 #if BUILD_AS_SERVICE
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[] {
-                new Service()
+                new PasswordsAPIService()
             };
             ServiceBase.Run( ServicesToRun );
         }
