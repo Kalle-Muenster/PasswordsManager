@@ -2,9 +2,15 @@ using System.Windows.Controls;
 using System.Windows.Forms;
 
 namespace Passwords.ICO
+<<<<<<< HEAD
 {
     internal class Program : IDisposable
     {
+=======
+{            
+    internal class Program : IDisposable
+    { 
+>>>>>>> refs/remotes/fork/main
         private NotifyIcon notifyIcon;
         private ContextMenuStrip notificationMenu;
         private System.ComponentModel.IContainer components;

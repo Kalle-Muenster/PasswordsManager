@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 using System.Windows.Controls;
+=======
+﻿using System.Windows.Controls;
+>>>>>>> refs/remotes/fork/main
 using System.Windows.Input;
 
 

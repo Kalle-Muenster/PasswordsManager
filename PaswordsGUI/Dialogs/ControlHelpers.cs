@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 using System.Windows.Media;
+=======
+﻿using System.Windows.Media;
+>>>>>>> refs/remotes/fork/main
 
 namespace Passwords.GUI.Dialogs
 {

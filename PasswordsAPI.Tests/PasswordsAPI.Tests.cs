@@ -4,11 +4,18 @@ using Passwords.API.Tests.Helpers;
 
 namespace Passwords.API.Tests
 {
+<<<<<<< HEAD
 
     public class ExternalLibraries
     {
         public static readonly string BuildFolder;
 
+=======
+    public class ExternalLibraries
+    {
+        public static readonly string BuildFolder;
+
+>>>>>>> refs/remotes/fork/main
         static ExternalLibraries()
         {
             BuildFolder = Test.CurrentConfig.ProjectFolder + "\\bin\\"

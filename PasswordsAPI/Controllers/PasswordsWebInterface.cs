@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 using Microsoft.AspNetCore.Mvc;
+=======
+﻿using Microsoft.AspNetCore.Mvc;
+>>>>>>> refs/remotes/fork/main
 using Microsoft.Extensions.Logging;
 using Passwords.API.Services;
 using System;

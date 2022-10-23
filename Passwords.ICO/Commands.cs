@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 using Microsoft.Win32;
+=======
+﻿using Microsoft.Win32;
+>>>>>>> refs/remotes/fork/main
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,7 +65,11 @@ namespace Passwords.ICO
         private Task                     switcher;
         internal delegate void StateChange( Command com );
         internal event StateChange CommandChangedState;
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> refs/remotes/fork/main
         private void ReadRegistry()
         {
             if( ThePathToTheGui.StartsWith("HKEY") ) {

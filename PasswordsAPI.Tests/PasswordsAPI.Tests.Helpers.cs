@@ -204,7 +204,11 @@ namespace Passwords.API.Tests.Helpers
                         CurrentContext.Begin( testcase );
                         return;
                     }
+<<<<<<< HEAD:PasswordsAPI.Tests/PasswordsAPI.Tests.Helpers.cs
                 } 
+=======
+                }
+>>>>>>> refs/remotes/fork/main:PasswordsAPI.Tests/DbContext.Helper.cs
                 SessionKey key = new SessionKey();
                 lock ( key ) {
                     CurrentContext = new Context( database, testcase, key );
@@ -229,7 +233,11 @@ namespace Passwords.API.Tests.Helpers
             }
 
             /////////////////////////////////////////////////////////////////
+<<<<<<< HEAD:PasswordsAPI.Tests/PasswordsAPI.Tests.Helpers.cs
             /// this should equal the regularly used PasswordsDbContext 
+=======
+            /// this should equal the regularly used PasswordsDbContext
+>>>>>>> refs/remotes/fork/main:PasswordsAPI.Tests/DbContext.Helper.cs
 
             public DbSet<PasswordUsers> PasswordUsers
             {
