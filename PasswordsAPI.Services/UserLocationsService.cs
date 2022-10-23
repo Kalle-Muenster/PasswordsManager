@@ -232,13 +232,8 @@ namespace Passwords.API.Services
                     } else {
                         Status = LocationServiceError.WithText( "Location '{0}' not exists" ).WithData( area );
                     }
-<<<<<<< HEAD
                 } else { 
                     Status = LocationServiceError.WithData( pass ).WithText( 
-=======
-                } else {
-                    Status = LocationServiceError.WithData( pass ).WithText(
->>>>>>> refs/remotes/fork/main
                         "For Deleting a Passwords, the owning users masterkey is needed"
                     ) + ( ResultCode.Invalid | ResultCode.User | ResultCode.Password );
                 }

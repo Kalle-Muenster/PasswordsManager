@@ -46,10 +46,7 @@ namespace Passwords.GUI
             if( args.Contains("--hash") ) {
                 if( args.Count > ( index = args.IndexOf("--hash") + 1 ) ) {
                     if( !ulong.TryParse( args[index], out hash ) ) {
-<<<<<<< HEAD
                         
-=======
->>>>>>> refs/remotes/fork/main
                     }
                 }
             }

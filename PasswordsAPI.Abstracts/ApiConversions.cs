@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 using System;
-=======
-﻿using System;
->>>>>>> refs/remotes/fork/main
 using Stepflow;
 using System.Runtime.InteropServices;
 using Passwords.API.Abstracts;
@@ -51,11 +47,7 @@ namespace Passwords.API.Extensions
                 bytes[i] = data[i];
             }
         }
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> refs/remotes/fork/main
         public ReInterpret( short value ) : this() { AsSigned16 = value; }
         public ReInterpret( int value ) : this() { AsSigned32 = value; }
         public ReInterpret( Int24 value ) : this() { AsSigned24 = value; }

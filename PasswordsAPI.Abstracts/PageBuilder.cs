@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 using System;
-=======
-﻿using System;
->>>>>>> refs/remotes/fork/main
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 using System;
-=======
-﻿using System;
->>>>>>> refs/remotes/fork/main
 using Passwords.API.Abstracts;
 using Passwords.API.Models;
 using System.Windows;

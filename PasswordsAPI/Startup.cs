@@ -29,12 +29,7 @@ namespace Passwords.API
             USE_MSSQL = 0,
             USE_SQLITE = 1
         }
-<<<<<<< HEAD
         public ServerFrameworks DatabaseType { get; } 
-=======
-        public ServerFrameworks DatabaseType { get; }
-        private string ApplicationKey { get; }
->>>>>>> refs/remotes/fork/main
 
         // kann weg
         private string ApplicationKey { get; }
@@ -70,10 +65,7 @@ namespace Passwords.API
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc( "v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" } );
             });
-<<<<<<< HEAD
 
-=======
->>>>>>> refs/remotes/fork/main
             services.AddSingleton( PasswordServer.Registry.TheKey );
             services.AddSingleton( new Consola.StdStreams(
                                    Consola.CreationFlags.AppendLog

@@ -206,11 +206,7 @@ namespace Passwords.Controllers
         [Produces( "application/json" ), HttpPatch( "{user}/{area}/Info" )]
         public async Task<IActionResult> PatchUserLocationInfo( string user, string area, string yps_info )
         {
-<<<<<<< HEAD
             if( (await _locs.GetLocationById(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity.Is().Status.Ok ) { 
-=======
-            if( (await _locs.GetLocationById(_locs.GetAreaId(area, _usrs.GetUserId(user)))).Entity.Is().Status.Ok ) {
->>>>>>> refs/remotes/fork/main
                 Status yps = DecryptQueryParameter(_usrs.Entity.Id, yps_info );
                 if( yps.Bad ) return BadRequest( yps.ToString() );
                 yps_info = ( (string[])yps.Data )[0];
@@ -246,7 +242,6 @@ namespace Passwords.Controllers
                     $"{Crypt.Error} - seems to be wrong masterkey"
                 ).WithData( Array.Empty<string>() );
             } return _usrs.Status.Ok ? _keys.Status : _usrs.Status;
-<<<<<<< HEAD
         }
 
         private string SerializeAsXaml(object obj)
@@ -254,15 +249,6 @@ namespace Passwords.Controllers
             return XamlView.SerializeGroup( obj );
         }
 
-=======
-        }
-
-        private string SerializeAsXaml(object obj)
-        {
-            return XamlView.SerializeGroup( obj );
-        }
-
->>>>>>> refs/remotes/fork/main
         [Produces("application/json"), HttpGet("{user}/{area}/Pass")]
         public async Task<IActionResult> GetUserLocationPassword( string user, string area, string yps )
         {
@@ -312,16 +298,6 @@ namespace Passwords.Controllers
                 return StatusCode(_usrs.Status.Http, _usrs.Status.Text);
             else
                 return StatusCode(_keys.Status.Http, _keys.Status.Text);
-<<<<<<< HEAD
-=======
-        }
-
-        [Produces("application/json"), HttpGet("ypserror/{code}")]
-        public async Task<IActionResult> GetYpsingError( uint code )
-        {
-            Status textFromErrorCode = new Status( ResultCode.Cryptic, "message from yps crypt: {0}", Yps.Error.GetText( (int)code ) );
-            return Ok( textFromErrorCode.ToString() );
->>>>>>> refs/remotes/fork/main
         }
     }
 }

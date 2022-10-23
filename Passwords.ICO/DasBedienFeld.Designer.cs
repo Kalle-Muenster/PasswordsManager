@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 namespace Passwords.ICO
-=======
-﻿namespace Passwords.ICO
->>>>>>> refs/remotes/fork/main
 {
     partial class DasBedienFeld
     {
