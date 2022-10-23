@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 #define BUILD_AS_DEAMON
 #else
 #define BUILD_AS_SERVICE
@@ -15,7 +15,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Threading;
-//using System.Windows.Forms;
 
 namespace Passwords.API
 {

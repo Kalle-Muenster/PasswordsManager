@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using Passwords.API.Abstracts;
 using System.Diagnostics;
@@ -16,7 +16,7 @@ namespace Passwords.API.Tests.Helpers
         public readonly string Architecture;
         public readonly string Configuration;
         public readonly string ProjectFolder;
-   
+
         public BuildConfig()
         {
             ProjectFolder = "C:\\WORKSPACE\\PROJECTS\\PasswordsAPI\\PasswordsAPI";

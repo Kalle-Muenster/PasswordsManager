@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Passwords.API.Abstracts;
 using Passwords.API.Models;
 using System.Windows;

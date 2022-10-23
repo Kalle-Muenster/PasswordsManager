@@ -1,4 +1,4 @@
-﻿namespace Passwords.ICO
+namespace Passwords.ICO
 {
     partial class DasBedienFeld
     {

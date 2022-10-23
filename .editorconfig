@@ -1,4 +1,4 @@
-﻿[*.cs]
+[*.cs]
 
 # CS8601: Mögliche Nullverweiszuweisung.
 dotnet_diagnostic.CS8601.severity = silent

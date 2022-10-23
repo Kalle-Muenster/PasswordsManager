@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Stepflow;
 using System.Runtime.InteropServices;
 using Passwords.API.Abstracts;
@@ -47,7 +47,7 @@ namespace Passwords.API.Extensions
                 bytes[i] = data[i];
             }
         }
-        
+
         public ReInterpret( short value ) : this() { AsSigned16 = value; }
         public ReInterpret( int value ) : this() { AsSigned32 = value; }
         public ReInterpret( Int24 value ) : this() { AsSigned24 = value; }

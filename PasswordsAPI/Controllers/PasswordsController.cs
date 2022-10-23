@@ -24,7 +24,7 @@ namespace Passwords.Controllers
         private UserLocationsService<PasswordsDbContext> _locs;
         private Status                                  _error;
 
-        public PasswordsController( ILogger<PasswordsController> logger, PasswordsDbContext db, 
+        public PasswordsController( ILogger<PasswordsController> logger, PasswordsDbContext db,
                                     IPasswordsApiService<PasswordUsers, PasswordUsersService<PasswordsDbContext>, PasswordsDbContext> usrs,
                                     IPasswordsApiService<UserPasswords, UserPasswordsService<PasswordsDbContext>, PasswordsDbContext> keys,
                                     IPasswordsApiService<UserLocations, UserLocationsService<PasswordsDbContext>, PasswordsDbContext> locs ) {
@@ -238,15 +238,15 @@ namespace Passwords.Controllers
                 string plaintext = key.Decrypt( encrypted );
                 if( plaintext != null ) {
                     return Status.Success.WithData( plaintext.Substring(3).Split(".~.") );
-                } return Status.Invalid.WithText( 
-                    $"{Crypt.Error} - seems to be wrong masterkey" 
+                } return Status.Invalid.WithText(
+                    $"{Crypt.Error} - seems to be wrong masterkey"
                 ).WithData( Array.Empty<string>() );
             } return _usrs.Status.Ok ? _keys.Status : _usrs.Status;
         }
 
         private string SerializeAsXaml(object obj)
         {
-            return XamlView.SerializeGroup( obj );            
+            return XamlView.SerializeGroup( obj );
         }
 
         [Produces("application/json"), HttpGet("{user}/{area}/Pass")]
@@ -270,7 +270,7 @@ namespace Passwords.Controllers
             Status textFromErrorCode = new Status((ResultCode) code, "message from error code: {0}", (ResultCode) code);
             if (textFromErrorCode.Ok) return Ok( textFromErrorCode.ToString() );
             if (textFromErrorCode.Bad) return StatusCode( textFromErrorCode.Http, textFromErrorCode.Text );
-            else return StatusCode( 500, textFromErrorCode.ToString() ); 
+            else return StatusCode( 500, textFromErrorCode.ToString() );
         }
 
         [Produces("application/json"), HttpGet("ypserror/{code}")]
@@ -293,9 +293,9 @@ namespace Passwords.Controllers
                     if( res.Bad ) return StatusCode( res.Http, res.Text );
                     return File( res.Data as System.IO.FileStream, "application/binary" );
                 } else return StatusCode( 500, "timestamp expected" );
-            } 
+            }
             if( _usrs.Status.Bad )
-                return StatusCode(_usrs.Status.Http, _usrs.Status.Text); 
+                return StatusCode(_usrs.Status.Http, _usrs.Status.Text);
             else
                 return StatusCode(_keys.Status.Http, _keys.Status.Text);
         }

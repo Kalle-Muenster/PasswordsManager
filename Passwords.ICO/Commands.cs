@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,7 +61,7 @@ namespace Passwords.ICO
         private Task                     switcher;
         internal delegate void StateChange( Command com );
         internal event StateChange CommandChangedState;
-        
+
         private void ReadRegistry()
         {
             if( ThePathToTheGui.StartsWith("HKEY") ) {

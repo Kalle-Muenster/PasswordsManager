@@ -58,9 +58,9 @@ namespace Passwords.API.Services
 
         public async Task<UserLocationsService<CTX>> SetKey( string masterPass )
         {
-            if( Entity.Is().Status.Bad ) return this; 
+            if( Entity.Is().Status.Bad ) return this;
             if( _keys.VerifyPassword( Entity.User, masterPass ) ) _key = _keys.GetMasterKey( Entity.User );
-            return _keys.Status 
+            return _keys.Status
                  ? OnError( _keys )
                  : this;
         }

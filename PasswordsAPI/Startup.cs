@@ -65,7 +65,7 @@ namespace Passwords.API
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc( "v1", new OpenApiInfo { Title = "PasswordsAPI", Version = "v1" } );
             });
-            
+
             services.AddSingleton( PasswordServer.Registry.TheKey );
             services.AddSingleton( new Consola.StdStreams(
                                    Consola.CreationFlags.AppendLog
@@ -85,7 +85,7 @@ namespace Passwords.API
                 services.AddDbContext<PasswordsDbContext>(
                 options => options.UseSqlite(
                     new Connectione(
-                        new Constringer( "Data Source=" 
+                        new Constringer( "Data Source="
                          + new FileInfo( ".\\DataBase\\SqLite\\db.db" ).FullName
                         ).ConnectionString ) ),
                 ServiceLifetime.Singleton,
@@ -101,7 +101,7 @@ namespace Passwords.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PasswordsAPI v1"));
             }
-            
+
             app.UseHttpsRedirection();
 
             app.UseCors( MyAllowSpecificOrigins );
